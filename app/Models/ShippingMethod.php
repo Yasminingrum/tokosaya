@@ -55,7 +55,7 @@ class ShippingMethod extends Model
     public function getLogoUrlAttribute()
     {
         if ($this->logo) {
-            if (str_starts_with($this->logo, ['http://', 'https://'])) {
+            if (\Illuminate\Support\Str::startsWith($this->logo, ['http://', 'https://'])) {
                 return $this->logo;
             }
             return asset('storage/' . $this->logo);

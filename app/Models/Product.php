@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Collections\ProductCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -72,7 +73,19 @@ class Product extends Model
         'updated_at' => 'datetime',
     ];
 
-    // Relationships
+    /**
+     * CUSTOM COLLECTION INTEGRATION
+     * Tell Laravel to use ProductCollection for multiple products
+     */
+    public function newCollection(array $models = [])
+    {
+        return new ProductCollection($models);
+    }
+
+    // ============================================================================
+    // RELATIONSHIPS
+    // ============================================================================
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -138,7 +151,10 @@ class Product extends Model
         return $this->hasMany(Wishlist::class);
     }
 
-    // Scopes
+    // ============================================================================
+    // QUERY SCOPES - OPTIMIZED
+    // ============================================================================
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
@@ -211,7 +227,54 @@ class Product extends Model
         });
     }
 
-    // Price helpers
+    /**
+     * Enhanced scope for full-text search (requires MySQL FULLTEXT index)
+     */
+    public function scopeFullTextSearch($query, $search)
+    {
+        return $query->whereRaw("MATCH(name, description) AGAINST(? IN BOOLEAN MODE)", [$search]);
+    }
+
+    /**
+     * Scope for performance - load only essential data
+     */
+    public function scopeForListing($query)
+    {
+        return $query->select([
+            'id', 'name', 'slug', 'price_cents', 'compare_price_cents',
+            'stock_quantity', 'rating_average', 'rating_count', 'featured',
+            'category_id', 'brand_id', 'created_at'
+        ])->with([
+            'category:id,name,slug',
+            'brand:id,name,slug',
+            'primaryImage:id,product_id,image_url,alt_text'
+        ]);
+    }
+
+    /**
+     * Scope for detailed view
+     */
+    public function scopeForDetails($query)
+    {
+        return $query->with([
+            'category',
+            'brand',
+            'images',
+            'activeVariants',
+            'approvedReviews' => function ($q) {
+                $q->with('user:id,first_name,last_name')->latest()->limit(5);
+            },
+            'attributes.attribute'
+        ]);
+    }
+
+    // ============================================================================
+    // ACCESSORS & MUTATORS - ENHANCED
+    // ============================================================================
+
+    /**
+     * Price helpers
+     */
     public function getPriceAttribute()
     {
         return $this->price_cents / 100;
@@ -237,11 +300,94 @@ class Product extends Model
         return $this->compare_price ? 'Rp ' . number_format($this->compare_price, 0, ',', '.') : null;
     }
 
-    // Stock helpers
+    /**
+     * Stock helpers
+     */
     public function getAvailableStockAttribute()
     {
         return max(0, $this->stock_quantity - $this->reserved_quantity);
     }
+
+    public function getStockStatusAttribute()
+    {
+        if (!$this->track_stock) {
+            return 'unlimited';
+        }
+
+        if ($this->stock_quantity <= 0) {
+            return 'out_of_stock';
+        }
+
+        if ($this->stock_quantity <= $this->min_stock_level) {
+            return 'low_stock';
+        }
+
+        return 'in_stock';
+    }
+
+    /**
+     * Weight and dimensions
+     */
+    public function getWeightInKgAttribute()
+    {
+        return $this->weight_grams / 1000;
+    }
+
+    public function getDimensionsAttribute()
+    {
+        if (!$this->length_mm || !$this->width_mm || !$this->height_mm) {
+            return null;
+        }
+
+        return [
+            'length' => $this->length_mm / 10, // cm
+            'width' => $this->width_mm / 10,   // cm
+            'height' => $this->height_mm / 10,  // cm
+        ];
+    }
+
+    /**
+     * SEO and URLs
+     */
+    public function getUrlAttribute()
+    {
+        return route('products.show', $this->slug);
+    }
+
+    public function getImageUrlAttribute()
+    {
+        return $this->primaryImage?->image_url ?? asset('images/products/placeholder.png');
+    }
+
+    /**
+     * Business logic accessors
+     */
+    public function getDiscountPercentageAttribute()
+    {
+        if (!$this->hasDiscount()) {
+            return 0;
+        }
+
+        return round((($this->compare_price_cents - $this->price_cents) / $this->compare_price_cents) * 100);
+    }
+
+    public function getProfitMarginAttribute()
+    {
+        if (!$this->cost_price_cents || $this->price_cents <= 0) {
+            return 0;
+        }
+
+        return round((($this->price_cents - $this->cost_price_cents) / $this->price_cents) * 100, 2);
+    }
+
+    public function getInventoryValueAttribute()
+    {
+        return ($this->price_cents * $this->stock_quantity) / 100;
+    }
+
+    // ============================================================================
+    // BUSINESS LOGIC METHODS
+    // ============================================================================
 
     public function isInStock()
     {
@@ -258,19 +404,9 @@ class Product extends Model
         return $this->track_stock && $this->stock_quantity <= 0;
     }
 
-    // Other helpers
     public function hasDiscount()
     {
         return $this->compare_price_cents && $this->compare_price_cents > $this->price_cents;
-    }
-
-    public function getDiscountPercentageAttribute()
-    {
-        if (!$this->hasDiscount()) {
-            return 0;
-        }
-
-        return round((($this->compare_price_cents - $this->price_cents) / $this->compare_price_cents) * 100);
     }
 
     public function hasVariants()
@@ -293,22 +429,51 @@ class Product extends Model
         return $this->rating_count > 0;
     }
 
-    public function getWeightInKgAttribute()
+    public function canPurchase($quantity = 1)
     {
-        return $this->weight_grams / 1000;
-    }
-
-    public function getDimensionsAttribute()
-    {
-        if (!$this->length_mm || !$this->width_mm || !$this->height_mm) {
-            return null;
+        if (!$this->track_stock) {
+            return true;
         }
 
-        return [
-            'length' => $this->length_mm / 10, // cm
-            'width' => $this->width_mm / 10,   // cm
-            'height' => $this->height_mm / 10,  // cm
-        ];
+        if ($this->allow_backorder) {
+            return true;
+        }
+
+        return $this->available_stock >= $quantity;
+    }
+
+    public function reserveStock($quantity)
+    {
+        if ($this->track_stock && $this->available_stock >= $quantity) {
+            $this->increment('reserved_quantity', $quantity);
+            return true;
+        }
+
+        return false;
+    }
+
+    public function releaseStock($quantity)
+    {
+        if ($this->track_stock) {
+            $this->decrement('reserved_quantity', min($quantity, $this->reserved_quantity));
+            return true;
+        }
+
+        return false;
+    }
+
+    public function reduceStock($quantity)
+    {
+        if ($this->track_stock) {
+            $this->decrement('stock_quantity', $quantity);
+            $this->decrement('reserved_quantity', min($quantity, $this->reserved_quantity));
+            $this->increment('sale_count', $quantity);
+            $this->increment('revenue_cents', $this->price_cents * $quantity);
+            $this->update(['last_sold_at' => now()]);
+            return true;
+        }
+
+        return false;
     }
 
     public function incrementViewCount()
@@ -316,12 +481,59 @@ class Product extends Model
         $this->increment('view_count');
     }
 
-    public function getImageUrlAttribute()
+    public function updateRating()
     {
-        return $this->primaryImage?->image_url ?? asset('images/products/placeholder.png');
+        $reviews = $this->approvedReviews();
+
+        $this->update([
+            'rating_average' => $reviews->avg('rating') ?? 0,
+            'rating_count' => $reviews->count()
+        ]);
     }
 
-    // Events
+    // ============================================================================
+    // STATIC METHODS FOR COLLECTION USAGE
+    // ============================================================================
+
+    /**
+     * Get all products with collection methods available
+     */
+    public static function collection()
+    {
+        return static::all();
+    }
+
+    /**
+     * Get products for dashboard analytics
+     */
+    public static function forDashboard()
+    {
+        return static::forListing()->get();
+    }
+
+    /**
+     * Get products for homepage
+     */
+    public static function forHomepage()
+    {
+        return static::active()->forListing()->get();
+    }
+
+    /**
+     * Search products with collection methods
+     */
+    public static function search($query)
+    {
+        return static::active()
+            ->search($query)
+            ->forListing()
+            ->get();
+    }
+
+    // ============================================================================
+    // MODEL EVENTS
+    // ============================================================================
+
     protected static function boot()
     {
         parent::boot();
@@ -334,6 +546,11 @@ class Product extends Model
             if (empty($product->sku)) {
                 $product->sku = 'PRD-' . strtoupper(Str::random(8));
             }
+
+            // Set defaults
+            $product->reserved_quantity = $product->reserved_quantity ?? 0;
+            $product->min_stock_level = $product->min_stock_level ?? 5;
+            $product->max_stock_level = $product->max_stock_level ?? 1000;
         });
 
         static::updating(function ($product) {
@@ -352,6 +569,10 @@ class Product extends Model
             if ($product->brand) {
                 $product->brand->updateProductCount();
             }
+
+            // Clear cache if needed
+            cache()->forget("product.{$product->id}");
+            cache()->forget("product.slug.{$product->slug}");
         });
 
         static::deleted(function ($product) {
@@ -364,6 +585,10 @@ class Product extends Model
             if ($product->brand) {
                 $product->brand->updateProductCount();
             }
+
+            // Clear cache
+            cache()->forget("product.{$product->id}");
+            cache()->forget("product.slug.{$product->slug}");
         });
     }
 }

@@ -621,7 +621,7 @@ class MediaFile extends Model
             'url' => $path,
             'mime_type' => $uploadedFile->getMimeType(),
             'size_bytes' => $uploadedFile->getSize(),
-            'uploaded_by' => $uploadedBy ?: auth()->id(),
+            'uploaded_by' => $uploadedBy ?: optional(auth())->id(),
             'folder' => $folder,
             'is_public' => $isPublic,
         ]);

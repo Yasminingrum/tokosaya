@@ -86,7 +86,7 @@ class PaymentMethod extends Model
     public function getLogoUrlAttribute()
     {
         if ($this->logo) {
-            if (str_starts_with($this->logo, ['http://', 'https://'])) {
+            if (str_starts_with($this->logo, 'http://') || str_starts_with($this->logo, 'https://')) {
                 return $this->logo;
             }
             return asset('storage/' . $this->logo);

@@ -118,20 +118,14 @@ class ActivityLog extends Model
         };
     }
 
-    public function hasChanges()
+    public function hasDataChanges()
     {
         return !empty($this->old_values) || !empty($this->new_values);
     }
 
-    // Fix for Laravel compatibility
-    public function getChanges()
-    {
-        return $this->changed_attributes;
-    }
-
     public function getChangedAttributesAttribute()
     {
-        if (!$this->hasChanges()) {
+        if (!$this->hasDataChanges()) {
             return [];
         }
 
@@ -198,7 +192,7 @@ class ActivityLog extends Model
     public static function log($action, $description = null, $model = null, $modelId = null, $oldValues = [], $newValues = [])
     {
         return static::create([
-            'user_id' => auth()->id(),
+            'user_id' => optional(\Illuminate\Support\Facades\Auth::user())->id,
             'action' => $action,
             'description' => $description,
             'model' => $model,
