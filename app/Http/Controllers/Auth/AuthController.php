@@ -50,13 +50,13 @@ class AuthController extends Controller
 
             // Log activity
             activity('login')
-                ->causedBy(auth()->user())
+                ->causedBy(Auth::user())
                 ->log('User logged in successfully');
 
             $request->session()->regenerate();
 
             // Redirect based on role
-            $user = auth()->user();
+            $user = Auth::user();
             if ($user->role->name === 'admin' || $user->role->name === 'super_admin') {
                 return redirect()->intended('/admin/dashboard');
             }
@@ -132,9 +132,9 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         // Log activity before logout
-        if (auth()->check()) {
+        if (Auth::check()) {
             activity('logout')
-                ->causedBy(auth()->user())
+                ->causedBy(Auth::user())
                 ->log('User logged out');
         }
 
@@ -151,7 +151,11 @@ class AuthController extends Controller
      */
     public function profile()
     {
-        $user = auth()->user()->load([
+        $user = User::where('id', Auth::id())->first();
+        if (!$user) {
+            return redirect('/login');
+        }
+        $user->load([
             'addresses',
             'orders' => function($query) {
                 $query->latest()->limit(5);
@@ -173,7 +177,7 @@ class AuthController extends Controller
      */
     public function updateProfile(Request $request)
     {
-        $user = auth()->user();
+        $user = User::find(Auth::id());
 
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:50',
@@ -188,9 +192,10 @@ class AuthController extends Controller
         }
 
         try {
-            $user->update($request->only([
+            $user->fill($request->only([
                 'first_name', 'last_name', 'phone', 'date_of_birth', 'gender'
             ]));
+            $user->save();
 
             // Log activity
             activity('profile_update')
@@ -218,7 +223,7 @@ class AuthController extends Controller
             return back()->withErrors($validator);
         }
 
-        $user = auth()->user();
+        $user = User::find(Auth::id());
 
         // Verify current password
         if (!Hash::check($request->current_password, $user->password_hash)) {
@@ -226,9 +231,8 @@ class AuthController extends Controller
         }
 
         try {
-            $user->update([
-                'password_hash' => Hash::make($request->password)
-            ]);
+            $user->password_hash = Hash::make($request->password);
+            $user->save();
 
             // Log activity
             activity('password_change')
@@ -247,7 +251,7 @@ class AuthController extends Controller
      */
     public function dashboard()
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         // Get recent orders
         $recentOrders = $user->orders()

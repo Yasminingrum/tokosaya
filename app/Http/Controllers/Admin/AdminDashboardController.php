@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Routing\Controller;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -17,6 +17,7 @@ class AdminDashboardController extends Controller
 {
     public function __construct()
     {
+        parent::__construct();
         $this->middleware('auth');
         $this->middleware('role:admin,super_admin,staff');
     }
@@ -199,7 +200,7 @@ class AdminDashboardController extends Controller
                 $startDate = Carbon::now()->startOfMonth();
         }
 
-        $data = Cache::remember("reports_data_{$period}", 1800, function () use ($startDate) {
+        $data = Cache::remember("reports_data_{$period}", 1800, function () use ($startDate, $period) {
             // Sales summary
             $salesSummary = Order::where('created_at', '>=', $startDate)
                 ->where('payment_status', 'paid')
@@ -478,6 +479,63 @@ class AdminDashboardController extends Controller
         $filename = 'sales_data_' . $period . '_days_' . now()->format('Y-m-d') . '.csv';
 
         return $this->generateCSV($salesData, $filename);
+    }
+
+    /**
+     * Export products data
+     */
+    private function exportProductsData($period)
+    {
+        $startDate = Carbon::now()->subDays($period);
+
+        $productsData = Product::where('created_at', '>=', $startDate)
+            ->withCount(['orders as total_orders' => function ($query) use ($startDate) {
+                $query->where('created_at', '>=', $startDate);
+            }])
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'Product Name' => $product->name,
+                    'SKU' => $product->sku ?? '',
+                    'Category' => optional($product->category)->name ?? '',
+                    'Price' => $product->price_cents / 100,
+                    'Stock Quantity' => $product->stock_quantity,
+                    'Status' => ucfirst($product->status),
+                    'Created At' => $product->created_at->format('Y-m-d H:i:s'),
+                    'Total Orders' => $product->total_orders ?? 0
+                ];
+            });
+
+        $filename = 'products_data_' . $period . '_days_' . now()->format('Y-m-d') . '.csv';
+
+        return $this->generateCSV($productsData, $filename);
+    }
+
+    /**
+     * Export customers data
+     */
+    private function exportCustomersData($period)
+    {
+        $startDate = Carbon::now()->subDays($period);
+
+        $customersData = User::whereHas('role', function($q) { $q->where('name', 'customer'); })
+            ->where('created_at', '>=', $startDate)
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'First Name' => $user->first_name,
+                    'Last Name' => $user->last_name,
+                    'Email' => $user->email,
+                    'Phone' => $user->phone ?? '',
+                    'Registered At' => $user->created_at->format('Y-m-d H:i:s'),
+                    'Total Orders' => $user->orders()->count(),
+                    'Total Spent' => number_format($user->orders()->where('payment_status', 'paid')->sum('total_cents') / 100, 2)
+                ];
+            });
+
+        $filename = 'customers_data_' . $period . '_days_' . now()->format('Y-m-d') . '.csv';
+
+        return $this->generateCSV($customersData, $filename);
     }
 
     /**

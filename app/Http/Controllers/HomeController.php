@@ -10,6 +10,7 @@ use App\Collections\ProductCollection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\a\DB;
 
 class HomeController extends Controller
 {
@@ -308,7 +309,7 @@ class HomeController extends Controller
     /**
      * Newsletter subscription
      */
-    public function newsletter(Request $request)
+/*    public function newsletter(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|max:180|unique:newsletter_subscribers,email'
@@ -359,6 +360,8 @@ class HomeController extends Controller
             return back()->withErrors(['error' => 'Gagal mendaftarkan email. Silakan coba lagi.']);
         }
     }
+*/
+
 
     /**
      * Get trending products (AJAX)
@@ -427,13 +430,6 @@ class HomeController extends Controller
     {
         $stats = Cache::remember('homepage_quick_stats', 1800, function () {
             return [
-    /**
-     * Get quick stats for dashboard widgets
-     */
-    public function quickStats()
-    {
-        $stats = Cache::remember('homepage_quick_stats', 1800, function () {
-            return [
                 'total_products' => Product::where('status', 'active')->count(),
                 'total_categories' => Category::where('is_active', true)->count(),
                 'total_brands' => \App\Models\Brand::where('is_active', true)->count(),
@@ -469,11 +465,10 @@ class HomeController extends Controller
     {
         try {
             // Check database connection
-            \DB::connection()->getPdo();
+            app('db')->connection()->getPdo();
 
-            // Check cache
-            Cache::put('health_check', time(), 60);
-            $cacheWorking = Cache::get('health_check') !== null;
+            $cacheWorking = app('cache')->put('health_check', time(), 60)
+                    && app('cache')->get('health_check') !== null;
 
             $status = [
                 'status' => 'healthy',

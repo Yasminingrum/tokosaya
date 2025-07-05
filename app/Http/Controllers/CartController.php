@@ -107,7 +107,7 @@ class CartController extends Controller
 
             // Log activity
             activity('cart_add')
-                ->causedBy(auth()->user())
+                ->causedBy(Auth::user())
                 ->withProperties([
                     'product_id' => $product->id,
                     'product_name' => $product->name,
@@ -214,7 +214,7 @@ class CartController extends Controller
 
             // Log before deletion
             activity('cart_remove')
-                ->causedBy(auth()->user())
+                ->causedBy(Auth::user())
                 ->withProperties([
                     'product_id' => $cartItem->product_id,
                     'product_name' => $cartItem->product->name,
@@ -260,7 +260,7 @@ class CartController extends Controller
 
             // Log before clearing
             activity('cart_clear')
-                ->causedBy(auth()->user())
+                ->causedBy(Auth::user())
                 ->withProperties(['items_count' => $cart->item_count])
                 ->log('Cart cleared');
 
@@ -400,11 +400,11 @@ class CartController extends Controller
     private function getOrCreateCart()
     {
         if (Auth::check()) {
-            $cart = ShoppingCart::where('user_id', auth()->id())->first();
+            $cart = ShoppingCart::where('user_id', Auth::id())->first();
 
             if (!$cart) {
                 $cart = ShoppingCart::create([
-                    'user_id' => auth()->id(),
+                    'user_id' => Auth::id(),
                     'item_count' => 0,
                     'total_cents' => 0
                 ]);
@@ -526,7 +526,7 @@ class CartController extends Controller
      */
     private function getRecentlyViewedProducts()
     {
-        $key = 'recently_viewed_' . (auth()->id() ?: session()->getId());
+        $key = 'recently_viewed_' . (Auth::id() ?: session()->getId());
         $productIds = session()->get($key, []);
 
         if (empty($productIds)) {
