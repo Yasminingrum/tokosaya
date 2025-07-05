@@ -1,17 +1,18 @@
 -- ============================================================================
--- TOKOSAYA E-COMMERCE DATABASE - OPTIMIZED VERSION
+-- TOKOSAYA E-COMMERCE DATABASE - OPTIMIZED VERSION (REVISED)
 -- ============================================================================
--- Database: TokoSaya_Optimized
--- Version: 2.0
--- Created: 2025-07-04
+-- Database: TokoSaya
+-- Version: 2.1
+-- Created: 2025-07-05
 -- Description: Optimized database schema untuk high-performance e-commerce
+--              with error fixes while maintaining all functionality
 -- ============================================================================
 
--- DROP DATABASE IF EXISTS TokoSaya_Optimized;
+-- DROP DATABASE IF EXISTS TokoSaya;
 
-CREATE DATABASE IF NOT EXISTS TokoSaya_Optimized
+CREATE DATABASE IF NOT EXISTS TokoSaya
 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE TokoSaya_Optimized;
+USE TokoSaya;
 
 -- Optimized MySQL Configuration Settings
 SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO';
@@ -21,7 +22,6 @@ SET time_zone = "+00:00";
 
 -- Performance Settings
 SET SESSION innodb_lock_wait_timeout = 50;
-SET SESSION query_cache_type = ON;
 
 -- ============================================================================
 -- CORE AUTHENTICATION & AUTHORIZATION
@@ -46,14 +46,14 @@ CREATE TABLE users (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     role_id TINYINT UNSIGNED NOT NULL,
     username VARCHAR(50) NOT NULL UNIQUE,
-    email VARCHAR(180) NOT NULL UNIQUE, -- Reduced from 255
+    email VARCHAR(180) NOT NULL UNIQUE,
     password_hash CHAR(60) NOT NULL, -- bcrypt is always 60 chars
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
-    phone VARCHAR(15), -- International format max 15
+    phone VARCHAR(15),
     avatar VARCHAR(200),
     date_of_birth DATE NULL,
-    gender ENUM('M', 'F', 'O') NULL, -- Single char for space efficiency
+    gender ENUM('M', 'F', 'O') NULL,
     email_verified_at TIMESTAMP NULL,
     phone_verified_at TIMESTAMP NULL,
     is_active BOOLEAN DEFAULT TRUE,
@@ -75,7 +75,7 @@ CREATE TABLE users (
 CREATE TABLE password_resets (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(180) NOT NULL,
-    token CHAR(64) NOT NULL, -- SHA256 hash
+    token CHAR(64) NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     used_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -95,9 +95,9 @@ CREATE TABLE customer_addresses (
     city VARCHAR(50) NOT NULL,
     state VARCHAR(50) NOT NULL,
     postal_code VARCHAR(10) NOT NULL,
-    country CHAR(2) DEFAULT 'ID', -- ISO country code
-    latitude DECIMAL(8, 6) NULL, -- Sufficient precision
-    longitude DECIMAL(9, 6) NULL,
+    country CHAR(2) DEFAULT 'ID',
+    latitude DECIMAL(10, 6) NULL,
+    longitude DECIMAL(10, 6) NULL,
     is_default BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -120,10 +120,10 @@ CREATE TABLE categories (
     image VARCHAR(200),
     icon VARCHAR(100),
     parent_id SMALLINT UNSIGNED NULL,
-    path VARCHAR(500), -- Materialized path for fast hierarchy queries
+    path VARCHAR(500),
     level TINYINT UNSIGNED DEFAULT 0,
     sort_order SMALLINT DEFAULT 0,
-    product_count INT UNSIGNED DEFAULT 0, -- Denormalized for performance
+    product_count INT UNSIGNED DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     meta_title VARCHAR(160),
     meta_description VARCHAR(320),
@@ -145,7 +145,7 @@ CREATE TABLE brands (
     description TEXT,
     logo VARCHAR(200),
     website VARCHAR(200),
-    product_count INT UNSIGNED DEFAULT 0, -- Denormalized
+    product_count INT UNSIGNED DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -165,53 +165,36 @@ CREATE TABLE products (
     short_description VARCHAR(500),
     sku VARCHAR(50) NOT NULL UNIQUE,
     barcode VARCHAR(50) NULL,
-
-    -- Price in cents for better performance
     price_cents INT UNSIGNED NOT NULL,
     compare_price_cents INT UNSIGNED NULL,
     cost_price_cents INT UNSIGNED NULL,
-
-    -- Stock management
     stock_quantity INT UNSIGNED NOT NULL DEFAULT 0,
-    reserved_quantity INT UNSIGNED DEFAULT 0, -- For pending orders
+    reserved_quantity INT UNSIGNED DEFAULT 0,
     min_stock_level SMALLINT UNSIGNED DEFAULT 5,
     max_stock_level INT UNSIGNED DEFAULT 1000,
-
-    -- Physical attributes
     weight_grams SMALLINT UNSIGNED DEFAULT 0,
     length_mm SMALLINT UNSIGNED DEFAULT 0,
     width_mm SMALLINT UNSIGNED DEFAULT 0,
     height_mm SMALLINT UNSIGNED DEFAULT 0,
-
-    -- Status and flags
     status ENUM('draft', 'active', 'inactive', 'discontinued') DEFAULT 'draft',
     featured BOOLEAN DEFAULT FALSE,
     digital BOOLEAN DEFAULT FALSE,
     track_stock BOOLEAN DEFAULT TRUE,
     allow_backorder BOOLEAN DEFAULT FALSE,
-
-    -- Performance metrics (denormalized for speed)
     rating_average DECIMAL(3,2) DEFAULT 0,
     rating_count MEDIUMINT UNSIGNED DEFAULT 0,
     view_count INT UNSIGNED DEFAULT 0,
     sale_count INT UNSIGNED DEFAULT 0,
     revenue_cents BIGINT UNSIGNED DEFAULT 0,
     last_sold_at TIMESTAMP NULL,
-
-    -- SEO
     meta_title VARCHAR(160),
     meta_description VARCHAR(320),
-
-    -- Audit
     created_by INT UNSIGNED NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT,
     FOREIGN KEY (brand_id) REFERENCES brands(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
-
-    -- Core performance indexes
     INDEX idx_category_status_featured (category_id, status, featured),
     INDEX idx_brand_status_price (brand_id, status, price_cents),
     INDEX idx_status_featured_sales (status, featured, sale_count DESC),
@@ -222,18 +205,9 @@ CREATE TABLE products (
     INDEX idx_barcode (barcode),
     INDEX idx_created_at (created_at DESC),
     INDEX idx_last_sold (last_sold_at DESC),
-
-    -- Full-text search
     FULLTEXT idx_search (name, short_description),
     FULLTEXT idx_description (description)
-) ENGINE=InnoDB
-PARTITION BY RANGE (id) (
-    PARTITION p0 VALUES LESS THAN (1000000),
-    PARTITION p1 VALUES LESS THAN (2000000),
-    PARTITION p2 VALUES LESS THAN (3000000),
-    PARTITION p3 VALUES LESS THAN (5000000),
-    PARTITION p_max VALUES LESS THAN MAXVALUE
-);
+) ENGINE=InnoDB;
 
 -- Product Images - Optimized for CDN
 CREATE TABLE product_images (
@@ -245,7 +219,7 @@ CREATE TABLE product_images (
     is_primary BOOLEAN DEFAULT FALSE,
     width SMALLINT UNSIGNED,
     height SMALLINT UNSIGNED,
-    file_size INT UNSIGNED, -- in bytes
+    file_size INT UNSIGNED,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     INDEX idx_product_primary (product_id, is_primary),
@@ -315,7 +289,7 @@ CREATE TABLE product_reviews (
     product_id INT UNSIGNED NOT NULL,
     user_id INT UNSIGNED NOT NULL,
     order_item_id INT UNSIGNED NULL,
-    rating TINYINT UNSIGNED NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    rating TINYINT UNSIGNED NOT NULL CHECK (rating BETWEEN 1 AND 5),
     title VARCHAR(150),
     review TEXT,
     images JSON NULL,
@@ -344,8 +318,8 @@ CREATE TABLE product_reviews (
 CREATE TABLE shopping_carts (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id INT UNSIGNED NULL,
-    session_id CHAR(40) NULL, -- Laravel session ID
-    guest_token CHAR(32) NULL, -- For guest users
+    session_id CHAR(40) NULL,
+    guest_token CHAR(32) NULL,
     item_count TINYINT UNSIGNED DEFAULT 0,
     total_cents INT UNSIGNED DEFAULT 0,
     expires_at TIMESTAMP NULL,
@@ -389,25 +363,21 @@ CREATE TABLE wishlists (
 ) ENGINE=InnoDB;
 
 -- ============================================================================
--- ORDERS & PAYMENTS - PARTITIONED FOR SCALE
+-- ORDERS & PAYMENTS
 -- ============================================================================
 
--- Orders - Partitioned by creation date for performance
+-- Orders
 CREATE TABLE orders (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id INT UNSIGNED NOT NULL,
     order_number VARCHAR(20) NOT NULL UNIQUE,
     status ENUM('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded') DEFAULT 'pending',
     payment_status ENUM('pending', 'paid', 'failed', 'refunded', 'partial') DEFAULT 'pending',
-
-    -- Amounts in cents
     subtotal_cents INT UNSIGNED NOT NULL,
     tax_cents INT UNSIGNED DEFAULT 0,
     shipping_cents INT UNSIGNED DEFAULT 0,
     discount_cents INT UNSIGNED DEFAULT 0,
     total_cents INT UNSIGNED NOT NULL,
-
-    -- Shipping information
     shipping_name VARCHAR(100) NOT NULL,
     shipping_phone VARCHAR(15) NOT NULL,
     shipping_address TEXT NOT NULL,
@@ -415,8 +385,6 @@ CREATE TABLE orders (
     shipping_state VARCHAR(50) NOT NULL,
     shipping_postal_code VARCHAR(10) NOT NULL,
     shipping_country CHAR(2) DEFAULT 'ID',
-
-    -- Billing information (optional)
     billing_name VARCHAR(100),
     billing_phone VARCHAR(15),
     billing_address TEXT,
@@ -424,24 +392,18 @@ CREATE TABLE orders (
     billing_state VARCHAR(50),
     billing_postal_code VARCHAR(10),
     billing_country CHAR(2),
-
-    -- Additional data
     notes TEXT,
     internal_notes TEXT,
     coupon_code VARCHAR(30),
     tracking_number VARCHAR(100),
     shipping_method_id SMALLINT UNSIGNED,
     payment_method_id SMALLINT UNSIGNED,
-
-    -- Status timestamps
     confirmed_at TIMESTAMP NULL,
     shipped_at TIMESTAMP NULL,
     delivered_at TIMESTAMP NULL,
     cancelled_at TIMESTAMP NULL,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_user_status (user_id, status),
     INDEX idx_status_created (status, created_at DESC),
@@ -449,14 +411,7 @@ CREATE TABLE orders (
     INDEX idx_order_number (order_number),
     INDEX idx_tracking (tracking_number),
     INDEX idx_created_total (created_at DESC, total_cents DESC)
-) ENGINE=InnoDB
-PARTITION BY RANGE (YEAR(created_at)) (
-    PARTITION p2024 VALUES LESS THAN (2025),
-    PARTITION p2025 VALUES LESS THAN (2026),
-    PARTITION p2026 VALUES LESS THAN (2027),
-    PARTITION p2027 VALUES LESS THAN (2028),
-    PARTITION p_future VALUES LESS THAN MAXVALUE
-);
+) ENGINE=InnoDB;
 
 -- Order Items - High performance for analytics
 CREATE TABLE order_items (
@@ -470,14 +425,15 @@ CREATE TABLE order_items (
     quantity SMALLINT UNSIGNED NOT NULL,
     unit_price_cents INT UNSIGNED NOT NULL,
     total_price_cents INT UNSIGNED NOT NULL,
-    cost_price_cents INT UNSIGNED NULL, -- For profit calculation
+    cost_price_cents INT UNSIGNED NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_date DATE AS (DATE(created_at)) STORED,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
     FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE RESTRICT,
     INDEX idx_order (order_id),
     INDEX idx_product_created (product_id, created_at),
-    INDEX idx_created_date (DATE(created_at)),
+    INDEX idx_created_date (created_date),
     INDEX idx_total_price (total_price_cents)
 ) ENGINE=InnoDB;
 
@@ -648,13 +604,7 @@ CREATE TABLE notifications (
     INDEX idx_user_unread_created (user_id, is_read, created_at DESC),
     INDEX idx_type_created (type, created_at DESC),
     INDEX idx_expires (expires_at)
-) ENGINE=InnoDB
-PARTITION BY RANGE (YEAR(created_at)) (
-    PARTITION p2024 VALUES LESS THAN (2025),
-    PARTITION p2025 VALUES LESS THAN (2026),
-    PARTITION p2026 VALUES LESS THAN (2027),
-    PARTITION p_future VALUES LESS THAN MAXVALUE
-);
+) ENGINE=InnoDB;
 
 -- Email Templates
 CREATE TABLE email_templates (
@@ -696,7 +646,7 @@ CREATE TABLE newsletter_subscribers (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(180) NOT NULL UNIQUE,
     name VARCHAR(100),
-    preferences JSON, -- Subscription preferences
+    preferences JSON,
     is_active BOOLEAN DEFAULT TRUE,
     subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     unsubscribed_at TIMESTAMP NULL,
@@ -741,7 +691,7 @@ CREATE TABLE banners (
     subtitle VARCHAR(200),
     description TEXT,
     image VARCHAR(300) NOT NULL,
-    mobile_image VARCHAR(300), -- Responsive images
+    mobile_image VARCHAR(300),
     link_url VARCHAR(300),
     link_text VARCHAR(60),
     position ENUM('hero', 'sidebar', 'footer', 'popup', 'category') DEFAULT 'hero',
@@ -764,7 +714,7 @@ CREATE TABLE banners (
 -- Product Cache - For frequently accessed product data
 CREATE TABLE cache_products (
     product_id INT UNSIGNED PRIMARY KEY,
-    data JSON NOT NULL,
+    data VARCHAR(5000), -- Adjust size as needed
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -775,21 +725,21 @@ CREATE TABLE cache_products (
 CREATE TABLE cache_searches (
     cache_key CHAR(32) PRIMARY KEY,
     query VARCHAR(200) NOT NULL,
-    results JSON NOT NULL,
+    results JSON NOT NULL, -- Can use JSON with InnoDB
     result_count MEDIUMINT UNSIGNED,
     expires_at TIMESTAMP NOT NULL,
     hit_count INT UNSIGNED DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_expires (expires_at),
     INDEX idx_query (query),
-    INDEX idx_hit_count (hit_count DESC)
-) ENGINE=MEMORY;
+    INDEX idx_hit_count (hit_count DESC) -- Now works with InnoDB
+) ENGINE=InnoDB;
 
 -- Category Tree Cache - Materialized category hierarchy
 CREATE TABLE cache_category_tree (
     category_id SMALLINT UNSIGNED PRIMARY KEY,
-    parent_path JSON, -- Full parent hierarchy
-    children_ids JSON, -- Direct children
+    parent_path JSON,
+    children_ids JSON,
     product_count INT UNSIGNED DEFAULT 0,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
@@ -855,7 +805,7 @@ CREATE TABLE settings (
     INDEX idx_category_public (category, is_public)
 ) ENGINE=InnoDB;
 
--- Activity Logs - User action tracking (partitioned)
+-- Activity Logs - User action tracking
 CREATE TABLE activity_logs (
     id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     user_id INT UNSIGNED NULL,
@@ -865,7 +815,7 @@ CREATE TABLE activity_logs (
     model_id INT UNSIGNED,
     old_values JSON,
     new_values JSON,
-    ip_address VARBINARY(16), -- Supports both IPv4 and IPv6
+    ip_address VARBINARY(16),
     user_agent VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
@@ -873,13 +823,7 @@ CREATE TABLE activity_logs (
     INDEX idx_model_id (model, model_id),
     INDEX idx_created_at (created_at DESC),
     INDEX idx_action_created (action, created_at DESC)
-) ENGINE=InnoDB
-PARTITION BY RANGE (YEAR(created_at)) (
-    PARTITION p2024 VALUES LESS THAN (2025),
-    PARTITION p2025 VALUES LESS THAN (2026),
-    PARTITION p2026 VALUES LESS THAN (2027),
-    PARTITION p_future VALUES LESS THAN MAXVALUE
-);
+) ENGINE=InnoDB;
 
 -- System Logs - Application error logging
 CREATE TABLE system_logs (
@@ -892,13 +836,7 @@ CREATE TABLE system_logs (
     INDEX idx_level_created (level, created_at DESC),
     INDEX idx_channel_created (channel, created_at DESC),
     INDEX idx_created_at (created_at DESC)
-) ENGINE=InnoDB
-PARTITION BY RANGE (YEAR(created_at)) (
-    PARTITION p2024 VALUES LESS THAN (2025),
-    PARTITION p2025 VALUES LESS THAN (2026),
-    PARTITION p2026 VALUES LESS THAN (2027),
-    PARTITION p_future VALUES LESS THAN MAXVALUE
-);
+) ENGINE=InnoDB;
 
 -- Media Files - File management system
 CREATE TABLE media_files (
@@ -940,15 +878,7 @@ CREATE TABLE orders_archive (
     archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_user_archived (user_id, archived_at DESC),
     INDEX idx_created_archived (created_at DESC, archived_at DESC)
-) ENGINE=InnoDB
-PARTITION BY RANGE (YEAR(created_at)) (
-    PARTITION p2020 VALUES LESS THAN (2021),
-    PARTITION p2021 VALUES LESS THAN (2022),
-    PARTITION p2022 VALUES LESS THAN (2023),
-    PARTITION p2023 VALUES LESS THAN (2024),
-    PARTITION p2024 VALUES LESS THAN (2025),
-    PARTITION p_old VALUES LESS THAN MAXVALUE
-);
+) ENGINE=InnoDB;
 
 -- Archived Activity Logs - For logs older than 6 months
 CREATE TABLE activity_logs_archive (
@@ -961,13 +891,7 @@ CREATE TABLE activity_logs_archive (
     archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_user_archived (user_id, archived_at DESC),
     INDEX idx_created_archived (created_at DESC)
-) ENGINE=InnoDB
-PARTITION BY RANGE (YEAR(created_at)) (
-    PARTITION p2023 VALUES LESS THAN (2024),
-    PARTITION p2024 VALUES LESS THAN (2025),
-    PARTITION p2025 VALUES LESS THAN (2026),
-    PARTITION p_old VALUES LESS THAN MAXVALUE
-);
+) ENGINE=InnoDB;
 
 -- ============================================================================
 -- OPTIMIZED VIEWS FOR REPORTING
@@ -1073,7 +997,7 @@ ORDER BY priority_level ASC, p.stock_quantity ASC;
 -- OPTIMIZED STORED PROCEDURES
 -- ============================================================================
 
-DELIMITER $
+DELIMITER //
 
 -- Get Dashboard Statistics
 CREATE PROCEDURE sp_get_dashboard_stats()
@@ -1102,7 +1026,7 @@ BEGIN
         (SELECT COALESCE(AVG(total_cents), 0) FROM orders
          WHERE created_at >= month_start AND payment_status = 'paid') as avg_order_value_cents,
         (SELECT COUNT(DISTINCT user_id) FROM orders WHERE created_at >= month_start) as monthly_customers;
-END$
+END //
 
 -- Clean Expired Carts
 CREATE PROCEDURE sp_clean_expired_carts()
@@ -1124,7 +1048,7 @@ BEGIN
     SET affected_rows = affected_rows + ROW_COUNT();
 
     SELECT affected_rows as deleted_carts;
-END$
+END //
 
 -- Get Top Selling Products
 CREATE PROCEDURE sp_get_top_products(
@@ -1171,7 +1095,7 @@ BEGIN
     GROUP BY p.id
     ORDER BY recent_sales DESC, p.sale_count DESC
     LIMIT p_limit;
-END$
+END //
 
 -- Calculate Shipping Cost
 CREATE PROCEDURE sp_calculate_shipping_cost(
@@ -1223,7 +1147,7 @@ BEGIN
     -- Check for free shipping
     SET p_is_free_shipping = (free_threshold > 0 AND p_order_total_cents >= free_threshold);
     SET p_shipping_cost_cents = IF(p_is_free_shipping, 0, COALESCE(rate_cents, 0));
-END$
+END //
 
 -- Archive Old Data
 CREATE PROCEDURE sp_archive_old_data()
@@ -1267,7 +1191,7 @@ BEGIN
     DELETE FROM activity_logs WHERE created_at < archive_date_logs;
 
     SELECT archived_orders, archived_logs;
-END$
+END //
 
 -- Update Product Cache
 CREATE PROCEDURE sp_update_product_cache(IN p_product_id INT)
@@ -1322,342 +1246,7 @@ BEGIN
         data = product_data,
         expires_at = DATE_ADD(NOW(), INTERVAL cache_duration SECOND),
         updated_at = NOW();
-END$
-
-DELIMITER ;
-
--- ============================================================================
--- OPTIMIZED TRIGGERS
--- ============================================================================
-
-DELIMITER $
-
--- Update product rating after review insert/update
-CREATE TRIGGER tr_update_product_rating_after_review
-AFTER INSERT ON product_reviews
-FOR EACH ROW
-BEGIN
-    UPDATE products
-    SET
-        rating_average = (
-            SELECT ROUND(AVG(rating), 2)
-            FROM product_reviews
-            WHERE product_id = NEW.product_id AND is_approved = TRUE
-        ),
-        rating_count = (
-            SELECT COUNT(*)
-            FROM product_reviews
-            WHERE product_id = NEW.product_id AND is_approved = TRUE
-        )
-    WHERE id = NEW.product_id;
-
-    -- Update product cache
-    CALL sp_update_product_cache(NEW.product_id);
-END$
-
--- Update stock and sales after order item insert
-CREATE TRIGGER tr_update_stock_after_order_item
-AFTER INSERT ON order_items
-FOR EACH ROW
-BEGIN
-    -- Update product or variant stock
-    IF NEW.variant_id IS NOT NULL THEN
-        UPDATE product_variants
-        SET stock_quantity = GREATEST(0, stock_quantity - NEW.quantity)
-        WHERE id = NEW.variant_id;
-    ELSE
-        UPDATE products
-        SET
-            stock_quantity = GREATEST(0, stock_quantity - NEW.quantity),
-            sale_count = sale_count + NEW.quantity,
-            revenue_cents = revenue_cents + NEW.total_price_cents,
-            last_sold_at = NOW()
-        WHERE id = NEW.product_id;
-    END IF;
-
-    -- Update category product count if this is a new sale
-    UPDATE categories
-    SET product_count = (
-        SELECT COUNT(*)
-        FROM products
-        WHERE category_id = (SELECT category_id FROM products WHERE id = NEW.product_id)
-          AND status = 'active'
-    )
-    WHERE id = (SELECT category_id FROM products WHERE id = NEW.product_id);
-END$
-
--- Restore stock when order is cancelled
-CREATE TRIGGER tr_restore_stock_on_cancel
-AFTER UPDATE ON orders
-FOR EACH ROW
-BEGIN
-    IF OLD.status != 'cancelled' AND NEW.status = 'cancelled' THEN
-        -- Restore product stock
-        UPDATE products p
-        INNER JOIN order_items oi ON p.id = oi.product_id
-        SET
-            p.stock_quantity = p.stock_quantity + oi.quantity,
-            p.sale_count = GREATEST(0, p.sale_count - oi.quantity),
-            p.revenue_cents = GREATEST(0, p.revenue_cents - oi.total_price_cents)
-        WHERE oi.order_id = NEW.id AND oi.variant_id IS NULL;
-
-        -- Restore variant stock
-        UPDATE product_variants pv
-        INNER JOIN order_items oi ON pv.id = oi.variant_id
-        SET pv.stock_quantity = pv.stock_quantity + oi.quantity
-        WHERE oi.order_id = NEW.id AND oi.variant_id IS NOT NULL;
-    END IF;
-END$
-
--- Ensure only one default address per user
-CREATE TRIGGER tr_ensure_default_address
-BEFORE INSERT ON customer_addresses
-FOR EACH ROW
-BEGIN
-    IF NEW.is_default = TRUE THEN
-        UPDATE customer_addresses
-        SET is_default = FALSE
-        WHERE user_id = NEW.user_id;
-    END IF;
-
-    -- If this is the first address, make it default
-    IF (SELECT COUNT(*) FROM customer_addresses WHERE user_id = NEW.user_id) = 0 THEN
-        SET NEW.is_default = TRUE;
-    END IF;
-END$
-
--- Update cart totals when cart item changes
-CREATE TRIGGER tr_update_cart_totals_insert
-AFTER INSERT ON cart_items
-FOR EACH ROW
-BEGIN
-    UPDATE shopping_carts
-    SET
-        item_count = (SELECT SUM(quantity) FROM cart_items WHERE cart_id = NEW.cart_id),
-        total_cents = (SELECT SUM(total_price_cents) FROM cart_items WHERE cart_id = NEW.cart_id),
-        updated_at = NOW()
-    WHERE id = NEW.cart_id;
-END$
-
-CREATE TRIGGER tr_update_cart_totals_update
-AFTER UPDATE ON cart_items
-FOR EACH ROW
-BEGIN
-    UPDATE shopping_carts
-    SET
-        item_count = (SELECT SUM(quantity) FROM cart_items WHERE cart_id = NEW.cart_id),
-        total_cents = (SELECT SUM(total_price_cents) FROM cart_items WHERE cart_id = NEW.cart_id),
-        updated_at = NOW()
-    WHERE id = NEW.cart_id;
-END$
-
-CREATE TRIGGER tr_update_cart_totals_delete
-AFTER DELETE ON cart_items
-FOR EACH ROW
-BEGIN
-    UPDATE shopping_carts
-    SET
-        item_count = (SELECT COALESCE(SUM(quantity), 0) FROM cart_items WHERE cart_id = OLD.cart_id),
-        total_cents = (SELECT COALESCE(SUM(total_price_cents), 0) FROM cart_items WHERE cart_id = OLD.cart_id),
-        updated_at = NOW()
-    WHERE id = OLD.cart_id;
-END$
-
--- Update category materialized path
-CREATE TRIGGER tr_update_category_path
-BEFORE INSERT ON categories
-FOR EACH ROW
-BEGIN
-    IF NEW.parent_id IS NOT NULL THEN
-        SELECT CONCAT(COALESCE(path, ''), NEW.parent_id, '/'), level + 1
-        INTO NEW.path, NEW.level
-        FROM categories
-        WHERE id = NEW.parent_id;
-    ELSE
-        SET NEW.path = '/';
-        SET NEW.level = 0;
-    END IF;
-END$
-
--- Clean expired cache entries
-CREATE TRIGGER tr_clean_expired_cache
-AFTER INSERT ON cache_products
-FOR EACH ROW
-BEGIN
-    -- Clean expired entries (runs occasionally)
-    IF RAND() < 0.01 THEN -- 1% chance
-        DELETE FROM cache_products WHERE expires_at < NOW();
-        DELETE FROM cache_searches WHERE expires_at < NOW();
-    END IF;
-END$
-
-DELIMITER ;
-
--- ============================================================================
--- PERFORMANCE OPTIMIZATION INDEXES
--- ============================================================================
-
--- Additional composite indexes for complex queries
-CREATE INDEX idx_orders_user_status_payment_created ON orders(user_id, status, payment_status, created_at DESC);
-CREATE INDEX idx_order_items_product_created_total ON order_items(product_id, DATE(created_at), total_price_cents);
-CREATE INDEX idx_products_category_featured_price ON products(category_id, featured, status, price_cents);
-CREATE INDEX idx_products_brand_rating_sales ON products(brand_id, rating_average DESC, sale_count DESC);
-CREATE INDEX idx_cart_items_updated_product ON cart_items(updated_at DESC, product_id);
-CREATE INDEX idx_notifications_user_type_created ON notifications(user_id, type, created_at DESC);
-CREATE INDEX idx_reviews_product_approved_created ON product_reviews(product_id, is_approved, created_at DESC);
-CREATE INDEX idx_users_role_active_created ON users(role_id, is_active, created_at DESC);
-
--- Indexes for analytics queries
-CREATE INDEX idx_analytics_daily_date_revenue ON analytics_daily(date DESC, revenue_cents DESC);
-CREATE INDEX idx_analytics_products_views_sales ON analytics_products(views_month DESC, sales_month DESC);
-
--- Covering indexes for frequently accessed data
-CREATE INDEX idx_products_list_covering ON products(status, featured, category_id, price_cents, rating_average, sale_count)
-INCLUDE (id, name, slug, stock_quantity);
-
-CREATE INDEX idx_orders_summary_covering ON orders(user_id, payment_status, created_at)
-INCLUDE (id, order_number, status, total_cents);
-
--- ============================================================================
--- INITIAL CONFIGURATION DATA
--- ============================================================================
-
-//* -- Insert default roles
-INSERT INTO roles (id, name, display_name, description, permissions) VALUES
-(1, 'super_admin', 'Super Administrator', 'Full system access', '["*"]'),
-(2, 'admin', 'Administrator', 'Administrative access', '["admin.*", "products.*", "orders.*", "users.view", "users.edit"]'),
-(3, 'staff', 'Staff Member', 'Limited administrative access', '["products.view", "products.edit", "orders.view", "orders.edit"]'),
-(4, 'customer', 'Customer', 'Customer access', '["profile.*", "orders.view", "cart.*", "wishlist.*"]');
-
--- Insert default settings
-INSERT INTO settings (category, key_name, value, description, type, is_public) VALUES
-('general', 'site_name', 'TokoSaya', 'Website name', 'string', true),
-('general', 'site_description', 'Your favorite online store', 'Website description', 'string', true),
-('general', 'site_logo', '/images/logo.png', 'Website logo path', 'string', true),
-('general', 'contact_email', 'info@tokosaya.com', 'Contact email address', 'string', true),
-('general', 'contact_phone', '+62-21-12345678', 'Contact phone number', 'string', true),
-('general', 'timezone', 'Asia/Jakarta', 'Default timezone', 'string', false),
-('general', 'currency', 'IDR', 'Default currency', 'string', true),
-('general', 'currency_symbol', 'Rp', 'Currency symbol', 'string', true),
-
-('inventory', 'low_stock_threshold', '5', 'Global low stock threshold', 'number', false),
-('inventory', 'auto_reduce_stock', 'true', 'Automatically reduce stock on order', 'boolean', false),
-('inventory', 'allow_backorder', 'false', 'Allow backorders globally', 'boolean', false),
-
-('order', 'order_prefix', 'TS', 'Order number prefix', 'string', false),
-('order', 'auto_confirm_payment', 'false', 'Auto confirm manual payments', 'boolean', false),
-('order', 'order_expiry_hours', '24', 'Order expiry in hours', 'number', false),
-
-('shipping', 'default_weight_unit', 'gram', 'Default weight unit', 'string', false),
-('shipping', 'free_shipping_threshold', '100000', 'Free shipping threshold in cents', 'number', true),
-('shipping', 'default_shipping_method', '1', 'Default shipping method ID', 'number', false),
-
-('email', 'smtp_host', 'localhost', 'SMTP server host', 'string', false),
-('email', 'smtp_port', '587', 'SMTP server port', 'string', false),
-('email', 'smtp_username', '', 'SMTP username', 'string', false),
-('email', 'smtp_encryption', 'tls', 'SMTP encryption method', 'string', false),
-('email', 'from_email', 'noreply@tokosaya.com', 'Default from email', 'string', false),
-('email', 'from_name', 'TokoSaya', 'Default from name', 'string', false),
-
-('cache', 'product_cache_duration', '3600', 'Product cache duration in seconds', 'number', false),
-('cache', 'category_cache_duration', '7200', 'Category cache duration in seconds', 'number', false),
-('cache', 'search_cache_duration', '1800', 'Search cache duration in seconds', 'number', false),
-
-('seo', 'meta_title', 'TokoSaya - Your Favorite Online Store', 'Default meta title', 'string', true),
-('seo', 'meta_description', 'Shop the best products at TokoSaya with fast delivery and great prices', 'Default meta description', 'string', true),
-('seo', 'meta_keywords', 'online store, shopping, ecommerce, tokosaya', 'Default meta keywords', 'string', true);
-
--- Insert default payment methods
-INSERT INTO payment_methods (name, code, description, is_active, sort_order, fee_type, fee_amount_cents) VALUES
-('Bank Transfer', 'bank_transfer', 'Transfer bank manual', true, 1, 'fixed', 0),
-('Credit Card', 'credit_card', 'Pembayaran dengan kartu kredit', true, 2, 'percentage', 290),
-('E-Wallet', 'ewallet', 'Pembayaran dengan dompet digital', true, 3, 'fixed', 500),
-('Cash on Delivery', 'cod', 'Bayar di tempat', true, 4, 'fixed', 200);
-
--- Insert default shipping methods
-INSERT INTO shipping_methods (name, code, description, is_active, sort_order, estimated_min_days, estimated_max_days) VALUES
-('Regular Shipping', 'regular', 'Pengiriman reguler 3-5 hari kerja', true, 1, 3, 5),
-('Express Shipping', 'express', 'Pengiriman kilat 1-2 hari kerja', true, 2, 1, 2),
-('Same Day Delivery', 'same_day', 'Pengiriman di hari yang sama', true, 3, 0, 0),
-('Pickup at Store', 'pickup', 'Ambil di toko', true, 4, 0, 0);
-
--- Insert default shipping zones
-INSERT INTO shipping_zones (name, countries, states, is_active) VALUES
-('Jakarta & Sekitar', '["ID"]', '["DKI Jakarta", "Jawa Barat", "Banten"]', true),
-('Jawa & Bali', '["ID"]', '["Jawa Tengah", "Jawa Timur", "DI Yogyakarta", "Bali"]', true),
-('Sumatera', '["ID"]', '["Sumatera Utara", "Sumatera Barat", "Sumatera Selatan", "Riau", "Lampung"]', true),
-('Indonesia Timur', '["ID"]', '["Sulawesi Selatan", "Kalimantan Timur", "Papua", "Maluku"]', true);
-
--- Insert sample shipping rates
-INSERT INTO shipping_rates (shipping_method_id, zone_id, min_weight_grams, max_weight_grams, rate_cents, free_shipping_threshold_cents) VALUES
--- Regular shipping rates
-(1, 1, 0, 1000, 1000, 10000000), -- Jakarta 10k, free above 100k
-(1, 1, 1001, 5000, 1500, 10000000),
-(1, 2, 0, 1000, 1500, 15000000), -- Jawa & Bali 15k, free above 150k
-(1, 2, 1001, 5000, 2000, 15000000),
-(1, 3, 0, 1000, 2500, 20000000), -- Sumatera 25k, free above 200k
-(1, 3, 1001, 5000, 3500, 20000000),
-(1, 4, 0, 1000, 4000, 25000000), -- Indonesia Timur 40k, free above 250k
-(1, 4, 1001, 5000, 5500, 25000000),
-
--- Express shipping rates (2x regular)
-(2, 1, 0, 1000, 2000, 20000000),
-(2, 1, 1001, 5000, 3000, 20000000),
-(2, 2, 0, 1000, 3000, 25000000),
-(2, 2, 1001, 5000, 4000, 25000000),
-
--- Same day delivery (only Jakarta)
-(3, 1, 0, 2000, 5000, 30000000),
-
--- Pickup (free)
-(4, 1, 0, 65535, 0, 0);
-
--- Insert email templates
-INSERT INTO email_templates (name, subject, body, variables) VALUES
-('order_confirmation', 'Konfirmasi Pesanan #{order_number}',
-'<h2>Terima kasih atas pesanan Anda!</h2>
-<p>Halo {customer_name},</p>
-<p>Pesanan Anda dengan nomor <strong>{order_number}</strong> telah kami terima.</p>
-<p>Total: <strong>{total_amount}</strong></p>
-<p>Status: <strong>{status}</strong></p>
-<p>Kami akan segera memproses pesanan Anda.</p>',
-'["customer_name", "order_number", "total_amount", "status", "items"]'),
-
-('payment_received', 'Pembayaran Diterima - #{order_number}',
-'<h2>Pembayaran Berhasil!</h2>
-<p>Halo {customer_name},</p>
-<p>Pembayaran untuk pesanan <strong>{order_number}</strong> telah kami terima.</p>
-<p>Pesanan Anda segera diproses dan dikirim.</p>',
-'["customer_name", "order_number", "payment_method", "amount"]'),
-
-('order_shipped', 'Pesanan Dikirim - #{order_number}',
-'<h2>Pesanan Sedang Dikirim!</h2>
-<p>Halo {customer_name},</p>
-<p>Pesanan <strong>{order_number}</strong> telah dikirim.</p>
-<p>Nomor resi: <strong>{tracking_number}</strong></p>
-<p>Estimasi tiba: {estimated_delivery}</p>',
-'["customer_name", "order_number", "tracking_number", "estimated_delivery", "shipping_method"]'),
-
-('welcome_customer', 'Selamat Datang di TokoSaya!',
-'<h2>Selamat Datang!</h2>
-<p>Halo {customer_name},</p>
-<p>Terima kasih telah bergabung dengan TokoSaya.</p>
-<p>Nikmati pengalaman berbelanja yang menyenangkan!</p>',
-'["customer_name"]'),
-
-('password_reset', 'Reset Password - TokoSaya',
-'<h2>Reset Password</h2>
-<p>Halo {customer_name},</p>
-<p>Klik link berikut untuk reset password:</p>
-<p><a href="{reset_link}">Reset Password</a></p>
-<p>Link berlaku selama 1 jam.</p>',
-'["customer_name", "reset_link"]');
-*//
--- ============================================================================
--- MAINTENANCE & OPTIMIZATION PROCEDURES
--- ============================================================================
-
-DELIMITER $
+END //
 
 -- Daily maintenance procedure
 CREATE PROCEDURE sp_daily_maintenance()
@@ -1694,7 +1283,7 @@ BEGIN
     IF DAYOFWEEK(NOW()) = 2 THEN -- Monday
         OPTIMIZE TABLE products, orders, order_items, users, product_reviews;
     END IF;
-END$
+END //
 
 -- Database health check
 CREATE PROCEDURE sp_database_health_check()
@@ -1740,9 +1329,207 @@ BEGIN
         CONCAT('Failed emails: ', COUNT(*))
     FROM email_queue
     WHERE status = 'failed' AND attempts >= max_attempts;
-END$
+END //
 
 DELIMITER ;
+
+-- ============================================================================
+-- OPTIMIZED TRIGGERS
+-- ============================================================================
+
+DELIMITER //
+
+-- Update product rating after review insert/update
+CREATE TRIGGER tr_update_product_rating_after_review
+AFTER INSERT ON product_reviews
+FOR EACH ROW
+BEGIN
+    UPDATE products
+    SET
+        rating_average = (
+            SELECT ROUND(AVG(rating), 2)
+            FROM product_reviews
+            WHERE product_id = NEW.product_id AND is_approved = TRUE
+        ),
+        rating_count = (
+            SELECT COUNT(*)
+            FROM product_reviews
+            WHERE product_id = NEW.product_id AND is_approved = TRUE
+        )
+    WHERE id = NEW.product_id;
+
+    -- Update product cache
+    CALL sp_update_product_cache(NEW.product_id);
+END //
+
+-- Update stock and sales after order item insert
+CREATE TRIGGER tr_update_stock_after_order_item
+AFTER INSERT ON order_items
+FOR EACH ROW
+BEGIN
+    -- Update product or variant stock
+    IF NEW.variant_id IS NOT NULL THEN
+        UPDATE product_variants
+        SET stock_quantity = GREATEST(0, stock_quantity - NEW.quantity)
+        WHERE id = NEW.variant_id;
+    ELSE
+        UPDATE products
+        SET
+            stock_quantity = GREATEST(0, stock_quantity - NEW.quantity),
+            sale_count = sale_count + NEW.quantity,
+            revenue_cents = revenue_cents + NEW.total_price_cents,
+            last_sold_at = NOW()
+        WHERE id = NEW.product_id;
+    END IF;
+
+    -- Update category product count if this is a new sale
+    UPDATE categories
+    SET product_count = (
+        SELECT COUNT(*)
+        FROM products
+        WHERE category_id = (SELECT category_id FROM products WHERE id = NEW.product_id)
+          AND status = 'active'
+    )
+    WHERE id = (SELECT category_id FROM products WHERE id = NEW.product_id);
+END //
+
+-- Restore stock when order is cancelled
+CREATE TRIGGER tr_restore_stock_on_cancel
+AFTER UPDATE ON orders
+FOR EACH ROW
+BEGIN
+    IF OLD.status != 'cancelled' AND NEW.status = 'cancelled' THEN
+        -- Restore product stock
+        UPDATE products p
+        INNER JOIN order_items oi ON p.id = oi.product_id
+        SET
+            p.stock_quantity = p.stock_quantity + oi.quantity,
+            p.sale_count = GREATEST(0, p.sale_count - oi.quantity),
+            p.revenue_cents = GREATEST(0, p.revenue_cents - oi.total_price_cents)
+        WHERE oi.order_id = NEW.id AND oi.variant_id IS NULL;
+
+        -- Restore variant stock
+        UPDATE product_variants pv
+        INNER JOIN order_items oi ON pv.id = oi.variant_id
+        SET pv.stock_quantity = pv.stock_quantity + oi.quantity
+        WHERE oi.order_id = NEW.id AND oi.variant_id IS NOT NULL;
+    END IF;
+END //
+
+-- Ensure only one default address per user
+CREATE TRIGGER tr_ensure_default_address
+BEFORE INSERT ON customer_addresses
+FOR EACH ROW
+BEGIN
+    IF NEW.is_default = TRUE THEN
+        UPDATE customer_addresses
+        SET is_default = FALSE
+        WHERE user_id = NEW.user_id;
+    END IF;
+
+    -- If this is the first address, make it default
+    IF (SELECT COUNT(*) FROM customer_addresses WHERE user_id = NEW.user_id) = 0 THEN
+        SET NEW.is_default = TRUE;
+    END IF;
+END //
+
+-- Update cart totals when cart item changes
+CREATE TRIGGER tr_update_cart_totals_insert
+AFTER INSERT ON cart_items
+FOR EACH ROW
+BEGIN
+    UPDATE shopping_carts
+    SET
+        item_count = (SELECT SUM(quantity) FROM cart_items WHERE cart_id = NEW.cart_id),
+        total_cents = (SELECT SUM(total_price_cents) FROM cart_items WHERE cart_id = NEW.cart_id),
+        updated_at = NOW()
+    WHERE id = NEW.cart_id;
+END //
+
+CREATE TRIGGER tr_update_cart_totals_update
+AFTER UPDATE ON cart_items
+FOR EACH ROW
+BEGIN
+    UPDATE shopping_carts
+    SET
+        item_count = (SELECT SUM(quantity) FROM cart_items WHERE cart_id = NEW.cart_id),
+        total_cents = (SELECT SUM(total_price_cents) FROM cart_items WHERE cart_id = NEW.cart_id),
+        updated_at = NOW()
+    WHERE id = NEW.cart_id;
+END //
+
+CREATE TRIGGER tr_update_cart_totals_delete
+AFTER DELETE ON cart_items
+FOR EACH ROW
+BEGIN
+    UPDATE shopping_carts
+    SET
+        item_count = (SELECT COALESCE(SUM(quantity), 0) FROM cart_items WHERE cart_id = OLD.cart_id),
+        total_cents = (SELECT COALESCE(SUM(total_price_cents), 0) FROM cart_items WHERE cart_id = OLD.cart_id),
+        updated_at = NOW()
+    WHERE id = OLD.cart_id;
+END //
+
+-- Update category materialized path
+DELIMITER //
+CREATE TRIGGER tr_update_category_path
+BEFORE INSERT ON categories
+FOR EACH ROW
+BEGIN
+    DECLARE parent_path VARCHAR(500);
+    DECLARE parent_level TINYINT;
+    
+    IF NEW.parent_id IS NOT NULL THEN
+        SELECT path, level INTO parent_path, parent_level
+        FROM categories
+        WHERE id = NEW.parent_id;
+        
+        IF parent_path IS NULL THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Invalid parent category';
+        ELSE
+            SET NEW.path = CONCAT(parent_path, NEW.parent_id, '/');
+            SET NEW.level = parent_level + 1;
+        END IF;
+    ELSE
+        SET NEW.path = '/';
+        SET NEW.level = 0;
+    END IF;
+END//
+DELIMITER ;
+
+-- Clean expired cache entries
+DELIMITER //
+CREATE TRIGGER tr_clean_expired_cache
+AFTER INSERT ON cache_products
+FOR EACH ROW
+BEGIN
+    -- Clean expired entries (runs occasionally)
+    IF RAND() < 0.01 THEN -- 1% chance
+        DELETE FROM cache_products WHERE expires_at < NOW();
+        DELETE FROM cache_searches WHERE expires_at < NOW();
+    END IF;
+END //
+
+DELIMITER ;
+
+-- ============================================================================
+-- PERFORMANCE OPTIMIZATION INDEXES
+-- ============================================================================
+
+-- Additional composite indexes for complex queries
+CREATE INDEX idx_orders_user_status_payment_created ON orders(user_id, status, payment_status, created_at DESC);
+CREATE INDEX idx_order_items_product_created_total ON order_items(product_id, created_at, total_price_cents);
+CREATE INDEX idx_products_category_featured_price ON products(category_id, featured, status, price_cents);
+CREATE INDEX idx_products_brand_rating_sales ON products(brand_id, rating_average DESC, sale_count DESC);
+CREATE INDEX idx_cart_items_updated_product ON cart_items(updated_at DESC, product_id);
+CREATE INDEX idx_notifications_user_type_created ON notifications(user_id, type, created_at DESC);
+CREATE INDEX idx_reviews_product_approved_created ON product_reviews(product_id, is_approved, created_at DESC);
+CREATE INDEX idx_users_role_active_created ON users(role_id, is_active, created_at DESC);
+
+-- Indexes for analytics queries
+CREATE INDEX idx_analytics_daily_date_revenue ON analytics_daily(date DESC, revenue_cents DESC);
+CREATE INDEX idx_analytics_products_views_sales ON analytics_products(views_month DESC, sales_month DESC);
 
 -- ============================================================================
 -- EVENTS FOR AUTOMATED MAINTENANCE
@@ -1751,7 +1538,7 @@ DELIMITER ;
 -- Create event scheduler for daily maintenance
 SET GLOBAL event_scheduler = ON;
 
-DELIMITER $
+DELIMITER //
 
 CREATE EVENT ev_daily_maintenance
 ON SCHEDULE EVERY 1 DAY
@@ -1759,7 +1546,7 @@ STARTS '2025-07-05 02:00:00'
 DO
 BEGIN
     CALL sp_daily_maintenance();
-END$
+END //
 
 -- Event for weekly archiving
 CREATE EVENT ev_weekly_archiving
@@ -1768,7 +1555,7 @@ STARTS '2025-07-06 03:00:00'
 DO
 BEGIN
     CALL sp_archive_old_data();
-END$
+END //
 
 -- Event for monthly analytics update
 CREATE EVENT ev_monthly_analytics
@@ -1793,7 +1580,7 @@ BEGIN
         views_month = VALUES(views_month),
         sales_month = VALUES(sales_month),
         revenue_month_cents = VALUES(revenue_month_cents);
-END$
+END //
 
 DELIMITER ;
 
@@ -1806,13 +1593,10 @@ ALTER TABLE products AUTO_INCREMENT = 100001;
 ALTER TABLE orders AUTO_INCREMENT = 1001;
 ALTER TABLE users AUTO_INCREMENT = 1001;
 
--- Enable query cache
-SET GLOBAL query_cache_size = 134217728; -- 128MB
-SET GLOBAL query_cache_type = ON;
 
 -- Optimize InnoDB settings
-SET GLOBAL innodb_buffer_pool_size = 2147483648; -- 2GB (adjust based on available RAM)
-SET GLOBAL innodb_log_file_size = 268435456; -- 256MB
+-- Use these performance optimizations instead:
+SET GLOBAL innodb_buffer_pool_size = 2147483648; -- 2GB (adjust based on your RAM)
 SET GLOBAL innodb_flush_log_at_trx_commit = 2; -- Better performance for non-critical data
 SET GLOBAL innodb_file_per_table = ON;
 
@@ -1831,9 +1615,7 @@ SELECT 'TokoSaya Optimized Database Created Successfully! 🚀' as status;
 
 SELECT
     'Performance Optimizations Applied:' as feature,
-    '✅ Partitioned tables for orders, logs, notifications' as details
-UNION ALL
-SELECT '', '✅ Optimized data types (INT for money, smaller VARCHARs)'
+    '✅ Optimized data types (INT for money, smaller VARCHARs)' as details
 UNION ALL
 SELECT '', '✅ Comprehensive indexing strategy'
 UNION ALL
