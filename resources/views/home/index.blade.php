@@ -138,7 +138,7 @@
         </div>
 
         <div class="row g-4">
-            @foreach($categories->take(8) as $category)
+            @foreach($featured_categories->take(8) as $category)
                 <div class="col-lg-3 col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="{{ $loop->index * 50 }}">
                     <a href="{{ route('categories.show', $category->slug) }}" class="category-card">
                         <div class="category-image">
@@ -181,7 +181,7 @@
         </div>
 
         <div class="row g-4">
-            @foreach($featuredProducts as $product)
+            @foreach($featured_products as $product)
                 <div class="col-lg-3 col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
                     @include('components.product-card', ['product' => $product])
                 </div>
@@ -197,6 +197,7 @@
     </div>
 </section>
 
+{{--
 <!-- Flash Sale Section -->
 @if($flashSaleProducts->count() > 0)
 <section class="flash-sale-section py-5 bg-danger text-white">
@@ -243,6 +244,7 @@
     </div>
 </section>
 @endif
+
 
 <!-- Latest Products Section -->
 <section class="latest-products-section py-5">
@@ -394,7 +396,7 @@
         </div>
     </div>
 </section>
-
+--}}
 @endsection
 
 @push('styles')

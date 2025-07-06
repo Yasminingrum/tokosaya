@@ -10,7 +10,7 @@ use App\Collections\ProductCollection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\a\DB;
+use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
@@ -23,11 +23,11 @@ class HomeController extends Controller
             // Get active banners
             $banners = Banner::where('is_active', true)
                 ->where('position', 'hero')
-                ->where(function($query) {
+                ->where(function ($query) {
                     $query->whereNull('starts_at')
                           ->orWhere('starts_at', '<=', now());
                 })
-                ->where(function($query) {
+                ->where(function ($query) {
                     $query->whereNull('expires_at')
                           ->orWhere('expires_at', '>=', now());
                 })
@@ -52,18 +52,41 @@ class HomeController extends Controller
             // Get homepage product sections using ProductCollection
             $homepageProducts = $productCollection->forHomepage();
 
+            $flashSaleProducts = Product::where('status', 'active')
+                ->where('on_sale', true)
+                ->where('sale_ends_at', '>', now())
+                ->with(['images'])
+                ->limit(8)
+                ->get();
+
+            // Tambahan untuk latest products
+            $latestProducts = Product::where('status', 'active')
+                ->orderBy('created_at', 'desc')
+                ->with(['images'])
+                ->limit(8)
+                ->get();
+
+            // Tambahan untuk brands
+            $brands = \App\Models\Brand::where('is_active', true)
+                ->with(['logo'])
+                ->limit(10)
+                ->get();
+
             return [
                 'banners' => $banners,
                 'featured_categories' => $featuredCategories,
                 'featured_products' => $homepageProducts['featured'],
                 'new_arrivals' => $homepageProducts['new_arrivals'],
                 'best_sellers' => $homepageProducts['best_sellers'],
-                'on_sale' => $homepageProducts['on_sale']
+                'on_sale' => $homepageProducts['on_sale'],
+                'flashSaleProducts' => $flashSaleProducts,
+                'latestProducts' => $latestProducts,
+                'brands' => $brands,
             ];
         });
 
-        return view('home.index', $data);
-    }
+    return view('home.index', $data);
+}
 
     /**
      * About page
@@ -114,7 +137,6 @@ class HomeController extends Controller
         try {
             // Here you can save to database, send email, etc.
             // For now, we'll just log the activity
-
             activity('contact_form')
                 ->withProperties([
                     'name' => $request->name,
@@ -183,7 +205,7 @@ class HomeController extends Controller
                 ->get(['id', 'name', 'slug']);
 
             return [
-                'products' => $products->map(function($product) {
+                'products' => $products->map(function ($product) {
                     return [
                         'type' => 'product',
                         'id' => $product->id,
@@ -192,7 +214,7 @@ class HomeController extends Controller
                         'price' => 'Rp ' . number_format($product->price_cents / 100, 0, ',', '.')
                     ];
                 }),
-                'categories' => $categories->map(function($category) {
+                'categories' => $categories->map(function ($category) {
                     return [
                         'type' => 'category',
                         'id' => $category->id,
@@ -200,7 +222,7 @@ class HomeController extends Controller
                         'url' => route('products.category', $category)
                     ];
                 }),
-                'brands' => $brands->map(function($brand) {
+                'brands' => $brands->map(function ($brand) {
                     return [
                         'type' => 'brand',
                         'id' => $brand->id,
@@ -307,63 +329,6 @@ class HomeController extends Controller
     }
 
     /**
-     * Newsletter subscription
-     */
-/*    public function newsletter(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|max:180|unique:newsletter_subscribers,email'
-        ]);
-
-        if ($validator->fails()) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Email sudah terdaftar atau tidak valid'
-                ], 422);
-            }
-            return back()->withErrors($validator);
-        }
-
-        try {
-            \App\Models\NewsletterSubscriber::create([
-                'email' => $request->email,
-                'is_active' => true,
-                'subscribed_at' => now()
-            ]);
-
-            // Log activity
-            activity('newsletter_subscription')
-                ->withProperties([
-                    'email' => $request->email,
-                    'ip_address' => $request->ip()
-                ])
-                ->log('Newsletter subscription');
-
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Terima kasih! Anda telah berlangganan newsletter kami.'
-                ]);
-            }
-
-            return back()->with('success', 'Terima kasih! Anda telah berlangganan newsletter kami.');
-
-        } catch (\Exception $e) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Gagal mendaftarkan email. Silakan coba lagi.'
-                ], 500);
-            }
-
-            return back()->withErrors(['error' => 'Gagal mendaftarkan email. Silakan coba lagi.']);
-        }
-    }
-*/
-
-
-    /**
      * Get trending products (AJAX)
      */
     public function trending()
@@ -379,7 +344,7 @@ class HomeController extends Controller
         });
 
         return response()->json([
-            'products' => $products->map(function($product) {
+            'products' => $products->map(function ($product) {
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
@@ -465,10 +430,10 @@ class HomeController extends Controller
     {
         try {
             // Check database connection
-            app('db')->connection()->getPdo();
+            DB::connection()->getPdo();
 
-            $cacheWorking = app('cache')->put('health_check', time(), 60)
-                    && app('cache')->get('health_check') !== null;
+            $cacheWorking = Cache::put('health_check', time(), 60)
+                    && Cache::get('health_check') !== null;
 
             $status = [
                 'status' => 'healthy',

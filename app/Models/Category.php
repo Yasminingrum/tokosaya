@@ -118,14 +118,7 @@ class Category extends Model
 
     public function getDescendants()
     {
-        $descendants = collect();
-
-        foreach ($this->children as $child) {
-            $descendants->push($child);
-            $descendants = $descendants->merge($child->getDescendants());
-        }
-
-        return $descendants;
+        return $this->allChildren()->get()->merge($this->children)->flatten();
     }
 
     public function getBreadcrumb()
@@ -149,6 +142,11 @@ class Category extends Model
     {
         $this->product_count = $this->activeProducts()->count();
         $this->save();
+
+        // Optionally update descendants
+        foreach ($this->children as $child) {
+            $child->updateProductCount();
+        }
     }
 
     // Events
@@ -167,6 +165,9 @@ class Category extends Model
                 if ($parent) {
                     $category->path = rtrim($parent->path, '/') . '/' . $parent->id . '/';
                     $category->level = $parent->level + 1;
+                } else {
+                    $category->path = '/';
+                    $category->level = 0;
                 }
             } else {
                 $category->path = '/';
@@ -186,6 +187,9 @@ class Category extends Model
                     if ($parent) {
                         $category->path = rtrim($parent->path, '/') . '/' . $parent->id . '/';
                         $category->level = $parent->level + 1;
+                    } else {
+                        $category->path = '/';
+                        $category->level = 0;
                     }
                 } else {
                     $category->path = '/';
@@ -202,7 +206,7 @@ class Category extends Model
         });
 
         static::deleted(function ($category) {
-            // Update parent's product count
+            // Update parent's product count if parent exists
             if ($category->parent) {
                 $category->parent->updateProductCount();
             }
@@ -211,10 +215,12 @@ class Category extends Model
 
     private function updateChildrenPaths()
     {
-        foreach ($this->children as $child) {
-            $child->path = rtrim($this->path, '/') . '/' . $this->id . '/';
-            $child->level = $this->level + 1;
-            $child->save();
+        $children = $this->children()->get();
+        if ($children->isNotEmpty()) {
+            Category::whereIn('id', $children->pluck('id'))->update([
+                'path' => rtrim($this->path, '/') . '/' . $this->id . '/',
+                'level' => $this->level + 1,
+            ]);
         }
     }
 }
