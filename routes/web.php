@@ -277,6 +277,10 @@ if (app()->environment(['local', 'testing'])) {
     });
 }
 
+// Newsletter subscription routes
+Route::post('/newsletter/subscribe', [HomeController::class, 'newsletterSubscribe'])->name('newsletter.subscribe');
+Route::get('/newsletter/unsubscribe/{token}', [HomeController::class, 'newsletterUnsubscribe'])->name('newsletter.unsubscribe');
+
 /*
 |--------------------------------------------------------------------------
 | Route Model Binding

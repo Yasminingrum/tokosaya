@@ -49,7 +49,7 @@ class Banner extends Model
         return $query->where('position', $position);
     }
 
-    public function scopeValid($query)
+    public function scopeValidDateRange($query)
     {
         return $query->where('is_active', true)
                     ->where(function ($q) {

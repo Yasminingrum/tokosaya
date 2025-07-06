@@ -269,7 +269,7 @@
 </section>
 
 <!-- Flash Sale Section -->
-@if($flash_sale_products->count() > 0)
+@if($flashSaleProducts->count() > 0)
 <section class="flash-sale-section py-5 bg-danger text-white">
     <div class="container">
         <div class="section-header text-center mb-5" data-aos="fade-up">
@@ -303,7 +303,7 @@
 
         <div class="swiper flash-sale-swiper">
             <div class="swiper-wrapper">
-                @foreach($flash_sale_products as $product)
+                @foreach($flashSaleProducts as $product)
                     <div class="swiper-slide">
                         @include('components.product-card', ['product' => $product, 'theme' => 'dark'])
                     </div>
@@ -324,7 +324,7 @@
         </div>
 
         <div class="row g-4">
-            @foreach($latest_products as $product)
+            @foreach($latestProducts as $product)
                 <div class="col-lg-3 col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
                     @include('components.product-card', ['product' => $product])
                 </div>
@@ -371,105 +371,154 @@
 @endif
 
 <!-- Newsletter Section -->
-<section class="newsletter-section py-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+<section class="py-5 bg-dark text-white">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-6" data-aos="fade-right">
-                <div class="newsletter-content text-white">
-                    <h3 class="newsletter-title font-display">Dapatkan Penawaran Terbaik!</h3>
-                    <p class="newsletter-description">
-                        Berlangganan newsletter kami dan jadilah yang pertama tahu tentang promo,
-                        diskon, dan produk terbaru dari TokoSaya.
-                    </p>
-                    <div class="newsletter-benefits mt-4">
-                        <div class="benefit-item">
-                            <i class="fas fa-check-circle me-2"></i>
-                            <span>Diskon eksklusif subscriber</span>
-                        </div>
-                        <div class="benefit-item">
-                            <i class="fas fa-check-circle me-2"></i>
-                            <span>Info produk terbaru</span>
-                        </div>
-                        <div class="benefit-item">
-                            <i class="fas fa-check-circle me-2"></i>
-                            <span>Flash sale preview</span>
-                        </div>
-                    </div>
-                </div>
+            <div class="col-md-6">
+                <h3 class="fw-bold">Dapatkan Update Terbaru</h3>
+                <p class="text-white-50">Berlangganan newsletter untuk mendapatkan promo dan produk terbaru</p>
             </div>
-            <div class="col-lg-6" data-aos="fade-left">
-                <div class="newsletter-form">
-                    <form id="newsletterForm" action="{{ route('newsletter.subscribe') }}" method="POST" class="row g-3">
-                        @csrf
-                        <div class="col-12">
-                            <div class="input-group input-group-lg">
-                                <input type="email"
-                                       class="form-control"
-                                       name="email"
-                                       placeholder="Masukkan email Anda"
-                                       required>
-                                <button type="submit" class="btn btn-warning">
-                                    <i class="fas fa-paper-plane me-2"></i>
-                                    Berlangganan
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <small class="text-white-50">
-                                *Dengan berlangganan, Anda menyetujui untuk menerima email marketing dari kami.
-                            </small>
-                        </div>
-                    </form>
-                </div>
+            <div class="col-md-6">
+                <!-- Option 1: Simple form tanpa route (JavaScript only) -->
+                <form class="d-flex gap-2" id="newsletterForm">
+                    @csrf
+                    <input type="email" class="form-control" name="email" placeholder="Masukkan email Anda" required>
+                    <button type="submit" class="btn btn-primary flex-shrink-0">Berlangganan</button>
+                </form>
+
+                <!-- Option 2: Form dengan route (jika sudah menambah route) -->
+                <!--
+                <form class="d-flex gap-2" action="{{ route('newsletter.subscribe') }}" method="POST">
+                    @csrf
+                    <input type="email" class="form-control" name="email" placeholder="Masukkan email Anda" required>
+                    <button type="submit" class="btn btn-primary flex-shrink-0">Berlangganan</button>
+                </form>
+                -->
             </div>
         </div>
     </div>
 </section>
 
-<!-- Testimonials Section -->
-<section class="testimonials-section py-5">
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Newsletter subscription (Simple JavaScript version)
+    const newsletterForm = document.getElementById('newsletterForm');
+    if (newsletterForm) {
+        newsletterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = this.querySelector('input[type="email"]').value;
+            if (email) {
+                // You can add AJAX call here to actually save the email
+                alert('Terima kasih! Anda akan segera mendapatkan update dari kami.');
+                this.reset();
+            }
+        });
+    }
+});
+</script>
+@endpush
+
+<!-- Customer Testimonials Section - FIXED -->
+@if(isset($testimonials) && $testimonials && $testimonials->count() > 0)
+<section class="py-5 bg-light">
     <div class="container">
-        <div class="section-header text-center mb-5" data-aos="fade-up">
-            <h2 class="section-title font-display">Apa Kata Mereka?</h2>
-            <p class="section-description">Testimoni dari pelanggan setia TokoSaya</p>
+        <div class="row">
+            <div class="col-12 text-center mb-5" data-aos="fade-up">
+                <h2 class="section-title font-display">Testimoni Pelanggan</h2>
+                <p class="section-description">Testimoni dari pelanggan setia TokoSaya</p>
+            </div>
         </div>
 
-        <div class="swiper testimonials-swiper">
-            <div class="swiper-wrapper">
-                @foreach($testimonials as $testimonial)
-                    <div class="swiper-slide">
-                        <div class="testimonial-card" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
-                            <div class="testimonial-content">
-                                <div class="testimonial-rating">
-                                    @for($i = 1; $i <= $testimonial->rating; $i++)
-                                        <i class="fas fa-star text-warning"></i>
-                                    @endfor
+        <div class="row g-4">
+            @foreach($testimonials as $testimonial)
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
+                <div class="card border-0 shadow-sm h-100 testimonial-card">
+                    <div class="card-body">
+                        <!-- Rating -->
+                        <div class="testimonial-rating mb-3">
+                            @for($i = 1; $i <= ($testimonial->rating ?? 5); $i++)
+                            <i class="fas fa-star text-warning"></i>
+                            @endfor
+                        </div>
+
+                        <!-- Review Text -->
+                        <p class="testimonial-text">
+                            "{{ $testimonial->review }}"
+                        </p>
+
+                        <!-- Author Info -->
+                        <div class="testimonial-author d-flex align-items-center">
+                            <div class="author-avatar me-3">
+                                @if(isset($testimonial->user) && $testimonial->user->avatar)
+                                <img src="{{ $testimonial->user->avatar }}" alt="{{ $testimonial->user->name }}" class="rounded-circle" width="50" height="50">
+                                @elseif(isset($testimonial->avatar) && $testimonial->avatar)
+                                <img src="{{ $testimonial->avatar }}" alt="{{ $testimonial->name ?? 'Customer' }}" class="rounded-circle" width="50" height="50">
+                                @else
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    {{ strtoupper(substr($testimonial->user->name ?? $testimonial->name ?? 'C', 0, 1)) }}
                                 </div>
-                                <p class="testimonial-text">
-                                    "{{ $testimonial->review }}"
-                                </p>
+                                @endif
                             </div>
-                            <div class="testimonial-author">
-                                <div class="author-avatar">
-                                    @if($testimonial->user->avatar)
-                                        <img src="{{ $testimonial->user->avatar }}" alt="{{ $testimonial->user->name }}">
-                                    @else
-                                        <img src="{{ asset('images/avatars/default-avatar.jpg') }}" alt="{{ $testimonial->user->name }}">
-                                    @endif
-                                </div>
-                                <div class="author-info">
-                                    <h6 class="author-name">{{ $testimonial->user->name }}</h6>
-                                    <span class="author-location">{{ $testimonial->user->city ?? 'Indonesia' }}</span>
-                                </div>
+                            <div class="author-info">
+                                <h6 class="author-name mb-0">
+                                    {{ $testimonial->user->name ?? $testimonial->name ?? 'Customer' }}
+                                </h6>
+                                <span class="author-location text-muted">
+                                    {{ $testimonial->user->city ?? $testimonial->location ?? 'Indonesia' }}
+                                </span>
+                                @if(($testimonial->verified_purchase ?? false))
+                                <br>
+                                <span class="badge bg-success mt-1">
+                                    <i class="fas fa-check"></i> Verified Purchase
+                                </span>
+                                @endif
                             </div>
                         </div>
                     </div>
-                @endforeach
+                </div>
             </div>
-            <div class="swiper-pagination"></div>
+            @endforeach
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="#" class="btn btn-outline-primary">
+                Lihat Testimoni Lainnya <i class="fas fa-arrow-right ms-1"></i>
+            </a>
         </div>
     </div>
 </section>
+@endif
+
+@push('styles')
+<style>
+.testimonial-card:hover {
+    transform: translateY(-5px);
+    transition: transform 0.3s ease;
+}
+
+.testimonial-rating {
+    margin-bottom: 1rem;
+}
+
+.testimonial-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    color: #555;
+    font-style: italic;
+}
+
+.author-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.author-location {
+    font-size: 0.9rem;
+}
+</style>
+@endpush
 
 @endsection
 

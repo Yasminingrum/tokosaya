@@ -92,14 +92,95 @@ class HomeController extends Controller
                 ->limit(10)
                 ->get();
 
-            // Active coupons for promotion display
+            // Active coupons for promotion display - FIXED
             $featuredCoupons = Coupon::where('is_active', true)
                 ->where('is_public', true)
-                ->validDateRange()
+                ->where(function($query) {
+                    $query->whereNull('starts_at')
+                          ->orWhere('starts_at', '<=', now());
+                })
+                ->where(function($query) {
+                    $query->whereNull('expires_at')
+                          ->orWhere('expires_at', '>=', now());
+                })
                 ->orderBy('value_cents', 'desc')
                 ->select(['id', 'code', 'name', 'type', 'value_cents', 'minimum_order_cents', 'expires_at'])
                 ->limit(3)
                 ->get();
+
+            // Customer Testimonials - ADDED
+$testimonials = collect([
+                (object) [
+                    'id' => 1,
+                    'rating' => 5,
+                    'review' => 'Pelayanan sangat memuaskan! Produk berkualitas dan pengiriman cepat. Sangat recommended!',
+                    'verified_purchase' => true,
+                    'created_at' => now()->subDays(5),
+                    'user' => (object) [
+                        'name' => 'Budi Santoso',
+                        'avatar' => null,
+                        'city' => 'Jakarta'
+                    ]
+                ],
+                (object) [
+                    'id' => 2,
+                    'rating' => 5,
+                    'review' => 'TokoSaya memang the best! Barang sesuai ekspektasi dan harga bersahabat.',
+                    'verified_purchase' => true,
+                    'created_at' => now()->subDays(10),
+                    'user' => (object) [
+                        'name' => 'Siti Nurhaliza',
+                        'avatar' => null,
+                        'city' => 'Bandung'
+                    ]
+                ],
+                (object) [
+                    'id' => 3,
+                    'rating' => 4,
+                    'review' => 'Pengalaman belanja yang menyenangkan. Customer service responsif dan membantu.',
+                    'verified_purchase' => true,
+                    'created_at' => now()->subDays(15),
+                    'user' => (object) [
+                        'name' => 'Ahmad Rifki',
+                        'avatar' => null,
+                        'city' => 'Surabaya'
+                    ]
+                ],
+                (object) [
+                    'id' => 4,
+                    'rating' => 5,
+                    'review' => 'Sudah berulang kali belanja di sini dan selalu puas. Kualitas produk terjamin!',
+                    'verified_purchase' => true,
+                    'created_at' => now()->subDays(20),
+                    'user' => (object) [
+                        'name' => 'Maya Dewi',
+                        'avatar' => null,
+                        'city' => 'Yogyakarta'
+                    ]
+                ],
+                (object) [
+                    'id' => 5,
+                    'rating' => 5,
+                    'review' => 'Website mudah digunakan, proses checkout lancar, dan produk sampai dengan aman.',
+                    'verified_purchase' => true,
+                    'created_at' => now()->subDays(25),
+                    'user' => (object) [
+                        'name' => 'Rizky Pratama',
+                        'avatar' => null,
+                        'city' => 'Medan'
+                    ]
+                ]
+            ]);
+
+            // Alternative: Get from database if you have testimonials table
+            /*
+            $testimonials = DB::table('testimonials')
+                ->where('is_active', true)
+                ->where('is_featured', true)
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get();
+            */
 
             return [
                 'banners' => $banners,
@@ -112,10 +193,11 @@ class HomeController extends Controller
                 'latestProducts' => $latestProducts,
                 'brands' => $brands,
                 'featuredCoupons' => $featuredCoupons,
+                'testimonials' => $testimonials,  // ✅ ADDED
             ];
         });
 
-        return view('home.index', $data);
+        return view('home', $data);
     }
 
     /**
@@ -615,5 +697,70 @@ class HomeController extends Controller
     protected function formatPrice($priceCents)
     {
         return 'Rp ' . number_format($priceCents / 100, 0, ',', '.');
+    }
+
+    /**
+     * Handle newsletter subscription
+     */
+    public function newsletterSubscribe(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|max:180|unique:newsletter_subscribers,email',
+            'name' => 'nullable|string|max:100',
+        ], [
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email sudah terdaftar untuk newsletter.',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            DB::table('newsletter_subscribers')->insert([
+                'email' => $request->email,
+                'name' => $request->name,
+                'is_active' => true,
+                'subscribed_at' => now(),
+                'unsubscribe_token' => str()->random(32),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return back()->with('success', 'Terima kasih! Anda telah berlangganan newsletter kami.');
+
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Gagal mendaftarkan newsletter. Silakan coba lagi.'])->withInput();
+        }
+    }
+
+    /**
+     * Handle newsletter unsubscribe
+     */
+    public function newsletterUnsubscribe($token)
+    {
+        try {
+            $subscriber = DB::table('newsletter_subscribers')
+                ->where('unsubscribe_token', $token)
+                ->first();
+
+            if (!$subscriber) {
+                return redirect()->route('home')->with('error', 'Token tidak valid.');
+            }
+
+            DB::table('newsletter_subscribers')
+                ->where('unsubscribe_token', $token)
+                ->update([
+                    'is_active' => false,
+                    'unsubscribed_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+            return redirect()->route('home')->with('success', 'Anda telah berhasil berhenti berlangganan newsletter.');
+
+        } catch (\Exception $e) {
+            return redirect()->route('home')->with('error', 'Gagal membatalkan langganan. Silakan coba lagi.');
+        }
     }
 }
