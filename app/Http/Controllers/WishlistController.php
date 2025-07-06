@@ -492,7 +492,7 @@ class WishlistController extends Controller
                     'name' => $product->name,
                     'slug' => $product->slug,
                     'price_cents' => $product->price_cents,
-                    'formatted_price' => format_currency($product->price_cents),
+                    'formatted_price' => $this->formatPrice($product->price_cents),
                     'image' => $product->images->first()?->image_url,
                     'category' => $product->category?->name,
                     'url' => route('products.show', $product->slug)

@@ -1,7 +1,6 @@
-// File: app/Helpers/ImageHelper.php
-
 <?php
 
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
 
@@ -39,27 +38,130 @@ if (!function_exists('upload_image')) {
 
 if (!function_exists('create_image_size')) {
     /**
-     * Create resized version of image
+     * Create resized version of image using GD library
+     *
+     * @param string $imagePath
+     * @param string $sizeName
+     * @param int $width
+     * @param int $height
+     * @return bool
      */
     function create_image_size($imagePath, $sizeName, $width, $height)
     {
+        // Check if GD extension is available
+        if (!extension_loaded('gd')) {
+            Logger()->warning('GD extension not available for image resizing');
+            return false;
+        }
+
         $fullPath = storage_path('app/public/' . $imagePath);
 
         if (!file_exists($fullPath)) {
             return false;
         }
 
-        $pathInfo = pathinfo($imagePath);
-        $newPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_' . $sizeName . '.' . $pathInfo['extension'];
-        $newFullPath = storage_path('app/public/' . $newPath);
+        try {
+            $pathInfo = pathinfo($imagePath);
+            $newPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_' . $sizeName . '.' . $pathInfo['extension'];
+            $newFullPath = storage_path('app/public/' . $newPath);
 
-        $image = Image::make($fullPath);
-        $image->fit($width, $height, function ($constraint) {
-            $constraint->upsize();
-        });
-        $image->save($newFullPath, 90);
+            // Get image info
+            $imageInfo = getimagesize($fullPath);
+            if (!$imageInfo) {
+                return false;
+            }
 
-        return $newPath;
+            $originalWidth = $imageInfo[0];
+            $originalHeight = $imageInfo[1];
+            $imageType = $imageInfo[2];
+
+            // Create image resource from file
+            $sourceImage = null;
+            switch ($imageType) {
+                case IMAGETYPE_JPEG:
+                    $sourceImage = imagecreatefromjpeg($fullPath);
+                    break;
+                case IMAGETYPE_PNG:
+                    $sourceImage = imagecreatefrompng($fullPath);
+                    break;
+                case IMAGETYPE_GIF:
+                    $sourceImage = imagecreatefromgif($fullPath);
+                    break;
+                case IMAGETYPE_WEBP:
+                    if (function_exists('imagecreatefromwebp')) {
+                        $sourceImage = imagecreatefromwebp($fullPath);
+                    }
+                    break;
+                default:
+                    return false;
+            }
+
+            if (!$sourceImage) {
+                return false;
+            }
+
+            // Calculate new dimensions maintaining aspect ratio
+            $aspectRatio = $originalWidth / $originalHeight;
+            $targetAspectRatio = $width / $height;
+
+            if ($aspectRatio > $targetAspectRatio) {
+                // Image is wider than target
+                $newWidth = $width;
+                $newHeight = intval($width / $aspectRatio);
+            } else {
+                // Image is taller than target
+                $newWidth = intval($height * $aspectRatio);
+                $newHeight = $height;
+            }
+
+            // Create new image canvas
+            $resizedImage = imagecreatetruecolor($newWidth, $newHeight);
+
+            // Preserve transparency for PNG and GIF
+            if ($imageType == IMAGETYPE_PNG || $imageType == IMAGETYPE_GIF) {
+                imagealphablending($resizedImage, false);
+                imagesavealpha($resizedImage, true);
+                $transparent = imagecolorallocatealpha($resizedImage, 255, 255, 255, 127);
+                imagefilledrectangle($resizedImage, 0, 0, $newWidth, $newHeight, $transparent);
+            }
+
+            // Resize the image
+            imagecopyresampled(
+                $resizedImage, $sourceImage,
+                0, 0, 0, 0,
+                $newWidth, $newHeight,
+                $originalWidth, $originalHeight
+            );
+
+            // Save the resized image
+            $result = false;
+            switch ($imageType) {
+                case IMAGETYPE_JPEG:
+                    $result = imagejpeg($resizedImage, $newFullPath, 90);
+                    break;
+                case IMAGETYPE_PNG:
+                    $result = imagepng($resizedImage, $newFullPath, 8);
+                    break;
+                case IMAGETYPE_GIF:
+                    $result = imagegif($resizedImage, $newFullPath);
+                    break;
+                case IMAGETYPE_WEBP:
+                    if (function_exists('imagewebp')) {
+                        $result = imagewebp($resizedImage, $newFullPath, 90);
+                    }
+                    break;
+            }
+
+            // Clean up memory
+            imagedestroy($sourceImage);
+            imagedestroy($resizedImage);
+
+            return $result;
+
+        } catch (\Exception $e) {
+            Logger()->error('Image resize failed: ' . $e->getMessage());
+            return false;
+        }
     }
 }
 
