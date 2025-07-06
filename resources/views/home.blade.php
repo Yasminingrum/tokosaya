@@ -138,7 +138,7 @@
         </div>
 
         <div class="row g-4">
-            @foreach($featured_categories->take(8) as $category)
+            @foreach($featured_categories as $category)
                 <div class="col-lg-3 col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="{{ $loop->index * 50 }}">
                     <a href="{{ route('categories.show', $category->slug) }}" class="category-card">
                         <div class="category-image">
@@ -183,7 +183,78 @@
         <div class="row g-4">
             @foreach($featured_products as $product)
                 <div class="col-lg-3 col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
-                    @include('components.product-card', ['product' => $product])
+                    <div class="product-card">
+                        <div class="product-badge">
+                            @if($product->status == 'discontinued')
+                                <span class="badge bg-danger">Habis</span>
+                            @elseif($product->compare_price_cents > $product->price_cents)
+                                <span class="badge bg-success">Diskon {{ round(($product->compare_price_cents - $product->price_cents) / $product->compare_price_cents * 100) }}%</span>
+                            @endif
+                        </div>
+                        <div class="product-image">
+                            <a href="{{ route('products.show', $product->slug) }}">
+                                @if($product->primaryImage)
+                                    <img src="{{ $product->primaryImage->image_url }}" alt="{{ $product->name }}" class="img-fluid">
+                                @else
+                                    <div class="no-image-placeholder">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+                                @endif
+                            </a>
+                        </div>
+                        <div class="product-content">
+                            <div class="product-category">
+                                {{ $product->category->name }}
+                            </div>
+                            <h3 class="product-name">
+                                <a href="{{ route('products.show', $product->slug) }}">{{ $product->name }}</a>
+                            </h3>
+                            <div class="product-rating">
+                                @for($i = 1; $i <= 5; $i++)
+                                    @if($i <= $product->rating_average)
+                                        <i class="fas fa-star text-warning"></i>
+                                    @else
+                                        <i class="far fa-star text-muted"></i>
+                                    @endif
+                                @endfor
+                                <span class="rating-count">({{ $product->rating_count }})</span>
+                            </div>
+                            <div class="product-price">
+                                <span class="current-price">Rp {{ number_format($product->price_cents / 100, 0, ',', '.') }}</span>
+                                @if($product->compare_price_cents > $product->price_cents)
+                                    <span class="compare-price">Rp {{ number_format($product->compare_price_cents / 100, 0, ',', '.') }}</span>
+                                @endif
+                            </div>
+                            <div class="product-stock">
+                                @if($product->stock_quantity <= 0)
+                                    <span class="text-danger">Stok Habis</span>
+                                @elseif($product->stock_quantity <= $product->min_stock_level)
+                                    <span class="text-warning">Stok Terbatas</span>
+                                @else
+                                    <span class="text-success">Tersedia</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="product-actions">
+                            @if($product->status == 'active' && $product->stock_quantity > 0)
+                                <form action="{{ route('cart.add') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-shopping-cart"></i> Beli
+                                    </button>
+                                </form>
+                            @else
+                                <button class="btn btn-secondary btn-sm" disabled>
+                                    <i class="fas fa-ban"></i> Tidak Tersedia
+                                </button>
+                            @endif
+                            <a href="{{ route('wishlist.add', $product->id) }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="far fa-heart"></i>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             @endforeach
         </div>
@@ -197,9 +268,8 @@
     </div>
 </section>
 
-{{--
 <!-- Flash Sale Section -->
-@if($flashSaleProducts->count() > 0)
+@if($flash_sale_products->count() > 0)
 <section class="flash-sale-section py-5 bg-danger text-white">
     <div class="container">
         <div class="section-header text-center mb-5" data-aos="fade-up">
@@ -209,22 +279,22 @@
             <p class="section-description">Penawaran terbatas! Buruan sebelum kehabisan</p>
 
             <!-- Countdown Timer -->
-            <div class="flash-sale-timer mt-3" x-data="countdownTimer('2024-12-31 23:59:59')">
+            <div class="flash-sale-timer mt-3">
                 <div class="countdown-display">
                     <div class="countdown-item">
-                        <span class="countdown-number" x-text="days"></span>
+                        <span class="countdown-number" id="days">00</span>
                         <span class="countdown-label">Hari</span>
                     </div>
                     <div class="countdown-item">
-                        <span class="countdown-number" x-text="hours"></span>
+                        <span class="countdown-number" id="hours">00</span>
                         <span class="countdown-label">Jam</span>
                     </div>
                     <div class="countdown-item">
-                        <span class="countdown-number" x-text="minutes"></span>
+                        <span class="countdown-number" id="minutes">00</span>
                         <span class="countdown-label">Menit</span>
                     </div>
                     <div class="countdown-item">
-                        <span class="countdown-number" x-text="seconds"></span>
+                        <span class="countdown-number" id="seconds">00</span>
                         <span class="countdown-label">Detik</span>
                     </div>
                 </div>
@@ -233,7 +303,7 @@
 
         <div class="swiper flash-sale-swiper">
             <div class="swiper-wrapper">
-                @foreach($flashSaleProducts as $product)
+                @foreach($flash_sale_products as $product)
                     <div class="swiper-slide">
                         @include('components.product-card', ['product' => $product, 'theme' => 'dark'])
                     </div>
@@ -245,7 +315,6 @@
 </section>
 @endif
 
-
 <!-- Latest Products Section -->
 <section class="latest-products-section py-5">
     <div class="container">
@@ -255,7 +324,7 @@
         </div>
 
         <div class="row g-4">
-            @foreach($latestProducts as $product)
+            @foreach($latest_products as $product)
                 <div class="col-lg-3 col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
                     @include('components.product-card', ['product' => $product])
                 </div>
@@ -272,6 +341,7 @@
 </section>
 
 <!-- Brands Section -->
+@if($brands->count() > 0)
 <section class="brands-section py-5 bg-light">
     <div class="container">
         <div class="section-header text-center mb-5" data-aos="fade-up">
@@ -281,7 +351,7 @@
 
         <div class="swiper brands-swiper">
             <div class="swiper-wrapper align-items-center">
-                @foreach($brands->take(10) as $brand)
+                @foreach($brands as $brand)
                     <div class="swiper-slide">
                         <div class="brand-item text-center" data-aos="fade-up" data-aos-delay="{{ $loop->index * 50 }}">
                             @if($brand->logo)
@@ -298,6 +368,7 @@
         </div>
     </div>
 </section>
+@endif
 
 <!-- Newsletter Section -->
 <section class="newsletter-section py-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
@@ -365,38 +436,41 @@
 
         <div class="swiper testimonials-swiper">
             <div class="swiper-wrapper">
-                @for($i = 1; $i <= 6; $i++)
+                @foreach($testimonials as $testimonial)
                     <div class="swiper-slide">
-                        <div class="testimonial-card" data-aos="fade-up" data-aos-delay="{{ $i * 100 }}">
+                        <div class="testimonial-card" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
                             <div class="testimonial-content">
                                 <div class="testimonial-rating">
-                                    @for($star = 1; $star <= 5; $star++)
+                                    @for($i = 1; $i <= $testimonial->rating; $i++)
                                         <i class="fas fa-star text-warning"></i>
                                     @endfor
                                 </div>
                                 <p class="testimonial-text">
-                                    "Pengalaman belanja yang luar biasa! Produk berkualitas, pengiriman cepat,
-                                    dan customer service yang sangat responsif. Highly recommended!"
+                                    "{{ $testimonial->review }}"
                                 </p>
                             </div>
                             <div class="testimonial-author">
                                 <div class="author-avatar">
-                                    <img src="{{ asset('images/avatars/avatar-' . $i . '.jpg') }}" alt="Customer {{ $i }}">
+                                    @if($testimonial->user->avatar)
+                                        <img src="{{ $testimonial->user->avatar }}" alt="{{ $testimonial->user->name }}">
+                                    @else
+                                        <img src="{{ asset('images/avatars/default-avatar.jpg') }}" alt="{{ $testimonial->user->name }}">
+                                    @endif
                                 </div>
                                 <div class="author-info">
-                                    <h6 class="author-name">Customer {{ $i }}</h6>
-                                    <span class="author-location">Jakarta, Indonesia</span>
+                                    <h6 class="author-name">{{ $testimonial->user->name }}</h6>
+                                    <span class="author-location">{{ $testimonial->user->city ?? 'Indonesia' }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                @endfor
+                @endforeach
             </div>
             <div class="swiper-pagination"></div>
         </div>
     </div>
 </section>
---}}
+
 @endsection
 
 @push('styles')
@@ -437,209 +511,108 @@
         z-index: 2;
     }
 
-    .hero-subtitle {
-        font-size: 1.1rem;
-        margin-bottom: 1rem;
-        opacity: 0.9;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .hero-title {
-        font-size: 3.5rem;
-        font-weight: 800;
-        line-height: 1.2;
-        margin-bottom: 1.5rem;
-    }
-
-    .hero-description {
-        font-size: 1.2rem;
-        line-height: 1.6;
-        margin-bottom: 2rem;
-        opacity: 0.9;
-    }
-
-    .hero-actions .btn {
-        border-radius: 50px;
-        padding: 15px 30px;
-        font-weight: 600;
-        text-transform: none;
-        transition: all 0.3s ease;
-    }
-
-    .hero-actions .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    }
-
-    .hero-image {
-        text-align: center;
-    }
-
-    .hero-image img {
-        max-width: 500px;
-        height: auto;
-        filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.2));
-    }
-
-    .min-vh-75 {
-        min-height: 75vh;
-    }
-
-    /* Swiper Navigation */
-    .swiper-pagination {
-        bottom: 30px !important;
-    }
-
-    .swiper-pagination-bullet {
+    /* Product Card Styles */
+    .product-card {
         background: white;
-        opacity: 0.7;
-        width: 12px;
-        height: 12px;
-    }
-
-    .swiper-pagination-bullet-active {
-        opacity: 1;
-        background: var(--primary-color);
-    }
-
-    .swiper-button-next,
-    .swiper-button-prev {
-        color: white;
-        background: rgba(255, 255, 255, 0.2);
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        backdrop-filter: blur(10px);
-    }
-
-    .swiper-button-next:after,
-    .swiper-button-prev:after {
-        font-size: 20px;
-    }
-
-    /* Features Section */
-    .feature-card {
-        padding: 2rem;
-        border-radius: 15px;
-        background: white;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-        height: 100%;
-    }
-
-    .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-    }
-
-    .feature-icon {
-        width: 80px;
-        height: 80px;
-        background: var(--primary-light);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 1.5rem;
-        color: var(--primary-color);
-        font-size: 2rem;
-    }
-
-    .feature-title {
-        font-weight: 600;
-        margin-bottom: 1rem;
-        color: #1e293b;
-    }
-
-    .feature-description {
-        color: #64748b;
-        font-size: 0.95rem;
-        line-height: 1.6;
-    }
-
-    /* Section Headers */
-    .section-header {
-        max-width: 600px;
-        margin: 0 auto;
-    }
-
-    .section-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 1rem;
-    }
-
-    .section-description {
-        font-size: 1.1rem;
-        color: #64748b;
-        line-height: 1.6;
-    }
-
-    /* Category Cards */
-    .category-card {
-        display: block;
-        background: white;
-        border-radius: 15px;
+        border-radius: 10px;
         overflow: hidden;
-        text-decoration: none;
-        color: inherit;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
         transition: all 0.3s ease;
         height: 100%;
     }
 
-    .category-card:hover {
+    .product-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-        color: inherit;
-        text-decoration: none;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
     }
 
-    .category-image {
-        height: 150px;
+    .product-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 2;
+    }
+
+    .product-image {
+        height: 200px;
         overflow: hidden;
         position: relative;
     }
 
-    .category-image img {
+    .product-image img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         transition: transform 0.3s ease;
     }
 
-    .category-card:hover .category-image img {
-        transform: scale(1.1);
+    .product-card:hover .product-image img {
+        transform: scale(1.05);
     }
 
-    .category-placeholder {
+    .no-image-placeholder {
         width: 100%;
         height: 100%;
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        background: #f5f5f5;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
+        color: #ccc;
         font-size: 3rem;
     }
 
-    .category-content {
+    .product-content {
         padding: 1.5rem;
-        text-align: center;
     }
 
-    .category-name {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: #1e293b;
-    }
-
-    .category-count {
+    .product-category {
+        font-size: 0.8rem;
         color: #64748b;
+        margin-bottom: 0.5rem;
+    }
+
+    .product-name {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        height: 2.5rem;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .product-rating {
+        margin-bottom: 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .product-price {
+        margin-bottom: 0.75rem;
+    }
+
+    .current-price {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    .compare-price {
         font-size: 0.9rem;
-        margin: 0;
+        text-decoration: line-through;
+        color: #64748b;
+        margin-left: 0.5rem;
+    }
+
+    .product-stock {
+        font-size: 0.8rem;
+        margin-bottom: 1rem;
+    }
+
+    .product-actions {
+        padding: 0 1.5rem 1.5rem;
+        display: flex;
+        gap: 0.5rem;
     }
 
     /* Flash Sale Section */
@@ -658,11 +631,6 @@
         height: 100%;
         background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="flash-pattern" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23flash-pattern)"/></svg>');
         opacity: 0.5;
-    }
-
-    .flash-sale-timer {
-        position: relative;
-        z-index: 2;
     }
 
     .countdown-display {
@@ -695,189 +663,15 @@
         letter-spacing: 0.5px;
     }
 
-    .flash-sale-swiper {
-        position: relative;
-        z-index: 2;
-        padding-bottom: 50px;
-    }
-
-    /* Newsletter Section */
-    .newsletter-section {
-        position: relative;
-        overflow: hidden;
-    }
-
-    .newsletter-title {
-        font-size: 2.2rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-    }
-
-    .newsletter-description {
-        font-size: 1.1rem;
-        opacity: 0.9;
-        line-height: 1.6;
-    }
-
-    .newsletter-benefits {
-        list-style: none;
-        padding: 0;
-    }
-
-    .benefit-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 0.75rem;
-        font-size: 0.95rem;
-    }
-
-    .benefit-item i {
-        color: var(--warning-color);
-    }
-
-    .newsletter-form {
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 15px;
-        padding: 2rem;
-        backdrop-filter: blur(10px);
-    }
-
-    .newsletter-form .form-control {
-        border: none;
-        border-radius: 10px 0 0 10px;
-        padding: 15px 20px;
-        font-size: 1rem;
-    }
-
-    .newsletter-form .btn {
-        border-radius: 0 10px 10px 0;
-        padding: 15px 25px;
-        font-weight: 600;
-    }
-
-    /* Testimonials Section */
-    .testimonial-card {
-        background: white;
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .testimonial-rating {
-        margin-bottom: 1rem;
-    }
-
-    .testimonial-text {
-        font-size: 1rem;
-        line-height: 1.6;
-        color: #64748b;
-        font-style: italic;
-        flex-grow: 1;
-        margin-bottom: 1.5rem;
-    }
-
-    .testimonial-author {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .author-avatar {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        overflow: hidden;
-        flex-shrink: 0;
-    }
-
-    .author-avatar img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .author-name {
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-        color: #1e293b;
-    }
-
-    .author-location {
-        font-size: 0.85rem;
-        color: #64748b;
-    }
-
-    /* Brands Section */
-    .brands-swiper {
-        padding: 2rem 0;
-    }
-
-    .brand-item {
-        padding: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .brand-item:hover {
-        transform: scale(1.05);
-    }
-
-    .brand-logo {
-        max-width: 120px;
-        max-height: 60px;
-        width: auto;
-        height: auto;
-        filter: grayscale(100%);
-        transition: filter 0.3s ease;
-    }
-
-    .brand-item:hover .brand-logo {
-        filter: grayscale(0%);
-    }
-
-    .brand-placeholder {
-        width: 120px;
-        height: 60px;
-        background: #f1f5f9;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #64748b;
-        font-weight: 600;
-        font-size: 0.9rem;
-        margin: 0 auto;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 1200px) {
-        .hero-title {
-            font-size: 3rem;
-        }
-    }
-
+    /* Responsive Adjustments */
     @media (max-width: 768px) {
         .hero-swiper {
             height: 70vh;
             min-height: 500px;
         }
 
-        .hero-title {
-            font-size: 2.5rem;
-        }
-
-        .hero-description {
-            font-size: 1rem;
-        }
-
-        .section-title {
-            font-size: 2rem;
-        }
-
-        .countdown-display {
-            gap: 1rem;
+        .product-image {
+            height: 150px;
         }
 
         .countdown-item {
@@ -888,40 +682,12 @@
         .countdown-number {
             font-size: 1.5rem;
         }
-
-        .newsletter-title {
-            font-size: 1.8rem;
-        }
-
-        .newsletter-form {
-            margin-top: 2rem;
-            padding: 1.5rem;
-        }
-
-        .feature-card,
-        .testimonial-card {
-            padding: 1.5rem;
-        }
-
-        .feature-icon {
-            width: 60px;
-            height: 60px;
-            font-size: 1.5rem;
-        }
-
-        .category-image {
-            height: 120px;
-        }
-
-        .category-content {
-            padding: 1rem;
-        }
     }
 
     @media (max-width: 576px) {
-        .hero-actions .btn {
-            width: 100%;
-            margin-bottom: 1rem;
+        .hero-swiper {
+            height: 60vh;
+            min-height: 400px;
         }
 
         .countdown-display {
@@ -933,40 +699,14 @@
             min-width: 50px;
             padding: 0.5rem;
         }
-
-        .newsletter-form .input-group {
-            flex-direction: column;
-        }
-
-        .newsletter-form .form-control,
-        .newsletter-form .btn {
-            border-radius: 10px;
-        }
-
-        .newsletter-form .btn {
-            margin-top: 1rem;
-        }
-    }
-
-    /* Loading animations */
-    .loading-shimmer {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: shimmer 1.5s infinite;
-    }
-
-    @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
     }
 </style>
 @endpush
 
 @push('scripts')
 <script>
-    // Initialize Swiper components
     document.addEventListener('DOMContentLoaded', function() {
-        // Hero Swiper
+        // Initialize Swipers
         const heroSwiper = new Swiper('.hero-swiper', {
             loop: true,
             autoplay: {
@@ -987,7 +727,6 @@
             },
         });
 
-        // Flash Sale Swiper
         const flashSaleSwiper = new Swiper('.flash-sale-swiper', {
             slidesPerView: 1,
             spaceBetween: 20,
@@ -1013,7 +752,27 @@
             },
         });
 
-        // Testimonials Swiper
+        const brandsSwiper = new Swiper('.brands-swiper', {
+            slidesPerView: 2,
+            spaceBetween: 30,
+            loop: true,
+            autoplay: {
+                delay: 2000,
+                disableOnInteraction: false,
+            },
+            breakpoints: {
+                576: {
+                    slidesPerView: 3,
+                },
+                768: {
+                    slidesPerView: 4,
+                },
+                1024: {
+                    slidesPerView: 5,
+                },
+            },
+        });
+
         const testimonialsSwiper = new Swiper('.testimonials-swiper', {
             slidesPerView: 1,
             spaceBetween: 30,
@@ -1036,186 +795,68 @@
             },
         });
 
-        // Brands Swiper
-        const brandsSwiper = new Swiper('.brands-swiper', {
-            slidesPerView: 2,
-            spaceBetween: 30,
-            loop: true,
-            autoplay: {
-                delay: 2000,
-                disableOnInteraction: false,
-            },
-            breakpoints: {
-                576: {
-                    slidesPerView: 3,
-                },
-                768: {
-                    slidesPerView: 4,
-                },
-                1024: {
-                    slidesPerView: 5,
-                },
-            },
-        });
-    });
+        // Countdown Timer for Flash Sale
+        function updateCountdown() {
+            // Set your flash sale end date here
+            const endDate = new Date('{{ $flash_sale_end ?? now()->addDays(3)->format('Y-m-d H:i:s') }}').getTime();
+            const now = new Date().getTime();
+            const distance = endDate - now;
 
-    // Countdown Timer Component
-    function countdownTimer(endDate) {
-        return {
-            days: 0,
-            hours: 0,
-            minutes: 0,
-            seconds: 0,
+            if (distance > 0) {
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-            init() {
-                this.updateCountdown();
-                setInterval(() => {
-                    this.updateCountdown();
-                }, 1000);
-            },
-
-            updateCountdown() {
-                const now = new Date().getTime();
-                const end = new Date(endDate).getTime();
-                const distance = end - now;
-
-                if (distance > 0) {
-                    this.days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                    this.hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    this.minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    this.seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                } else {
-                    this.days = this.hours = this.minutes = this.seconds = 0;
-                }
-            }
-        }
-    }
-
-    // Newsletter Form Submission
-    document.getElementById('newsletterForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const form = this;
-        const button = form.querySelector('button[type="submit"]');
-        const originalText = button.innerHTML;
-
-        try {
-            // Show loading state
-            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
-            button.disabled = true;
-
-            const formData = new FormData(form);
-            const response = await fetch(form.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showNotification('Terima kasih! Anda telah berlangganan newsletter kami.', 'success');
-                form.reset();
+                document.getElementById('days').textContent = days.toString().padStart(2, '0');
+                document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+                document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+                document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
             } else {
-                throw new Error(data.message || 'Terjadi kesalahan');
+                document.getElementById('days').textContent = '00';
+                document.getElementById('hours').textContent = '00';
+                document.getElementById('minutes').textContent = '00';
+                document.getElementById('seconds').textContent = '00';
             }
-        } catch (error) {
-            showNotification('Maaf, terjadi kesalahan. Silakan coba lagi.', 'error');
-            console.error('Newsletter subscription error:', error);
-        } finally {
-            // Restore button
-            button.innerHTML = originalText;
-            button.disabled = false;
         }
-    });
 
-    // Lazy Loading for Images
-    if ('IntersectionObserver' in window) {
-        const imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    if (img.dataset.src) {
-                        img.src = img.dataset.src;
-                        img.classList.remove('loading-shimmer');
-                        imageObserver.unobserve(img);
-                    }
-                }
-            });
-        });
+        // Update countdown every second
+        setInterval(updateCountdown, 1000);
+        updateCountdown(); // Initial call
 
-        document.querySelectorAll('img[data-src]').forEach(img => {
-            img.classList.add('loading-shimmer');
-            imageObserver.observe(img);
-        });
-    }
-
-    // Scroll to Top on Page Load
-    window.addEventListener('load', function() {
-        window.scrollTo(0, 0);
-    });
-
-    // Performance optimization: Preload critical images
-    function preloadCriticalImages() {
-        const criticalImages = [
-            '{{ asset("images/hero-shopping.svg") }}',
-            // Add other critical images here
-        ];
-
-        criticalImages.forEach(src => {
-            const link = document.createElement('link');
-            link.rel = 'preload';
-            link.as = 'image';
-            link.href = src;
-            document.head.appendChild(link);
-        });
-    }
-
-    // Call preload function
-    preloadCriticalImages();
-
-    // Track user interactions for analytics
-    function trackInteraction(action, category, label) {
-        // Replace with your analytics tracking code
-        console.log('Analytics:', { action, category, label });
-
-        // Example: Google Analytics 4
-        if (typeof gtag !== 'undefined') {
-            gtag('event', action, {
-                event_category: category,
-                event_label: label
-            });
-        }
-    }
-
-    // Track category clicks
-    document.querySelectorAll('.category-card').forEach(card => {
-        card.addEventListener('click', function() {
-            const categoryName = this.querySelector('.category-name').textContent;
-            trackInteraction('click', 'category', categoryName);
-        });
-    });
-
-    // Track product card interactions
-    document.querySelectorAll('.product-card').forEach(card => {
-        card.addEventListener('click', function() {
-            const productName = this.querySelector('.product-name')?.textContent || 'Unknown';
-            trackInteraction('click', 'product', productName);
-        });
-    });
-
-    // Smooth scrolling for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
+        // Newsletter Form Submission
+        document.getElementById('newsletterForm')?.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
+            const form = this;
+            const button = form.querySelector('button[type="submit"]');
+            const originalText = button.innerHTML;
+
+            try {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
+                button.disabled = true;
+
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
                 });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Terima kasih! Anda telah berlangganan newsletter kami.');
+                    form.reset();
+                } else {
+                    throw new Error(data.message || 'Terjadi kesalahan');
+                }
+            } catch (error) {
+                alert(error.message || 'Maaf, terjadi kesalahan. Silakan coba lagi.');
+            } finally {
+                button.innerHTML = originalText;
+                button.disabled = false;
             }
         });
     });
