@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Brand;
 
-class BrandsTableSeeder extends Seeder
+class BrandsSeeder extends Seeder
 {
     public function run()
     {

@@ -6,7 +6,7 @@ use Illuminate\Database\Seeder;
 use App\Models\CustomerAddress;
 use App\Models\User;
 
-class CustomerAddressesTableSeeder extends Seeder
+class CustomerAddressesSeeder extends Seeder
 {
     public function run()
     {

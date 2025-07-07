@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\{
     HomeController,
     AuthController,
@@ -57,6 +58,14 @@ Route::get('/faq', function () {
     return view('faq');
 })->name('faq');
 
+Route::get('/privacy', function () {
+    return view('privacy');
+})->name('privacy');
+
+Route::get('/terms', function () {
+    return view('terms');
+})->name('terms');
+
 // ============================================================================
 // AUTHENTICATION ROUTES
 // ============================================================================
@@ -90,10 +99,22 @@ Route::prefix('products')->name('products.')->group(function () {
     Route::get('/', [ProductController::class, 'index'])->name('index');
     Route::get('/{product:slug}', [ProductController::class, 'show'])->name('show');
 
-    // Additional product routes (if methods exist)
+    // Tambahkan route untuk AJAX
+    Route::get('/ajax/list', [ProductController::class, 'index'])->name('ajax.list');
     Route::get('/featured', [ProductController::class, 'featured'])->name('featured');
     Route::get('/search', [ProductController::class, 'search'])->name('search');
 });
+
+Route::get('/products-simple', function() {
+    $products = \App\Models\Product::where('status', 'active')
+                                   ->with(['category:id,name,slug', 'brand:id,name,slug'])
+                                   ->paginate(12);
+
+    $categories = \App\Models\Category::where('is_active', true)->get();
+    $brands = \App\Models\Brand::where('is_active', true)->get();
+
+    return view('products.simple', compact('products', 'categories', 'brands'));
+})->name('products.simple');
 
 // ============================================================================
 // CATEGORY ROUTES
@@ -118,7 +139,7 @@ Route::prefix('cart')->name('cart.')->group(function () {
     // Cart utilities
     Route::get('/count', [CartController::class, 'getCount'])->name('count');
     Route::get('/total', [CartController::class, 'getTotal'])->name('total');
-
+    Route::get('/mini', [CartController::class, 'getMini'])->name('mini');
     // Coupon operations (if methods exist)
     Route::post('/apply-coupon', [CartController::class, 'applyCoupon'])->name('apply-coupon');
     Route::delete('/remove-coupon', [CartController::class, 'removeCoupon'])->name('remove-coupon');
@@ -134,6 +155,7 @@ Route::middleware('auth')->prefix('wishlist')->name('wishlist.')->group(function
     Route::delete('/remove/{product}', [WishlistController::class, 'remove'])->name('remove');
     Route::delete('/clear', [WishlistController::class, 'clear'])->name('clear');
     Route::post('/move-to-cart/{product}', [WishlistController::class, 'moveToCart'])->name('move-to-cart');
+    Route::post('/toggle', [WishlistController::class, 'toggle'])->name('toggle');
 });
 
 // ============================================================================
@@ -247,11 +269,31 @@ Route::prefix('reviews')->name('reviews.')->group(function () {
 // ============================================================================
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard.index');
+    Route::get('/', function() {
+        return view('admin.dashboard');
+    })->name('dashboard');
+    Route::get('/dashboard', function() {
+        return view('admin.dashboard');
+    })->name('dashboard.index');
+});
 
-    // Add more admin routes as you create the corresponding methods
-    // in AdminDashboardController or create additional admin controllers
+// ============================================================================
+// BRAND ROUTES
+// ============================================================================
+
+Route::prefix('brands')->name('brands.')->group(function () {
+    Route::get('/', function () {
+        $brands = \App\Models\Brand::active()->withCount('products')->get();
+        return view('brands.index', compact('brands'));
+    })->name('index');
+
+    Route::get('/{brand:slug}', function ($brand) {
+        $products = \App\Models\Product::where('brand_id', $brand->id)
+                                      ->where('status', 'active')
+                                      ->with(['category', 'images'])
+                                      ->paginate(24);
+        return view('brands.show', compact('brand', 'products'));
+    })->name('show');
 });
 
 // ============================================================================
@@ -295,27 +337,3 @@ Route::bind('category', function ($value) {
     return \App\Models\Category::where('slug', $value)->firstOrFail();
 });
 
-/*
-|--------------------------------------------------------------------------
-| Route Information
-|--------------------------------------------------------------------------
-|
-| This file contains only routes that use existing controllers from your
-| project structure. Additional routes can be added as you create more
-| controllers and methods.
-|
-| Existing Controllers Used:
-| - HomeController
-| - AuthController
-| - ProductController
-| - CartController
-| - OrderController
-| - AdminDashboardController
-| - CheckoutController
-| - PaymentController
-| - CategoryController
-| - WishlistController
-| - ReviewController
-| - ProfileController
-|
-*/

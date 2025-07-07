@@ -1,5 +1,3 @@
-// File: app/Helpers/PriceHelper.php
-
 <?php
 
 if (!function_exists('format_currency')) {

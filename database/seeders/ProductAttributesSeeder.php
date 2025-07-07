@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\ProductAttribute;
 
-class ProductAttributesTableSeeder extends Seeder
+class ProductAttributesSeeder extends Seeder
 {
     public function run()
     {

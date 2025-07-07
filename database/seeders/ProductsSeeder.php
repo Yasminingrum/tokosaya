@@ -6,20 +6,36 @@ use Illuminate\Database\Seeder;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Brand;
+use App\Models\User;
 use Illuminate\Support\Str;
 
-class ProductsTableSeeder extends Seeder
+class ProductsSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        $categories = Category::whereNull('parent_id')->get();
-        $brands = Brand::all();
+        // Get valid users (admin/super_admin)
+        $admin = User::whereHas('role', function($query) {
+            $query->whereIn('name', ['admin', 'super_admin']);
+        })->first();
 
-        // Create 100 products
-        for ($i = 1; $i <= 100; $i++) {
+        if (!$admin) {
+            $this->command->error('No admin user found! Please run UsersSeeder first.');
+            return;
+        }
+
+        $categories = Category::where('is_active', true)->get();
+        $brands = Brand::where('is_active', true)->get();
+
+        if ($categories->isEmpty() || $brands->isEmpty()) {
+            $this->command->error('No categories or brands found! Please run CategorySeeder and BrandSeeder first.');
+            return;
+        }
+
+        // Create 30 products
+        for ($i = 1; $i <= 30; $i++) {
             $category = $categories->random();
             $brand = $brands->random();
-            $name = fake()->words(3, true);
+            $name = fake()->words(rand(2, 5), true);
 
             $product = Product::create([
                 'category_id' => $category->id,
@@ -47,7 +63,7 @@ class ProductsTableSeeder extends Seeder
                 'allow_backorder' => rand(0, 1),
                 'meta_title' => $name . ' | TokoSaya',
                 'meta_description' => 'Beli ' . $name . ' dengan harga terbaik di TokoSaya',
-                'created_by' => rand(1, 4) // Random admin/manager user
+                'created_by' => $admin->id,
             ]);
 
             // Update category product count

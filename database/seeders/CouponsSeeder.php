@@ -6,7 +6,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Coupon;
 use Carbon\Carbon;
 
-class CouponsTableSeeder extends Seeder
+class CouponsSeeder extends Seeder
 {
     public function run()
     {

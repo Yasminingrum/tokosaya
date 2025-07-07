@@ -7,7 +7,7 @@ use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
 use App\Models\ShippingRate;
 
-class ShippingRatesTableSeeder extends Seeder
+class ShippingRatesSeeder extends Seeder
 {
     public function run()
     {

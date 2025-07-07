@@ -46,7 +46,7 @@
                 </span>
             @endif
 
-            @if($product->created_at->diffInDays() <= 7)
+            @if($product->created_at && $product->created_at->diffInDays() <= 7)
                 <span class="badge badge-new">Baru</span>
             @endif
 
@@ -103,9 +103,13 @@
     <div class="product-info">
         <!-- Category -->
         <div class="product-category">
-            <a href="{{ route('categories.show', $product->category->slug) }}" class="category-link">
-                {{ $product->category->name }}
-            </a>
+            @if($product->category)
+                <a href="{{ route('categories.show', $product->category->slug) }}" class="category-link">
+                    {{ $product->category->name }}
+                </a>
+            @else
+    <span class="category-link">Tanpa Kategori</span>
+@endif
         </div>
 
         <!-- Product Name -->

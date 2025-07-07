@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Brand;
+use App\Models\User;
 use App\Collections\ProductCollection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -18,39 +21,41 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $cacheKey = 'products_listing_' . md5(serialize($request->all()));
-
-        $data = Cache::remember($cacheKey, 1800, function () use ($request) {
-            // Get all active products
+        try {
+            // Query paling sederhana - TANPA cache, tanpa collection
             $products = Product::where('status', 'active')
-                ->with(['category', 'brand', 'images'])
-                ->get();
+                ->select([
+                    'id', 'name', 'slug', 'price_cents', 'compare_price_cents',
+                    'stock_quantity', 'category_id', 'brand_id', 'created_at'
+                ])
+                ->with([
+                    'category:id,name,slug',
+                    'brand:id,name,slug'
+                ])
+                ->orderBy('created_at', 'desc')
+                ->paginate(12);
 
-            $collection = new ProductCollection($products);
+            // Data minimal untuk view
+            $categories = Category::where('is_active', true)
+                                ->select('id', 'name', 'slug')
+                                ->get();
 
-            // Apply filters using ProductCollection
-            $filtered = $collection->advancedFilter($request->all());
+            $brands = Brand::where('is_active', true)
+                        ->select('id', 'name', 'slug')
+                        ->get();
 
-            // Pagination
-            $paginated = $collection->paginateCollection(
-                $request->get('per_page', 12),
-                $request->get('page', 1)
-            );
+            return view('products.index', compact('products', 'categories', 'brands'));
 
-            return [
-                'products' => $paginated,
-                'categories' => Category::where('is_active', true)->get(),
-                'brands' => Brand::where('is_active', true)->get(),
-                'price_range' => [
-                    'min' => $collection->min('price_cents') / 100,
-                    'max' => $collection->max('price_cents') / 100
-                ],
-                'filters' => $request->all(),
-                'stats' => $collection->quickStats()
-            ];
-        });
+        } catch (\Exception $e) {
+            \Log::error('Product index error: ' . $e->getMessage());
 
-        return view('products.index', $data);
+            // Fallback: return empty view
+            $products = collect()->paginate(12);
+            $categories = collect();
+            $brands = collect();
+
+            return view('products.index', compact('products', 'categories', 'brands'));
+        }
     }
 
     /**
@@ -292,7 +297,7 @@ class ProductController extends Controller
 
         try {
             $data = $request->all();
-            $data['created_by'] = auth()->id();
+            $data['created_by'] = Auth::id();
 
             $product = Product::create($data);
 
@@ -424,7 +429,7 @@ class ProductController extends Controller
 
             // Log stock change
             activity('stock_update')
-                ->causedBy(auth()->user())
+                ->causedBy(Auth::user())
                 ->performedOn($product)
                 ->withProperties([
                     'old_stock' => $oldStock,
@@ -461,7 +466,7 @@ class ProductController extends Controller
 
             // Log status change
             activity('status_change')
-                ->causedBy(auth()->user())
+                ->causedBy(Auth::user())
                 ->performedOn($product)
                 ->withProperties(['new_status' => $newStatus])
                 ->log('Product status changed');
@@ -485,7 +490,7 @@ class ProductController extends Controller
      */
     private function addToRecentlyViewed(Product $product)
     {
-        $key = 'recently_viewed_' . (auth()->id() ?: session()->getId());
+        $key = 'recently_viewed_' . (Auth::id() ?: session()->getId());
         $recentlyViewed = collect(session()->get($key, []));
 
         // Remove if already exists

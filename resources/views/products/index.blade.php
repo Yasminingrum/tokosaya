@@ -510,7 +510,7 @@
                 <!-- Grid View Products -->
                 <template x-if="viewMode !== 'list'">
                     <div class="product-grid" :class="viewMode">
-                        @if(isset($products) && $products->count())
+                        @if(isset($products) && count($products))
                             @foreach($products as $product)
                             <div class="product-item" x-show="!loading">
                                 @include('components.product-card', ['product' => $product])
@@ -523,7 +523,7 @@
                 <!-- List View Products -->
                 <template x-if="viewMode === 'list'">
                     <div class="list-view">
-                        @if(isset($products) && $products->count())
+                        @if(isset($products) && count($products))
                             @foreach($products as $product)
                             <div class="product-item-list" x-show="!loading">
                                 <div class="product-image-list">
@@ -635,7 +635,7 @@
             @endif
 
             <!-- Pagination -->
-            @if(isset($products) && $products->hasPages())
+            @if(isset($products) && method_exists($products, 'hasPages') && $products->hasPages())
             <div class="pagination-wrapper">
                 {{ $products->appends(request()->query())->links() }}
             </div>
@@ -657,7 +657,7 @@
 
 @push('scripts')
 <script>
-    // Main product filtering functionality
+    // Simplified product filtering functionality
     function productFilters() {
         return {
             filters: {
@@ -674,13 +674,11 @@
             loading: false,
             viewMode: 'grid-3',
             showFilters: false,
-            currentPage: 1,
-            canLoadMore: false,
-            displayResults: '0-0 of 0',
+            displayResults: '{{ $products->firstItem() ?? 0 }}-{{ $products->lastItem() ?? 0 }} of {{ $products->total() ?? 0 }}',
 
             init() {
                 this.loadUrlParams();
-                this.applyFilters();
+                this.loading = false; // Set loading selesai saat init
             },
 
             toggleFilters() {
@@ -693,11 +691,7 @@
             },
 
             formatPrice(cents) {
-                return new Intl.NumberFormat('id-ID', {
-                    style: 'currency',
-                    currency: 'IDR',
-                    minimumFractionDigits: 0
-                }).format(cents / 100);
+                return 'Rp ' + new Intl.NumberFormat('id-ID').format(cents / 100);
             },
 
             hasActiveFilters() {
@@ -708,8 +702,7 @@
                        this.filters.priceMax < 10000000 ||
                        this.filters.rating.length > 0 ||
                        this.filters.stock.length > 0 ||
-                       this.filters.onSale ||
-                       this.filters.sortBy !== 'newest';
+                       this.filters.onSale;
             },
 
             clearFilters() {
@@ -728,103 +721,33 @@
             },
 
             applyFilters() {
+                if (this.loading) return; // Prevent multiple requests
+
                 this.loading = true;
-                this.currentPage = 1;
 
                 const params = new URLSearchParams();
 
-                // Add non-empty filters to params
+                // Add filters to params
                 if (this.filters.search) params.append('search', this.filters.search);
-                if (this.filters.categories.length) params.append('categories', this.filters.categories.join(','));
-                if (this.filters.brands.length) params.append('brands', this.filters.brands.join(','));
-                if (this.filters.priceMin > 0) params.append('price_min', this.filters.priceMin);
-                if (this.filters.priceMax < 10000000) params.append('price_max', this.filters.priceMax);
-                if (this.filters.rating.length) params.append('rating', this.filters.rating.join(','));
-                if (this.filters.stock.length) params.append('stock', this.filters.stock.join(','));
-                if (this.filters.onSale) params.append('on_sale', '1');
+                if (this.filters.categories.length) params.append('category_id', this.filters.categories[0]);
+                if (this.filters.brands.length) params.append('brand_id', this.filters.brands[0]);
+                if (this.filters.priceMin > 0) params.append('min_price', this.filters.priceMin / 100);
+                if (this.filters.priceMax < 10000000) params.append('max_price', this.filters.priceMax / 100);
                 if (this.filters.sortBy !== 'newest') params.append('sort', this.filters.sortBy);
 
-                // Update URL without page reload
+                // Simple page reload with new params (lebih reliable)
                 const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-                window.history.pushState({}, '', newUrl);
-
-                // Fetch filtered products
-                fetch(newUrl, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    this.updateProductsDisplay(data);
-                    this.loading = false;
-                })
-                .catch(error => {
-                    console.error('Filter error:', error);
-                    this.loading = false;
-                });
-            },
-
-            loadMore() {
-                if (this.loading || !this.canLoadMore) return;
-
-                this.loading = true;
-                this.currentPage++;
-
-                const params = new URLSearchParams(window.location.search);
-                params.set('page', this.currentPage);
-
-                fetch(window.location.pathname + '?' + params.toString(), {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    this.appendProducts(data);
-                    this.loading = false;
-                })
-                .catch(error => {
-                    console.error('Load more error:', error);
-                    this.loading = false;
-                });
-            },
-
-            updateProductsDisplay(data) {
-                // Update products container with new HTML
-                const productsContainer = document.querySelector('.product-grid, .list-view');
-                if (productsContainer && data.html) {
-                    productsContainer.innerHTML = data.html;
-                }
-
-                // Update pagination info
-                this.displayResults = data.display_results || '0-0 of 0';
-                this.canLoadMore = data.has_more || false;
-            },
-
-            appendProducts(data) {
-                // Append new products to existing container
-                const productsContainer = document.querySelector('.product-grid, .list-view');
-                if (productsContainer && data.html) {
-                    productsContainer.insertAdjacentHTML('beforeend', data.html);
-                }
-
-                this.canLoadMore = data.has_more || false;
+                window.location.href = newUrl;
             },
 
             loadUrlParams() {
                 const params = new URLSearchParams(window.location.search);
 
                 if (params.get('search')) this.filters.search = params.get('search');
-                if (params.get('categories')) this.filters.categories = params.get('categories').split(',');
-                if (params.get('brands')) this.filters.brands = params.get('brands').split(',');
-                if (params.get('price_min')) this.filters.priceMin = parseInt(params.get('price_min'));
-                if (params.get('price_max')) this.filters.priceMax = parseInt(params.get('price_max'));
-                if (params.get('rating')) this.filters.rating = params.get('rating').split(',');
-                if (params.get('stock')) this.filters.stock = params.get('stock').split(',');
-                if (params.get('on_sale')) this.filters.onSale = params.get('on_sale') === '1';
+                if (params.get('category_id')) this.filters.categories = [params.get('category_id')];
+                if (params.get('brand_id')) this.filters.brands = [params.get('brand_id')];
+                if (params.get('min_price')) this.filters.priceMin = parseInt(params.get('min_price')) * 100;
+                if (params.get('max_price')) this.filters.priceMax = parseInt(params.get('max_price')) * 100;
                 if (params.get('sort')) this.filters.sortBy = params.get('sort');
 
                 // Load saved view mode
@@ -834,15 +757,15 @@
         };
     }
 
-    // Global functions for product interactions
-    function addToCart(productId, variantId = null) {
+    // Simplified addToCart function
+    function addToCart(productId) {
         const button = event.target;
         const originalText = button.innerHTML;
 
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Adding...';
 
-        fetch('{{ route("cart.add") }}', {
+        fetch('/cart/add', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -851,21 +774,13 @@
             },
             body: JSON.stringify({
                 product_id: productId,
-                variant_id: variantId,
                 quantity: 1
             })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Update mini cart
-                updateMiniCart();
-
-                // Show success notification
-                showNotification('Product added to cart!', 'success');
-
-                // Update button temporarily
-                button.innerHTML = '<i class="fas fa-check me-2"></i>Added!';
+                button.innerHTML = '<i class="fas fa-check me-1"></i>Added!';
                 button.classList.add('btn-success');
 
                 setTimeout(() => {
@@ -879,18 +794,18 @@
         })
         .catch(error => {
             console.error('Add to cart error:', error);
-            showNotification(error.message || 'Failed to add to cart', 'error');
-
             button.innerHTML = originalText;
             button.disabled = false;
+            alert('Error adding to cart. Please try again.');
         });
     }
 
+    // Simplified addToWishlist function
     function addToWishlist(productId) {
         const button = event.target.closest('button');
         const icon = button.querySelector('i');
 
-        fetch('{{ route("wishlist.toggle") }}', {
+        fetch('/wishlist/toggle', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -904,132 +819,24 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Toggle icon
                 if (data.added) {
                     icon.classList.remove('far');
                     icon.classList.add('fas', 'text-danger');
-                    showNotification('Added to wishlist!', 'success');
                 } else {
                     icon.classList.remove('fas', 'text-danger');
                     icon.classList.add('far');
-                    showNotification('Removed from wishlist', 'info');
                 }
-            } else {
-                throw new Error(data.message || 'Failed to update wishlist');
             }
         })
         .catch(error => {
             console.error('Wishlist error:', error);
-            showNotification(error.message || 'Please login to use wishlist', 'error');
+            alert('Please login to use wishlist');
         });
     }
 
-    function updateMiniCart() {
-        fetch('{{ route("cart.mini") }}', {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            const miniCartContainer = document.getElementById('mini-cart-container');
-            if (miniCartContainer && data.html) {
-                miniCartContainer.innerHTML = data.html;
-            }
-
-            // Update cart count in header
-            const cartCountElements = document.querySelectorAll('.cart-count');
-            cartCountElements.forEach(element => {
-                element.textContent = data.count || 0;
-            });
-        })
-        .catch(error => {
-            console.error('Mini cart update error:', error);
-        });
-    }
-
-    function showNotification(message, type = 'info') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
-        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-
-        notification.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-
-        document.body.appendChild(notification);
-
-        // Auto remove after 4 seconds
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, 4000);
-    }
-
-    // Initialize on page load
+    // Initialize when page loads
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize tooltips
-        const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        tooltips.forEach(tooltip => {
-            new bootstrap.Tooltip(tooltip);
-        });
-
-        // Initialize price range sliders
-        const priceSliders = document.querySelectorAll('.price-range-slider input[type="range"]');
-        priceSliders.forEach(slider => {
-            slider.addEventListener('input', function() {
-                const container = this.closest('.price-range-slider');
-                const minSlider = container.querySelector('input[type="range"]:first-child');
-                const maxSlider = container.querySelector('input[type="range"]:last-child');
-
-                // Ensure min doesn't exceed max
-                if (minSlider && maxSlider) {
-                    if (parseInt(minSlider.value) > parseInt(maxSlider.value)) {
-                        if (this === minSlider) {
-                            maxSlider.value = minSlider.value;
-                        } else {
-                            minSlider.value = maxSlider.value;
-                        }
-                    }
-                }
-            });
-        });
+        console.log('Products page loaded successfully');
     });
-
-    // Handle browser back/forward buttons
-    window.addEventListener('popstate', function(e) {
-        // Reload page to reflect URL changes
-        window.location.reload();
-    });
-
-    // Infinite scroll implementation (alternative to load more button)
-    function initInfiniteScroll() {
-        let loading = false;
-
-        window.addEventListener('scroll', function() {
-            if (loading) return;
-
-            const scrollPosition = window.innerHeight + window.scrollY;
-            const documentHeight = document.documentElement.offsetHeight;
-
-            // Trigger when 200px from bottom
-            if (scrollPosition >= documentHeight - 200) {
-                const loadMoreButton = document.querySelector('.load-more-btn');
-                if (loadMoreButton && !loadMoreButton.disabled) {
-                    loading = true;
-                    loadMoreButton.click();
-
-                    setTimeout(() => {
-                        loading = false;
-                    }, 1000);
-                }
-            }
-        });
-    }
-
 </script>
 @endpush

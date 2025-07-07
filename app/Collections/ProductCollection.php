@@ -23,10 +23,11 @@ class ProductCollection extends Collection
     public function inPriceRange($minPrice = null, $maxPrice = null)
     {
         return $this->filter(function ($product) use ($minPrice, $maxPrice) {
-            if ($minPrice !== null && $product->price < $minPrice) {
+            $price = $product->price_cents / 100; // Convert to actual price
+            if ($minPrice !== null && $price < $minPrice) {
                 return false;
             }
-            if ($maxPrice !== null && $product->price > $maxPrice) {
+            if ($maxPrice !== null && $price > $maxPrice) {
                 return false;
             }
             return true;
@@ -39,7 +40,7 @@ class ProductCollection extends Collection
     public function expensive()
     {
         return $this->filter(function ($product) {
-            return $product->price > 100000;
+            return $product->price_cents > 10000000; // 100,000 * 100 cents
         });
     }
 
@@ -49,7 +50,7 @@ class ProductCollection extends Collection
     public function affordable()
     {
         return $this->filter(function ($product) {
-            return $product->price <= 100000;
+            return $product->price_cents <= 10000000; // 100,000 * 100 cents
         });
     }
 
@@ -59,17 +60,14 @@ class ProductCollection extends Collection
     public function inStock()
     {
         return $this->filter(function ($product) {
-            return $product->stock > 0;
+            return $product->stock_quantity > 0;
         });
     }
 
-    /**
-     * Get products that are out of stock
-     */
     public function outOfStock()
     {
         return $this->filter(function ($product) {
-            return $product->stock == 0;
+            return $product->stock_quantity == 0;
         });
     }
 

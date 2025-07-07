@@ -1,8 +1,8 @@
 @php
     $cart = app('App\Services\CartService');
-    $cartItems = $cart->getCartItems();
-    $cartTotal = $cart->getCartTotal();
-    $cartCount = $cart->getCartItemCount();
+    $cartItems = $cart->getItems();
+    $cartTotal = $cart->getTotal();
+    $cartCount = $cart->getItemCount();
 @endphp
 
 <div class="mini-cart-dropdown" x-data="miniCart()">

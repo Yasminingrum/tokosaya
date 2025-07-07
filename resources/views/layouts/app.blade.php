@@ -51,7 +51,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css">
 
     <!-- Custom CSS -->
-    @vite(['resources/css/app.scss'])
+    @vite(['resources/css/app.css'])
 
     <!-- Additional CSS -->
     @stack('styles')
@@ -636,8 +636,8 @@
         document.addEventListener('alpine:init', () => {
             // Cart Store
             Alpine.store('cart', {
-                count: {{ app('App\Services\CartService')->getCartItemCount() }},
-                total: {{ app('App\Services\CartService')->getCartTotal() }},
+                count: {{ app('App\Services\CartService')->getItemCount() }},
+                total: {{ app('App\Services\CartService')->getTotal() }},
 
                 updateCount(count) {
                     this.count = count;

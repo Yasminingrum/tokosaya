@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\ShippingMethod;
 
-class ShippingMethodsTableSeeder extends Seeder
+class ShippingMethodsSeeder extends Seeder
 {
     public function run()
     {

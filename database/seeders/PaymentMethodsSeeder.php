@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\PaymentMethod;
 
-class PaymentMethodsTableSeeder extends Seeder
+class PaymentMethodsSeeder extends Seeder
 {
     public function run()
     {

@@ -6,7 +6,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Product;
 use App\Models\ProductImage;
 
-class ProductImagesTableSeeder extends Seeder
+class ProductImagesSeeder extends Seeder
 {
     public function run()
     {

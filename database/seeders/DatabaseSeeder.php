@@ -9,22 +9,22 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            RolesTableSeeder::class,
-            UsersTableSeeder::class,
-            CustomerAddressesTableSeeder::class,
-            CategoriesTableSeeder::class,
-            BrandsTableSeeder::class,
-            ProductAttributesTableSeeder::class,
-            ProductsTableSeeder::class,
-            ProductImagesTableSeeder::class,
-            ProductAttributeValuesTableSeeder::class,
-            PaymentMethodsTableSeeder::class,
-            ShippingMethodsTableSeeder::class,
-            ShippingZonesTableSeeder::class,
-            ShippingRatesTableSeeder::class,
-            CouponsTableSeeder::class,
-            OrdersTableSeeder::class,
-            ProductReviewsTableSeeder::class,
+            RolesSeeder::class,
+            UsersSeeder::class,
+            CustomerAddressesSeeder::class,
+            CategoriesSeeder::class,
+            BrandsSeeder::class,
+            ProductAttributesSeeder::class,
+            ProductsSeeder::class,
+            ProductImagesSeeder::class,
+            ProductAttributeValuesSeeder::class,
+            PaymentMethodsSeeder::class,
+            ShippingMethodsSeeder::class,
+            ShippingZonesSeeder::class,
+            ShippingRatesSeeder::class,
+            CouponsSeeder::class,
+            OrdersSeeder::class,
+            ProductReviewsSeeder::class,
         ]);
 
         // Update category product counts

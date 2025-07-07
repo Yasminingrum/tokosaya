@@ -7,7 +7,7 @@ use App\Models\Product;
 use App\Models\ProductAttribute;
 use App\Models\ProductAttributeValue;
 
-class ProductAttributeValuesTableSeeder extends Seeder
+class ProductAttributeValuesSeeder extends Seeder
 {
     public function run()
     {
