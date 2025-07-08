@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Routing\Controller;
 use App\Http\Requests\Profile\UpdateProfileRequest;
 use App\Http\Requests\Profile\ChangePasswordRequest;
 use App\Models\User;
@@ -11,6 +11,7 @@ use App\Models\CustomerAddress;
 use App\Models\ProductReview;
 use App\Models\Notification;
 use App\Models\Wishlist;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -37,7 +38,7 @@ class ProfileController extends Controller
      *
      * @return \Illuminate\View\View
      */
-    public function index()
+public function index()
     {
         $user = Auth::user();
 
@@ -59,12 +60,27 @@ class ProfileController extends Controller
                                                  ->count()
         ];
 
-        // Recent orders
+        // ✅ CREATE ALL REQUIRED VARIABLES
+        $recentOrdersCount = $stats['total_orders'];
+        $wishlistCount = $stats['wishlist_count'];
+        $unreadNotifications = $stats['unread_notifications'];
+
+        // Calculate additional stats
+        $averageRating = ProductReview::where('user_id', $user->id)->avg('rating') ?? 0;
+        $averageRating = round($averageRating, 1);
+        $totalReviews = $stats['reviews_count'];
+        $loyaltyPoints = $this->calculateLoyaltyPoints($stats['total_spent'], $stats['completed_orders']);
+
+        // Recent orders with status colors
         $recentOrders = Order::where('user_id', $user->id)
                             ->with(['items.product:id,name,slug'])
                             ->orderBy('created_at', 'desc')
                             ->limit(5)
-                            ->get();
+                            ->get()
+                            ->map(function($order) {
+                                $order->status_color = $this->getStatusColor($order->status);
+                                return $order;
+                            });
 
         // Recent reviews
         $recentReviews = ProductReview::where('user_id', $user->id)
@@ -79,12 +95,119 @@ class ProfileController extends Controller
                                           ->limit(5)
                                           ->get();
 
+        // ✅ CREATE RECENT ACTIVITY
+        $recentActivity = collect([]);
+
+        // Add recent orders to activity
+        foreach($recentOrders->take(3) as $order) {
+            $recentActivity->push((object)[
+                'type_color' => $this->getStatusColor($order->status),
+                'icon' => 'shopping-bag',
+                'title' => 'Order ' . ucfirst($order->status),
+                'description' => "Order #{$order->order_number} - " . $this->formatCurrency($order->total_cents),
+                'created_at' => $order->created_at,
+                'action_url' => route('orders.show', $order),
+                'action_text' => 'View Order'
+            ]);
+        }
+
+        // Add recent reviews to activity
+        foreach($recentReviews as $review) {
+            $recentActivity->push((object)[
+                'type_color' => 'warning',
+                'icon' => 'star',
+                'title' => 'Review Posted',
+                'description' => "You rated {$review->product->name} {$review->rating} stars",
+                'created_at' => $review->created_at,
+                'action_url' => route('products.show', $review->product),
+                'action_text' => 'View Product'
+            ]);
+        }
+
+        // Add profile update activity
+        if ($user->updated_at->diffInDays() <= 30) {
+            $recentActivity->push((object)[
+                'type_color' => 'info',
+                'icon' => 'user-edit',
+                'title' => 'Profile Updated',
+                'description' => 'You updated your profile information',
+                'created_at' => $user->updated_at,
+                'action_url' => route('profile.edit'),
+                'action_text' => 'Edit Profile'
+            ]);
+        }
+
+        // Add welcome activity for new users
+        if ($user->created_at->diffInDays() <= 7) {
+            $recentActivity->push((object)[
+                'type_color' => 'success',
+                'icon' => 'user-plus',
+                'title' => 'Welcome to TokoSaya!',
+                'description' => 'Your account has been created successfully',
+                'created_at' => $user->created_at,
+                'action_url' => route('products.index'),
+                'action_text' => 'Start Shopping'
+            ]);
+        }
+
+        // Sort activity by date and limit
+        $recentActivity = $recentActivity->sortByDesc('created_at')->take(5)->values();
+
+        // ✅ CREATE RECOMMENDED PRODUCTS
+        $recommendedProducts = collect([]);
+
+        try {
+            // Try to get recommendations based on user's order history
+            $userCategories = Order::where('user_id', $user->id)
+                ->join('order_items', 'orders.id', '=', 'order_items.order_id')
+                ->join('products', 'order_items.product_id', '=', 'products.id')
+                ->where('orders.payment_status', 'paid')
+                ->pluck('products.category_id')
+                ->unique()
+                ->take(3);
+
+            if ($userCategories->isNotEmpty()) {
+                $recommendedProducts = Product::whereIn('category_id', $userCategories)
+                    ->where('status', 'active')
+                    ->where('stock_quantity', '>', 0)
+                    ->with(['category:id,name', 'images'])
+                    ->inRandomOrder()
+                    ->limit(8)
+                    ->get();
+            } else {
+                // Fallback: get featured products
+                $recommendedProducts = Product::where('status', 'active')
+                    ->where('stock_quantity', '>', 0)
+                    ->where('featured', true)
+                    ->with(['category:id,name', 'images'])
+                    ->orderBy('sale_count', 'desc')
+                    ->limit(8)
+                    ->get();
+            }
+
+            // Add primary image to each product
+            $recommendedProducts = $recommendedProducts->map(function($product) {
+                $product->primary_image = $product->images->where('is_primary', true)->first()?->image_url
+                    ?? $product->images->first()?->image_url
+                    ?? asset('images/no-image.jpg');
+                return $product;
+            });
+
+        } catch (\Exception $e) {
+            // If anything fails, just use empty collection
+            $recommendedProducts = collect([]);
+        }
+
         // Calculate customer tier
         $customerTier = $this->calculateCustomerTier($stats['total_spent'], $stats['completed_orders']);
+        $currentTier = $customerTier;
 
         return view('profile.index', compact(
             'user', 'stats', 'recentOrders', 'recentReviews',
-            'recentNotifications', 'customerTier'
+            'recentNotifications', 'customerTier', 'recentOrdersCount',
+            'wishlistCount', 'unreadNotifications', 'averageRating',
+            'totalReviews', 'loyaltyPoints', 'currentTier', 'recentActivity',
+            'recommendedProducts'
         ));
     }
 
@@ -93,6 +216,88 @@ class ProfileController extends Controller
      *
      * @return \Illuminate\View\View
      */
+
+
+    /**
+     * Get status color for order badges
+     *
+     * @param string $status
+     * @return string
+     */
+    private function getStatusColor($status)
+    {
+        $colors = [
+            'pending' => 'warning',
+            'confirmed' => 'info',
+            'processing' => 'primary',
+            'shipped' => 'info',
+            'delivered' => 'success',
+            'cancelled' => 'danger',
+            'refunded' => 'secondary'
+        ];
+
+        return $colors[$status] ?? 'secondary';
+    }
+
+    /**
+     * Format currency for display
+     *
+     * @param int $cents
+     * @return string
+     */
+    private function formatCurrency($cents)
+    {
+        return 'Rp ' . number_format($cents / 100, 0, ',', '.');
+    }
+
+/**
+ * Upload avatar image
+ *
+ * @param \Illuminate\Http\Request $request
+ * @return \Illuminate\Http\JsonResponse
+ */
+    public function uploadAvatar(Request $request)
+    {
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg|max:2048'
+        ]);
+
+        $user = Auth::user();
+
+        try {
+            DB::beginTransaction();
+
+            // Delete old avatar if exists
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            $avatar = $request->file('avatar');
+            $filename = 'avatar_' . $user->id . '_' . time() . '.' . $avatar->getClientOriginalExtension();
+            $path = $avatar->storeAs('avatars', $filename, 'public');
+
+            // Update user avatar
+            User::where('id', $user->id)->update(['avatar' => $path]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Avatar updated successfully',
+                'avatar_url' => Storage::url($path)
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update avatar: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     public function edit()
     {
         $user = Auth::user();

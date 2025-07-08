@@ -102,8 +102,8 @@
                                class="nav-item {{ request()->routeIs('profile.notifications') ? 'active' : '' }}">
                                 <i class="fas fa-bell"></i>
                                 <span>Notifications</span>
-                                @if($unreadNotifications > 0)
-                                    <span class="badge bg-primary">{{ $unreadNotifications }}</span>
+                                @if(($stats['unread_notifications'] ?? 0) > 0)
+                                    <span class="badge bg-primary">{{ $stats['unread_notifications'] ?? 0 }}</span>
                                 @endif
                             </a>
                             <a href="{{ route('profile.security') }}"
@@ -146,7 +146,7 @@
                                 <i class="fas fa-shopping-cart"></i>
                             </div>
                             <div class="stat-content">
-                                <h5 class="stat-value">{{ $recentOrdersCount }}</h5>
+                                <h5 class="stat-value">{{ $stats['total_orders'] ?? 0 }}</h5>
                                 <p class="stat-label">Recent Orders</p>
                                 <small class="stat-change text-success">
                                     <i class="fas fa-arrow-up"></i> +12% this month
@@ -160,7 +160,7 @@
                                 <i class="fas fa-heart"></i>
                             </div>
                             <div class="stat-content">
-                                <h5 class="stat-value">{{ $wishlistCount }}</h5>
+                                <h5 class="stat-value">{{ $wishlistCount ?? $stats['wishlist_count'] ?? 0 }}</h5>
                                 <p class="stat-label">Saved Items</p>
                                 <small class="stat-change text-muted">
                                     In your wishlist
@@ -174,11 +174,9 @@
                                 <i class="fas fa-star"></i>
                             </div>
                             <div class="stat-content">
-                                <h5 class="stat-value">{{ $averageRating }}</h5>
+                                <h5 class="stat-value">{{ $averageRating ?? 0 }}</h5>
                                 <p class="stat-label">Avg. Rating Given</p>
-                                <small class="stat-change text-muted">
-                                    {{ $totalReviews }} reviews
-                                </small>
+                                <small class="stat-change text-muted">{{ $totalReviews ?? 0 }} reviews</small>
                             </div>
                         </div>
                     </div>
@@ -390,7 +388,7 @@
                             </div>
                             <div class="card-body">
                                 <div class="activity-timeline">
-                                    @foreach($recentActivity as $activity)
+                                    @foreach(($recentActivity ?? collect([])) as $activity)
                                     <div class="activity-item">
                                         <div class="activity-icon bg-{{ $activity->type_color }}">
                                             <i class="fas fa-{{ $activity->icon }}"></i>
@@ -410,7 +408,7 @@
                                     </div>
                                     @endforeach
 
-                                    @if($recentActivity->isEmpty())
+                                    @if(($recentActivity ?? collect([]))->isEmpty())
                                     <div class="empty-activity text-center py-4">
                                         <i class="fas fa-clock fa-2x text-muted mb-3"></i>
                                         <p class="text-muted">No recent activity</p>
@@ -423,7 +421,7 @@
                 </div>
 
                 <!-- Recommendations -->
-                @if($recommendedProducts->count() > 0)
+                @if(($recommendedProducts ?? collect([]))->count() > 0)
                 <div class="row mt-4">
                     <div class="col-12">
                         <div class="card shadow-sm">

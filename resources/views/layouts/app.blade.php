@@ -378,25 +378,35 @@
                         </li>
 
                         @auth
-                            <!-- Wishlist -->
+                            @if(auth()->user()->isCustomer())
+                                <!-- Wishlist -->
+                                <li class="nav-item">
+                                    <a class="nav-link position-relative" href="{{ route('wishlist.index') }}">
+                                        <i class="fas fa-heart"></i>
+                                        <span class="cart-badge" x-text="$store.wishlist.count" x-show="$store.wishlist.count > 0"></span>
+                                    </a>
+                                </li>
+
+                                <!-- Shopping Cart -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-shopping-cart"></i>
+                                        <span class="cart-badge" x-text="$store.cart.count" x-show="$store.cart.count > 0"></span>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end p-0" style="width: 300px;">
+                                        @include('cart.mini-cart')
+                                    </div>
+                                </li>
+                            @endif
+                        @else
+                            <!-- Guest users can see cart -->
                             <li class="nav-item">
-                                <a class="nav-link position-relative" href="{{ route('wishlist.index') }}">
-                                    <i class="fas fa-heart"></i>
-                                    <span class="cart-badge" x-text="$store.wishlist.count" x-show="$store.wishlist.count > 0"></span>
+                                <a class="nav-link position-relative" href="{{ route('cart.index') }}">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    <span class="cart-badge">0</span>
                                 </a>
                             </li>
                         @endauth
-
-                        <!-- Shopping Cart -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-shopping-cart"></i>
-                                <span class="cart-badge" x-text="$store.cart.count" x-show="$store.cart.count > 0"></span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end p-0" style="width: 300px;">
-                                @include('cart.mini-cart')
-                            </div>
-                        </li>
 
                         @auth
                             <!-- User Menu -->
@@ -409,16 +419,18 @@
                                     <li><a class="dropdown-item" href="{{ route('profile.index') }}">
                                         <i class="fas fa-user me-2"></i>Profil Saya
                                     </a></li>
-                                    <li><a class="dropdown-item" href="{{ route('orders.index') }}">
-                                        <i class="fas fa-shopping-bag me-2"></i>Pesanan Saya
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{{ route('profile.addresses.index') }}">
-                                        <i class="fas fa-map-marker-alt me-2"></i>Alamat
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="{{ route('wishlist.index') }}">
-                                        <i class="fas fa-heart me-2"></i>Wishlist
-                                    </a></li>
-                                    @if(Auth::user()->role->name === 'admin' || Auth::user()->role->name === 'super_admin')
+                                    @if(auth()->user()->isCustomer())
+                                        <li><a class="dropdown-item" href="{{ route('orders.index') }}">
+                                            <i class="fas fa-shopping-bag me-2"></i>Pesanan Saya
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{{ route('profile.addresses.index') }}">
+                                            <i class="fas fa-map-marker-alt me-2"></i>Alamat
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{{ route('wishlist.index') }}">
+                                            <i class="fas fa-heart me-2"></i>Wishlist
+                                        </a></li>
+                                    @endif
+                                    @if(Auth::user()->isAdmin())
                                         <li><hr class="dropdown-divider"></li>
                                         <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}">
                                             <i class="fas fa-tachometer-alt me-2"></i>Admin Panel

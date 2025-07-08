@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Routing\Controller;
 use App\Http\Requests\Order\CreateOrderRequest;
 use App\Models\Order;
 use App\Models\ShippingMethod;

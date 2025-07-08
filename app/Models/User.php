@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
@@ -19,7 +20,7 @@ class User extends Authenticatable
         'role_id',
         'username',
         'email',
-        'password', // or 'password_hash' if using custom column
+        'password',
         'first_name',
         'last_name',
         'phone',
@@ -119,6 +120,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Relationship: User has one active Shopping Cart (singular)
+     */
+    public function shoppingCart()
+    {
+        return $this->hasOne(ShoppingCart::class)->latest();
+    }
+
+    /**
      * Relationship: User has many Reviews
      */
     public function reviews()
@@ -139,6 +148,9 @@ class User extends Authenticatable
      */
     public function hasRole($roleName)
     {
+        if (is_array($roleName)) {
+            return $this->role && in_array($this->role->name, $roleName);
+        }
         return $this->role && $this->role->name === $roleName;
     }
 
@@ -147,7 +159,7 @@ class User extends Authenticatable
      */
     public function isAdmin()
     {
-        return $this->hasRole('admin') || $this->hasRole('super_admin');
+        return $this->hasRole(['admin', 'super_admin']);
     }
 
     /**
@@ -156,6 +168,14 @@ class User extends Authenticatable
     public function isCustomer()
     {
         return $this->hasRole('customer');
+    }
+
+    /**
+     * Helper method: Check if user should see shopping cart
+     */
+    public function canUseCart()
+    {
+        return $this->isCustomer();
     }
 
     /**

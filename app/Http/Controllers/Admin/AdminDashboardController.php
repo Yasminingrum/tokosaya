@@ -16,8 +16,7 @@ use Carbon\Carbon;
 class AdminDashboardController extends Controller
 {
     public function __construct()
-    {
-        parent::__construct();
+    {;
         $this->middleware('auth');
         $this->middleware('role:admin,super_admin,staff');
     }

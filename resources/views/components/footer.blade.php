@@ -1,34 +1,27 @@
-<!-- Footer -->
-<footer class="bg-gray-900 text-white mt-auto">
-    <!-- Newsletter Section -->
-    <div class="bg-gradient-to-r from-blue-600 to-purple-700 py-12">
-        <div class="container mx-auto px-4">
-            <div class="max-w-4xl mx-auto text-center">
-                <h3 class="text-2xl lg:text-3xl font-bold mb-4">
-                    Dapatkan Penawaran Terbaik
-                </h3>
-                <p class="text-lg mb-8 opacity-90">
-                    Berlangganan newsletter untuk mendapatkan info produk terbaru, diskon eksklusif, dan penawaran menarik lainnya
-                </p>
+<!-- Modern Minimalist Footer -->
+<footer class="bg-gray-900 text-white">
+    <!-- Newsletter Section - Simplified -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 py-16">
+        <div class="container mx-auto px-4 text-center">
+            <div class="max-w-2xl mx-auto space-y-6" data-aos="fade-up">
+                <h2 class="text-3xl font-bold">Dapatkan Update Terbaru</h2>
+                <p class="text-blue-100">Berlangganan untuk penawaran eksklusif dan produk terbaru</p>
 
-                <form action="{{ route('newsletter.subscribe') }}" method="POST"
-                      class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto"
+                <form class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
                       x-data="{ email: '', loading: false }"
                       @submit.prevent="subscribeNewsletter()">
                     @csrf
                     <input type="email"
-                           name="email"
                            x-model="email"
-                           placeholder="Masukkan email Anda"
-                           class="flex-1 px-6 py-3 rounded-lg text-gray-900 focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+                           placeholder="Email Anda"
+                           class="flex-1 px-6 py-3 rounded-full text-gray-900 focus:ring-2 focus:ring-white focus:outline-none"
                            required>
                     <button type="submit"
                             :disabled="loading"
-                            class="bg-yellow-400 text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-yellow-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            class="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50">
                         <span x-show="!loading">Berlangganan</span>
-                        <span x-show="loading" class="flex items-center">
-                            <i class="fas fa-spinner fa-spin mr-2"></i>
-                            Memproses...
+                        <span x-show="loading">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>Memproses...
                         </span>
                     </button>
                 </form>
@@ -36,149 +29,79 @@
         </div>
     </div>
 
-    <!-- Main Footer Content -->
+    <!-- Main Footer Content - Clean Layout -->
     <div class="py-16">
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+
                 <!-- Company Info -->
                 <div class="lg:col-span-1">
                     <div class="flex items-center space-x-3 mb-6">
-                        <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-700 rounded-lg flex items-center justify-center">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
                             <i class="fas fa-store text-white text-xl"></i>
                         </div>
                         <div>
-                            <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                                TokoSaya
-                            </h2>
+                            <h2 class="text-xl font-bold">TokoSaya</h2>
                             <p class="text-sm text-gray-400">Belanja Mudah & Terpercaya</p>
                         </div>
                     </div>
 
                     <p class="text-gray-300 mb-6 leading-relaxed">
-                        TokoSaya adalah platform e-commerce terpercaya yang menyediakan jutaan produk berkualitas dengan harga terbaik.
-                        Kami berkomitmen memberikan pengalaman berbelanja online yang aman, mudah, dan menyenangkan.
+                        Platform e-commerce modern yang menghadirkan pengalaman berbelanja online terbaik dengan produk berkualitas dan pelayanan terpercaya.
                     </p>
 
-                    <!-- Social Media -->
+                    <!-- Social Media - Minimalist -->
                     <div class="flex space-x-4">
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors group">
-                            <i class="fab fa-facebook-f text-gray-400 group-hover:text-white"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-pink-600 transition-colors group">
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors group">
                             <i class="fab fa-instagram text-gray-400 group-hover:text-white"></i>
                         </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-blue-400 transition-colors group">
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors group">
+                            <i class="fab fa-facebook text-gray-400 group-hover:text-white"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-400 transition-colors group">
                             <i class="fab fa-twitter text-gray-400 group-hover:text-white"></i>
                         </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-red-600 transition-colors group">
+                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors group">
                             <i class="fab fa-youtube text-gray-400 group-hover:text-white"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-green-600 transition-colors group">
-                            <i class="fab fa-whatsapp text-gray-400 group-hover:text-white"></i>
                         </a>
                     </div>
                 </div>
 
                 <!-- Quick Links -->
                 <div>
-                    <h3 class="text-lg font-semibold mb-6 text-white">Link Cepat</h3>
+                    <h3 class="text-lg font-semibold mb-6 text-white">Navigasi</h3>
                     <ul class="space-y-3">
-                        <li>
-                            <a href="{{ route('home') }}" class="text-gray-300 hover:text-white transition-colors flex items-center group">
-                                <i class="fas fa-chevron-right text-xs text-blue-400 mr-2 group-hover:translate-x-1 transition-transform"></i>
-                                Beranda
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('products.index') }}" class="text-gray-300 hover:text-white transition-colors flex items-center group">
-                                <i class="fas fa-chevron-right text-xs text-blue-400 mr-2 group-hover:translate-x-1 transition-transform"></i>
-                                Semua Produk
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('categories.index') }}" class="text-gray-300 hover:text-white transition-colors flex items-center group">
-                                <i class="fas fa-chevron-right text-xs text-blue-400 mr-2 group-hover:translate-x-1 transition-transform"></i>
-                                Kategori
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('brands.index') }}" class="text-gray-300 hover:text-white transition-colors flex items-center group">
-                                <i class="fas fa-chevron-right text-xs text-blue-400 mr-2 group-hover:translate-x-1 transition-transform"></i>
-                                Brand Terpercaya
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('products.index', ['featured' => 1]) }}" class="text-gray-300 hover:text-white transition-colors flex items-center group">
-                                <i class="fas fa-chevron-right text-xs text-blue-400 mr-2 group-hover:translate-x-1 transition-transform"></i>
-                                Produk Unggulan
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('products.index', ['sale' => 1]) }}" class="text-gray-300 hover:text-white transition-colors flex items-center group">
-                                <i class="fas fa-chevron-right text-xs text-blue-400 mr-2 group-hover:translate-x-1 transition-transform"></i>
-                                Promo & Diskon
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('compare.index') }}" class="text-gray-300 hover:text-white transition-colors flex items-center group">
-                                <i class="fas fa-chevron-right text-xs text-blue-400 mr-2 group-hover:translate-x-1 transition-transform"></i>
-                                Bandingkan Produk
-                            </a>
-                        </li>
+                        <li><a href="{{ route('home') }}" class="footer-link">Beranda</a></li>
+                        <li><a href="{{ route('products.index') }}" class="footer-link">Semua Produk</a></li>
+                        <li><a href="{{ route('categories.index') }}" class="footer-link">Kategori</a></li>
+                        <li><a href="{{ route('brands.index') }}" class="footer-link">Brand</a></li>
+                        <li><a href="{{ route('products.index', ['featured' => 1]) }}" class="footer-link">Produk Unggulan</a></li>
+                        <li><a href="{{ route('products.index', ['sale' => 1]) }}" class="footer-link">Promo & Diskon</a></li>
                     </ul>
                 </div>
 
                 <!-- Customer Service -->
                 <div>
-                    <h3 class="text-lg font-semibold mb-6 text-white">Layanan Pelanggan</h3>
+                    <h3 class="text-lg font-semibold mb-6 text-white">Bantuan</h3>
                     <ul class="space-y-3">
-                        <li>
-                            <a href="{{ route('contact') }}" class="text-gray-300 hover:text-white transition-colors flex items-center group">
-                                <i class="fas fa-chevron-right text-xs text-blue-400 mr-2 group-hover:translate-x-1 transition-transform"></i>
-                                Hubungi Kami
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('faq') }}" class="text-gray-300 hover:text-white transition-colors flex items-center group">
-                                <i class="fas fa-chevron-right text-xs text-blue-400 mr-2 group-hover:translate-x-1 transition-transform"></i>
-                                FAQ
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('shipping-info') }}" class="text-gray-300 hover:text-white transition-colors flex items-center group">
-                                <i class="fas fa-chevron-right text-xs text-blue-400 mr-2 group-hover:translate-x-1 transition-transform"></i>
-                                Info Pengiriman
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('return-policy') }}" class="text-gray-300 hover:text-white transition-colors flex items-center group">
-                                <i class="fas fa-chevron-right text-xs text-blue-400 mr-2 group-hover:translate-x-1 transition-transform"></i>
-                                Kebijakan Return
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('warranty') }}" class="text-gray-300 hover:text-white transition-colors flex items-center group">
-                                <i class="fas fa-chevron-right text-xs text-blue-400 mr-2 group-hover:translate-x-1 transition-transform"></i>
-                                Garansi Produk
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('track-order') }}" class="text-gray-300 hover:text-white transition-colors flex items-center group">
-                                <i class="fas fa-chevron-right text-xs text-blue-400 mr-2 group-hover:translate-x-1 transition-transform"></i>
-                                Lacak Pesanan
-                            </a>
-                        </li>
+                        <li><a href="{{ route('contact') }}" class="footer-link">Hubungi Kami</a></li>
+                        <li><a href="{{ route('faq') }}" class="footer-link">FAQ</a></li>
+                        <li><a href="#" class="footer-link">Panduan Belanja</a></li>
+                        <li><a href="#" class="footer-link">Kebijakan Return</a></li>
+                        <li><a href="#" class="footer-link">Garansi Produk</a></li>
+                        <li><a href="#" class="footer-link">Lacak Pesanan</a></li>
                     </ul>
                 </div>
 
                 <!-- Contact Info -->
                 <div>
-                    <h3 class="text-lg font-semibold mb-6 text-white">Kontak Kami</h3>
+                    <h3 class="text-lg font-semibold mb-6 text-white">Kontak</h3>
                     <div class="space-y-4">
-                        <!-- Phone -->
+
+                        <!-- Customer Service -->
                         <div class="flex items-start space-x-3">
                             <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                                <i class="fas fa-phone text-white text-sm"></i>
+                                <i class="fas fa-headset text-white text-sm"></i>
                             </div>
                             <div>
                                 <p class="text-gray-300 text-sm">Customer Service</p>
@@ -203,21 +126,6 @@
                             </div>
                         </div>
 
-                        <!-- Address -->
-                        <div class="flex items-start space-x-3">
-                            <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                                <i class="fas fa-map-marker-alt text-white text-sm"></i>
-                            </div>
-                            <div>
-                                <p class="text-gray-300 text-sm">Alamat Kantor</p>
-                                <address class="text-white not-italic leading-relaxed">
-                                    Jl. Sudirman No. 123<br>
-                                    Jakarta Pusat 10220<br>
-                                    Indonesia
-                                </address>
-                            </div>
-                        </div>
-
                         <!-- WhatsApp -->
                         <div class="flex items-start space-x-3">
                             <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
@@ -231,47 +139,27 @@
                                 <p class="text-xs text-gray-400">Chat langsung</p>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Payment Methods & Shipping Partners -->
+    <!-- Payment & Shipping - Compact -->
     <div class="border-t border-gray-800 py-8">
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
                 <!-- Payment Methods -->
                 <div>
                     <h4 class="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">Metode Pembayaran</h4>
                     <div class="flex flex-wrap gap-3">
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/payments/visa.png') }}" alt="Visa" class="h-6 object-contain">
+                        @foreach(['visa', 'mastercard', 'bca', 'mandiri', 'bni', 'gopay', 'ovo', 'dana'] as $payment)
+                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-12 h-8">
+                            <img src="{{ asset("images/payments/{$payment}.png") }}" alt="{{ ucfirst($payment) }}" class="h-4 object-contain">
                         </div>
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/payments/mastercard.png') }}" alt="Mastercard" class="h-6 object-contain">
-                        </div>
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/payments/bca.png') }}" alt="BCA" class="h-6 object-contain">
-                        </div>
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/payments/mandiri.png') }}" alt="Mandiri" class="h-6 object-contain">
-                        </div>
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/payments/bni.png') }}" alt="BNI" class="h-6 object-contain">
-                        </div>
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/payments/bri.png') }}" alt="BRI" class="h-6 object-contain">
-                        </div>
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/payments/gopay.png') }}" alt="GoPay" class="h-6 object-contain">
-                        </div>
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/payments/ovo.png') }}" alt="OVO" class="h-6 object-contain">
-                        </div>
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/payments/dana.png') }}" alt="DANA" class="h-6 object-contain">
-                        </div>
+                        @endforeach
                     </div>
                 </div>
 
@@ -279,97 +167,76 @@
                 <div>
                     <h4 class="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">Partner Pengiriman</h4>
                     <div class="flex flex-wrap gap-3">
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/shipping/jne.png') }}" alt="JNE" class="h-6 object-contain">
+                        @foreach(['jne', 'jnt', 'sicepat', 'pos', 'tiki', 'anteraja'] as $shipping)
+                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-12 h-8">
+                            <img src="{{ asset("images/shipping/{$shipping}.png") }}" alt="{{ strtoupper($shipping) }}" class="h-4 object-contain">
                         </div>
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/shipping/jnt.png') }}" alt="J&T" class="h-6 object-contain">
-                        </div>
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/shipping/sicepat.png') }}" alt="SiCepat" class="h-6 object-contain">
-                        </div>
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/shipping/pos.png') }}" alt="Pos Indonesia" class="h-6 object-contain">
-                        </div>
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/shipping/tiki.png') }}" alt="TIKI" class="h-6 object-contain">
-                        </div>
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-16 h-10">
-                            <img src="{{ asset('images/shipping/anteraja.png') }}" alt="AnterAja" class="h-6 object-contain">
-                        </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Security & Certifications -->
+    <!-- Trust Badges - Minimal -->
     <div class="border-t border-gray-800 py-6">
         <div class="container mx-auto px-4">
             <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div class="flex flex-wrap items-center gap-6">
+
+                <!-- Trust Indicators -->
+                <div class="flex flex-wrap items-center gap-6 text-sm">
                     <div class="flex items-center space-x-2">
-                        <i class="fas fa-shield-alt text-green-400 text-lg"></i>
-                        <span class="text-gray-300 text-sm">100% Original</span>
+                        <i class="fas fa-shield-alt text-green-400"></i>
+                        <span class="text-gray-300">100% Original</span>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <i class="fas fa-lock text-blue-400 text-lg"></i>
-                        <span class="text-gray-300 text-sm">SSL Secure</span>
+                        <i class="fas fa-lock text-blue-400"></i>
+                        <span class="text-gray-300">SSL Secure</span>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <i class="fas fa-undo text-yellow-400 text-lg"></i>
-                        <span class="text-gray-300 text-sm">30 Hari Return</span>
+                        <i class="fas fa-undo text-yellow-400"></i>
+                        <span class="text-gray-300">30 Hari Return</span>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <i class="fas fa-shipping-fast text-purple-400 text-lg"></i>
-                        <span class="text-gray-300 text-sm">Gratis Ongkir</span>
+                        <i class="fas fa-shipping-fast text-purple-400"></i>
+                        <span class="text-gray-300">Gratis Ongkir</span>
                     </div>
                 </div>
 
                 <!-- Certifications -->
                 <div class="flex items-center gap-4">
                     <img src="{{ asset('images/certifications/ssl.png') }}" alt="SSL Certificate" class="h-8 opacity-80">
-                    <img src="{{ asset('images/certifications/verified.png') }}" alt="Verified Merchant" class="h-8 opacity-80">
-                    <img src="{{ asset('images/certifications/trusted.png') }}" alt="Trusted Store" class="h-8 opacity-80">
+                    <img src="{{ asset('images/certifications/verified.png') }}" alt="Verified" class="h-8 opacity-80">
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bottom Footer -->
+    <!-- Bottom Footer - Clean -->
     <div class="border-t border-gray-800 py-6">
         <div class="container mx-auto px-4">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
+
                 <!-- Copyright -->
                 <div class="text-center md:text-left">
-                    <p class="text-gray-400 text-sm">
+                    <p class="text-gray-400">
                         © {{ date('Y') }} TokoSaya. All rights reserved.
-                        <span class="text-gray-500">Made with ❤️ in Indonesia</span>
                     </p>
                 </div>
 
                 <!-- Legal Links -->
-                <div class="flex flex-wrap items-center gap-6 text-sm">
-                    <a href="{{ route('privacy-policy') }}" class="text-gray-400 hover:text-white transition-colors">
-                        Kebijakan Privasi
-                    </a>
-                    <a href="{{ route('terms-of-service') }}" class="text-gray-400 hover:text-white transition-colors">
-                        Syarat & Ketentuan
-                    </a>
-                    <a href="{{ route('sitemap') }}" class="text-gray-400 hover:text-white transition-colors">
-                        Sitemap
-                    </a>
-                    <a href="{{ route('about') }}" class="text-gray-400 hover:text-white transition-colors">
-                        Tentang Kami
-                    </a>
+                <div class="flex flex-wrap items-center gap-6">
+                    <a href="{{ route('privacy-policy') }}" class="footer-link">Kebijakan Privasi</a>
+                    <a href="{{ route('terms-of-service') }}" class="footer-link">Syarat & Ketentuan</a>
+                    <a href="{{ route('about') }}" class="footer-link">Tentang Kami</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Back to Top Button -->
+    <!-- Back to Top Button - Modern -->
     <button id="back-to-top"
-            class="fixed bottom-8 right-8 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 transform translate-y-16 opacity-0 z-50"
+            class="fixed bottom-8 right-8 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 transform translate-y-16 opacity-0 z-50 hover:scale-110"
             onclick="scrollToTop()">
         <i class="fas fa-chevron-up"></i>
     </button>
@@ -377,40 +244,43 @@
 
 @push('scripts')
 <script>
-// Newsletter subscription
+// Newsletter subscription with better UX
 function subscribeNewsletter() {
     const form = event.target;
-    const formData = new FormData(form);
+    const email = form.querySelector('input[type="email"]').value;
+    const button = form.querySelector('button[type="submit"]');
 
-    Alpine.store('newsletter', { loading: true });
+    // Set loading state
+    this.loading = true;
 
-    fetch(form.action, {
+    fetch('/api/newsletter/subscribe', {
         method: 'POST',
-        body: formData,
         headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ email })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             showFooterNotification('Berhasil berlangganan newsletter!', 'success');
             form.reset();
+            this.email = '';
         } else {
-            showFooterNotification(data.message || 'Gagal berlangganan newsletter', 'error');
+            showFooterNotification(data.message || 'Gagal berlangganan', 'error');
         }
     })
     .catch(error => {
-        console.error('Newsletter subscription error:', error);
+        console.error('Newsletter error:', error);
         showFooterNotification('Terjadi kesalahan, silakan coba lagi', 'error');
     })
     .finally(() => {
-        Alpine.store('newsletter', { loading: false });
+        this.loading = false;
     });
 }
 
-// Back to top functionality
+// Back to top with smooth animation
 function scrollToTop() {
     window.scrollTo({
         top: 0,
@@ -419,16 +289,35 @@ function scrollToTop() {
 }
 
 // Show/hide back to top button
-window.addEventListener('scroll', function() {
+let isBackToTopVisible = false;
+
+function toggleBackToTop() {
     const backToTopBtn = document.getElementById('back-to-top');
-    if (window.pageYOffset > 300) {
+    const shouldShow = window.pageYOffset > 300;
+
+    if (shouldShow && !isBackToTopVisible) {
         backToTopBtn.classList.remove('translate-y-16', 'opacity-0');
         backToTopBtn.classList.add('translate-y-0', 'opacity-100');
-    } else {
+        isBackToTopVisible = true;
+    } else if (!shouldShow && isBackToTopVisible) {
         backToTopBtn.classList.add('translate-y-16', 'opacity-0');
         backToTopBtn.classList.remove('translate-y-0', 'opacity-100');
+        isBackToTopVisible = false;
     }
-});
+}
+
+// Throttled scroll listener
+let ticking = false;
+
+function requestTick() {
+    if (!ticking) {
+        requestAnimationFrame(toggleBackToTop);
+        ticking = true;
+        setTimeout(() => { ticking = false; }, 100);
+    }
+}
+
+window.addEventListener('scroll', requestTick);
 
 // Footer notification system
 function showFooterNotification(message, type = 'info') {
@@ -443,6 +332,9 @@ function showFooterNotification(message, type = 'info') {
         <div class="flex items-center space-x-2">
             <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
             <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-white/80 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
     `;
 
@@ -481,7 +373,55 @@ if ('IntersectionObserver' in window) {
     lazyImages.forEach(img => imageObserver.observe(img));
 }
 
-// Footer link tracking
+// Footer animation on scroll
+const footerElements = document.querySelectorAll('footer .container > div > div');
+if ('IntersectionObserver' in window) {
+    const footerObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+
+    footerElements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = `opacity 0.6s ease-out ${index * 0.1}s, transform 0.6s ease-out ${index * 0.1}s`;
+        footerObserver.observe(el);
+    });
+}
+
+// Newsletter form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const newsletterForm = document.querySelector('form[x-data]');
+    if (newsletterForm) {
+        const emailInput = newsletterForm.querySelector('input[type="email"]');
+
+        emailInput.addEventListener('input', function() {
+            const email = this.value;
+            const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+            if (email.length > 0) {
+                if (isValid) {
+                    this.classList.remove('ring-red-300');
+                    this.classList.add('ring-green-300');
+                } else {
+                    this.classList.remove('ring-green-300');
+                    this.classList.add('ring-red-300');
+                }
+            } else {
+                this.classList.remove('ring-red-300', 'ring-green-300');
+            }
+        });
+    }
+});
+
+// Link tracking for analytics
 document.querySelectorAll('footer a').forEach(link => {
     link.addEventListener('click', function() {
         if (typeof gtag !== 'undefined') {
@@ -493,39 +433,13 @@ document.querySelectorAll('footer a').forEach(link => {
     });
 });
 
-// Newsletter form validation
-document.addEventListener('DOMContentLoaded', function() {
-    const newsletterForm = document.querySelector('form[action*="newsletter"]');
-    if (newsletterForm) {
-        const emailInput = newsletterForm.querySelector('input[type="email"]');
-
-        emailInput.addEventListener('input', function() {
-            const email = this.value;
-            const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-            if (email.length > 0) {
-                if (isValid) {
-                    this.classList.remove('border-red-300');
-                    this.classList.add('border-green-300');
-                } else {
-                    this.classList.remove('border-green-300');
-                    this.classList.add('border-red-300');
-                }
-            } else {
-                this.classList.remove('border-red-300', 'border-green-300');
-            }
-        });
-    }
-});
-
-// Social media link tracking
-document.querySelectorAll('footer a[href*="facebook"], footer a[href*="instagram"], footer a[href*="twitter"], footer a[href*="youtube"], footer a[href*="whatsapp"]').forEach(link => {
+// Social media tracking
+document.querySelectorAll('footer a[href*="facebook"], footer a[href*="instagram"], footer a[href*="twitter"], footer a[href*="youtube"]').forEach(link => {
     link.addEventListener('click', function() {
         const platform = this.href.includes('facebook') ? 'facebook' :
                          this.href.includes('instagram') ? 'instagram' :
                          this.href.includes('twitter') ? 'twitter' :
-                         this.href.includes('youtube') ? 'youtube' :
-                         this.href.includes('whatsapp') ? 'whatsapp' : 'unknown';
+                         'youtube';
 
         if (typeof gtag !== 'undefined') {
             gtag('event', 'social_media_click', {
@@ -536,32 +450,232 @@ document.querySelectorAll('footer a[href*="facebook"], footer a[href*="instagram
     });
 });
 
-// Initialize Alpine.js stores for footer
-document.addEventListener('alpine:init', () => {
-    Alpine.store('newsletter', {
-        loading: false
-    });
-});
-
-// Footer animation on scroll
-const footerElements = document.querySelectorAll('footer .container > div > div');
-const footerObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.style.opacity = '1';
-            entry.target.style.transform = 'translateY(0)';
-        }
-    });
-}, {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-});
-
-footerElements.forEach((el, index) => {
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(20px)';
-    el.style.transition = `opacity 0.6s ease-out ${index * 0.1}s, transform 0.6s ease-out ${index * 0.1}s`;
-    footerObserver.observe(el);
-});
+// Export for global use
+window.showFooterNotification = showFooterNotification;
 </script>
+@endpush
+
+@push('styles')
+<style>
+/* Modern Footer Styles */
+.footer-link {
+    @apply text-gray-300 hover:text-white transition-colors duration-200 text-sm;
+}
+
+.footer-link:hover {
+    @apply text-white;
+}
+
+/* Newsletter form styles */
+.newsletter-input {
+    @apply transition-all duration-300;
+}
+
+.newsletter-input:focus {
+    @apply ring-2 ring-white ring-opacity-50;
+}
+
+/* Back to top button */
+#back-to-top {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#back-to-top:hover {
+    transform: translateY(0) scale(1.1);
+}
+
+/* Social media icons hover effect */
+.social-icon {
+    @apply transition-all duration-300;
+}
+
+.social-icon:hover {
+    @apply transform scale-110;
+}
+
+/* Payment and shipping logos */
+.payment-logo,
+.shipping-logo {
+    @apply transition-opacity duration-300 hover:opacity-80;
+    filter: grayscale(0.2);
+}
+
+.payment-logo:hover,
+.shipping-logo:hover {
+    filter: grayscale(0);
+}
+
+/* Trust badges animation */
+.trust-badge {
+    @apply transition-all duration-300;
+}
+
+.trust-badge:hover {
+    @apply transform scale-105;
+}
+
+/* Newsletter section gradient overlay */
+.newsletter-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.newsletter-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+/* Footer animation classes */
+.footer-fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.footer-fade-in.animate {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .footer-link {
+        @apply text-base py-1;
+    }
+
+    #back-to-top {
+        @apply w-10 h-10 bottom-6 right-6;
+    }
+
+    .social-icon {
+        @apply w-8 h-8;
+    }
+}
+
+@media (max-width: 480px) {
+    .newsletter-section {
+        @apply py-12;
+    }
+
+    .newsletter-section h2 {
+        @apply text-2xl;
+    }
+
+    .payment-logo,
+    .shipping-logo {
+        @apply w-10 h-6;
+    }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+    .newsletter-input {
+        @apply bg-gray-800 text-white border-gray-700;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .footer-link {
+        @apply underline;
+    }
+
+    .footer-link:hover {
+        @apply no-underline;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .footer-fade-in,
+    .social-icon,
+    .trust-badge,
+    #back-to-top {
+        transition: none !important;
+    }
+
+    .social-icon:hover,
+    .trust-badge:hover,
+    #back-to-top:hover {
+        transform: none !important;
+    }
+}
+
+/* Custom scrollbar for footer content */
+.footer-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.footer-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.footer-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+.footer-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Loading state for newsletter form */
+.newsletter-loading {
+    @apply opacity-75 pointer-events-none;
+}
+
+/* Success state animation */
+@keyframes checkmark {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.3);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.success-checkmark {
+    animation: checkmark 0.6s ease-out;
+}
+
+/* Newsletter form focus styles */
+.newsletter-form input:focus {
+    @apply outline-none ring-2 ring-white ring-opacity-50;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+/* Footer grid responsive enhancement */
+@media (min-width: 1024px) {
+    .footer-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr 1fr 1fr;
+        gap: 2rem;
+    }
+}
+
+/* Smooth reveal animation for footer sections */
+.footer-section {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.footer-section.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+</style>
 @endpush

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Routing\Controller;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ShoppingCart;
@@ -13,6 +14,30 @@ use Illuminate\Support\Facades\DB;
 
 class CartController extends Controller
 {
+    /**
+     * ✅ ADDED: Constructor to check user role
+     */
+    public function __construct()
+    {
+        // Apply middleware to check if user can use cart
+        $this->middleware(function ($request, $next) {
+            // If user is logged in and is admin, redirect to admin dashboard
+            if (Auth::check() && !Auth::user()->canUseCart()) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Admin tidak dapat menggunakan shopping cart'
+                    ], 403);
+                }
+
+                return redirect()->route('admin.dashboard')
+                    ->with('error', 'Admin tidak dapat mengakses shopping cart. Gunakan panel admin untuk mengelola produk.');
+            }
+
+            return $next($request);
+        });
+    }
+
     /**
      * Display cart contents
      */
