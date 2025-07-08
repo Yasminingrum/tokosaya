@@ -59,7 +59,15 @@ class Coupon extends Model
     // Scopes
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('is_active', true)
+                    ->where(function($q) {
+                        $q->whereNull('starts_at')
+                          ->orWhere('starts_at', '<=', now());
+                    })
+                    ->where(function($q) {
+                        $q->whereNull('expires_at')
+                          ->orWhere('expires_at', '>=', now());
+                    });
     }
 
     public function scopePublic($query)

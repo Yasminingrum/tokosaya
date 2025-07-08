@@ -44,12 +44,6 @@
     <!-- AOS Animation -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
-    <!-- GLightbox -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css">
-
-    <!-- Swiper CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css">
-
     <!-- Custom CSS -->
     @vite(['resources/css/app.css'])
 
@@ -79,47 +73,6 @@
             font-family: var(--font-display);
         }
 
-        /* Loading spinner */
-        .loading-spinner {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .loading-spinner.show {
-            display: flex;
-        }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-dark);
-        }
-
-        /* Smooth scroll */
-        html {
-            scroll-behavior: smooth;
-        }
-
         /* Header styles */
         .navbar-brand {
             font-family: var(--font-display);
@@ -138,7 +91,7 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Cart badge */
+        /* Cart badge - FIXED STYLE */
         .cart-badge {
             position: absolute;
             top: -8px;
@@ -153,6 +106,7 @@
             align-items: center;
             justify-content: center;
             font-weight: 600;
+            min-width: 20px;
         }
 
         /* Button styles */
@@ -167,22 +121,6 @@
             background-color: var(--primary-dark);
             border-color: var(--primary-dark);
             transform: translateY(-1px);
-        }
-
-        /* Footer styles */
-        .footer {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-            color: white;
-        }
-
-        .footer-link {
-            color: #cbd5e1;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .footer-link:hover {
-            color: white;
         }
 
         /* Search suggestions */
@@ -201,45 +139,10 @@
             display: none;
         }
 
-        .search-suggestion-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            border-bottom: 1px solid #f1f5f9;
-            transition: background-color 0.2s ease;
-        }
-
-        .search-suggestion-item:hover {
-            background-color: #f8fafc;
-        }
-
-        .search-suggestion-item:last-child {
-            border-bottom: none;
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .fade-in-up {
-            animation: fadeInUp 0.6s ease-out;
-        }
-
         /* Responsive utilities */
         @media (max-width: 768px) {
             .navbar-brand {
                 font-size: 1.25rem;
-            }
-
-            .search-mobile {
-                margin-top: 1rem;
             }
         }
     </style>
@@ -247,7 +150,7 @@
 
 <body>
     <!-- Loading Spinner -->
-    <div class="loading-spinner" id="loadingSpinner">
+    <div class="loading-spinner" id="loadingSpinner" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); z-index: 9999; justify-content: center; align-items: center;">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
@@ -313,36 +216,18 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <!-- Search Bar -->
                     <div class="mx-auto d-none d-lg-block" style="width: 400px;">
-                        <div class="position-relative" x-data="searchComponent()">
+                        <form action="{{ route('search.index') }}" method="GET">
                             <div class="input-group">
                                 <input type="text"
+                                       name="q"
                                        class="form-control"
                                        placeholder="Cari produk..."
-                                       x-model="searchQuery"
-                                       @input="searchProducts()"
-                                       @focus="showSuggestions = true"
-                                       @click.away="showSuggestions = false">
-                                <button class="btn btn-primary" type="button">
+                                       value="{{ request('q') }}">
+                                <button class="btn btn-primary" type="submit">
                                     <i class="fas fa-search"></i>
                                 </button>
                             </div>
-
-                            <!-- Search Suggestions -->
-                            <div class="search-suggestions" x-show="showSuggestions && suggestions.length > 0">
-                                <template x-for="suggestion in suggestions" :key="suggestion.id">
-                                    <div class="search-suggestion-item" @click="selectProduct(suggestion)">
-                                        <div class="d-flex align-items-center">
-                                            <img :src="suggestion.image" :alt="suggestion.name"
-                                                 class="me-3" style="width: 40px; height: 40px; object-fit: cover;">
-                                            <div>
-                                                <div class="fw-medium" x-text="suggestion.name"></div>
-                                                <small class="text-muted" x-text="suggestion.price"></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
+                        </form>
                     </div>
 
                     <!-- Navigation Links -->
@@ -362,7 +247,14 @@
                                 <i class="fas fa-tags me-1"></i>Kategori
                             </a>
                             <ul class="dropdown-menu">
-                                @foreach(App\Models\Category::where('parent_id', null)->where('is_active', true)->orderBy('sort_order')->limit(8)->get() as $category)
+                                @php
+                                    $categories = \App\Models\Category::where('parent_id', null)
+                                        ->where('is_active', true)
+                                        ->orderBy('sort_order')
+                                        ->limit(8)
+                                        ->get();
+                                @endphp
+                                @foreach($categories as $category)
                                     <li>
                                         <a class="dropdown-item" href="{{ route('categories.show', $category->slug) }}">
                                             @if($category->icon)
@@ -378,23 +270,49 @@
                         </li>
 
                         @auth
-                            @if(auth()->user()->isCustomer())
+                            <!-- Cek apakah user adalah customer -->
+                            @if(!auth()->user()->role || auth()->user()->role->name === 'customer')
                                 <!-- Wishlist -->
                                 <li class="nav-item">
                                     <a class="nav-link position-relative" href="{{ route('wishlist.index') }}">
                                         <i class="fas fa-heart"></i>
-                                        <span class="cart-badge" x-text="$store.wishlist.count" x-show="$store.wishlist.count > 0"></span>
+                                        @php
+                                            $wishlistCount = auth()->user()->wishlists()->count();
+                                        @endphp
+                                        @if($wishlistCount > 0)
+                                            <span class="cart-badge">{{ $wishlistCount }}</span>
+                                        @endif
                                     </a>
                                 </li>
 
-                                <!-- Shopping Cart -->
+                                <!-- 🛒 SHOPPING CART - WORKING VERSION -->
                                 <li class="nav-item dropdown">
                                     <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown">
                                         <i class="fas fa-shopping-cart"></i>
-                                        <span class="cart-badge" x-text="$store.cart.count" x-show="$store.cart.count > 0"></span>
+                                        <span class="cart-badge" id="cartCount" style="display: none;">0</span>
                                     </a>
                                     <div class="dropdown-menu dropdown-menu-end p-0" style="width: 300px;">
-                                        @include('cart.mini-cart')
+                                        <div class="card border-0 shadow-sm">
+                                            <div class="card-header bg-primary text-white">
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-shopping-cart me-2"></i>Keranjang Belanja
+                                                </h6>
+                                            </div>
+                                            <div class="card-body" id="miniCartContent">
+                                                <div class="text-center py-4">
+                                                    <i class="fas fa-shopping-cart text-muted fs-1 mb-3"></i>
+                                                    <p class="text-muted">Keranjang Anda kosong</p>
+                                                    <a href="{{ route('products.index') }}" class="btn btn-primary btn-sm">
+                                                        Mulai Berbelanja
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer bg-light text-center">
+                                                <a href="{{ route('cart.index') }}" class="btn btn-outline-primary btn-sm">
+                                                    Lihat Keranjang
+                                                </a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </li>
                             @endif
@@ -403,7 +321,7 @@
                             <li class="nav-item">
                                 <a class="nav-link position-relative" href="{{ route('cart.index') }}">
                                     <i class="fas fa-shopping-cart"></i>
-                                    <span class="cart-badge">0</span>
+                                    <span class="cart-badge" id="guestCartCount" style="display: none;">0</span>
                                 </a>
                             </li>
                         @endauth
@@ -419,7 +337,7 @@
                                     <li><a class="dropdown-item" href="{{ route('profile.index') }}">
                                         <i class="fas fa-user me-2"></i>Profil Saya
                                     </a></li>
-                                    @if(auth()->user()->isCustomer())
+                                    @if(!auth()->user()->role || auth()->user()->role->name === 'customer')
                                         <li><a class="dropdown-item" href="{{ route('orders.index') }}">
                                             <i class="fas fa-shopping-bag me-2"></i>Pesanan Saya
                                         </a></li>
@@ -430,7 +348,7 @@
                                             <i class="fas fa-heart me-2"></i>Wishlist
                                         </a></li>
                                     @endif
-                                    @if(Auth::user()->isAdmin())
+                                    @if(Auth::user()->role && Auth::user()->role->name === 'admin')
                                         <li><hr class="dropdown-divider"></li>
                                         <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}">
                                             <i class="fas fa-tachometer-alt me-2"></i>Admin Panel
@@ -455,13 +373,19 @@
                     </ul>
 
                     <!-- Mobile Search -->
-                    <div class="d-lg-none search-mobile mt-3">
-                        <div class="input-group">
-                            <input type="text" class="form-control" placeholder="Cari produk...">
-                            <button class="btn btn-primary" type="button">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
+                    <div class="d-lg-none mt-3">
+                        <form action="{{ route('search.index') }}" method="GET">
+                            <div class="input-group">
+                                <input type="text"
+                                       name="q"
+                                       class="form-control"
+                                       placeholder="Cari produk..."
+                                       value="{{ request('q') }}">
+                                <button class="btn btn-primary" type="button">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -511,246 +435,62 @@
         @yield('content')
     </main>
 
-    <!-- Footer -->
-    <footer class="footer mt-5">
-        <div class="container py-5">
-            <div class="row">
-                <!-- Company Info -->
-                <div class="col-lg-4 mb-4">
-                    <h5 class="font-display fw-bold mb-3">
-                        <i class="fas fa-store me-2"></i>TokoSaya
-                    </h5>
-                    <p class="mb-3">
-                        Platform e-commerce terpercaya dengan ribuan produk berkualitas,
-                        pengiriman cepat, dan pelayanan terbaik untuk seluruh Indonesia.
-                    </p>
-                    <div class="d-flex gap-3">
-                        <a href="#" class="footer-link fs-5">
-                            <i class="fab fa-facebook"></i>
-                        </a>
-                        <a href="#" class="footer-link fs-5">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                        <a href="#" class="footer-link fs-5">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" class="footer-link fs-5">
-                            <i class="fab fa-youtube"></i>
-                        </a>
-                        <a href="#" class="footer-link fs-5">
-                            <i class="fab fa-tiktok"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Quick Links -->
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6 class="fw-bold mb-3">Tentang Kami</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="{{ route('about') }}" class="footer-link">Tentang TokoSaya</a></li>
-                        <li class="mb-2"><a href="{{ route('contact') }}" class="footer-link">Hubungi Kami</a></li>
-                        <li class="mb-2"><a href="#" class="footer-link">Karir</a></li>
-                        <li class="mb-2"><a href="#" class="footer-link">Blog</a></li>
-                        <li class="mb-2"><a href="#" class="footer-link">Investor</a></li>
-                    </ul>
-                </div>
-
-                <!-- Customer Service -->
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6 class="fw-bold mb-3">Layanan</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="footer-link">Bantuan</a></li>
-                        <li class="mb-2"><a href="#" class="footer-link">Metode Pembayaran</a></li>
-                        <li class="mb-2"><a href="#" class="footer-link">Panduan Belanja</a></li>
-                        <li class="mb-2"><a href="#" class="footer-link">Panduan Jual</a></li>
-                        <li class="mb-2"><a href="#" class="footer-link">Lacak Pesanan</a></li>
-                    </ul>
-                </div>
-
-                <!-- Legal -->
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6 class="fw-bold mb-3">Legal</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="{{ route('privacy') }}" class="footer-link">Kebijakan Privasi</a></li>
-                        <li class="mb-2"><a href="{{ route('terms') }}" class="footer-link">Syarat & Ketentuan</a></li>
-                        <li class="mb-2"><a href="#" class="footer-link">Kebijakan Return</a></li>
-                        <li class="mb-2"><a href="#" class="footer-link">Hak Kekayaan Intelektual</a></li>
-                    </ul>
-                </div>
-
-                <!-- Contact Info -->
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6 class="fw-bold mb-3">Kontak</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="fas fa-phone me-2"></i>
-                            <small>+62 21 1234 5678</small>
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-envelope me-2"></i>
-                            <small>cs@tokosaya.com</small>
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-clock me-2"></i>
-                            <small>Senin-Minggu 08:00-22:00</small>
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-map-marker-alt me-2"></i>
-                            <small>Jakarta, Indonesia</small>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Bottom Footer -->
-        <div class="border-top border-secondary">
-            <div class="container py-3">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <small>&copy; {{ date('Y') }} TokoSaya. All rights reserved.</small>
-                    </div>
-                    <div class="col-md-6 text-md-end">
-                        <small>Made with <i class="fas fa-heart text-danger"></i> in Indonesia</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Back to Top Button -->
-    <button class="btn btn-primary position-fixed bottom-0 end-0 m-4 rounded-circle"
-            id="backToTop"
-            style="width: 50px; height: 50px; display: none; z-index: 1000;">
-        <i class="fas fa-arrow-up"></i>
-    </button>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    <!-- AOS Animation -->
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-
-    <!-- GLightbox -->
-    <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
-
-    <!-- Swiper JS -->
-    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
-
-    <!-- Custom JS -->
-    @vite(['resources/js/app.js'])
-
+    <!-- ========= LETAKKAN SCRIPT INI DI BAGIAN BAWAH SEBELUM </body> ========= -->
     <script>
-        // Alpine.js Global Stores
-        document.addEventListener('alpine:init', () => {
-            // Cart Store
-            Alpine.store('cart', {
-                count: 0,
-                total: 0,
-                loading: false,
-
-                async init() {
-                    await this.loadCartData();
-                },
-
-                async loadCartData() {
-                    try {
-                        const response = await fetch('/cart/data');
-                        const data = await response.json();
-                        this.count = data.count || 0;
-                        this.total = data.total || 0;
-                    } catch (error) {
-                        console.log('Could not load cart data');
-                        this.count = 0;
-                        this.total = 0;
-                    }
-                },
-
-                updateCount(count) {
-                    this.count = count;
-                },
-
-                updateTotal(total) {
-                    this.total = total;
-                }
-            });
-
-            // Wishlist Store
-            Alpine.store('wishlist', {
-                count: 0,
-
-                async init() {
-                    // Load wishlist count if user is authenticated
-                    if (document.querySelector('meta[name="user-authenticated"]')) {
-                        await this.loadWishlistData();
-                    }
-                },
-
-                async loadWishlistData() {
-                    try {
-                        const response = await fetch('/wishlist/count');
-                        const data = await response.json();
-                        this.count = data.count || 0;
-                    } catch (error) {
-                        this.count = 0;
-                    }
-                },
-
-                updateCount(count) {
-                    this.count = count;
-                }
-            });
-
-            // Initialize stores
-            Alpine.store('cart').init();
-            Alpine.store('wishlist').init();
+        // Cart functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCartCount();
         });
 
-        // Search Component
-        function searchComponent() {
-            return {
-                searchQuery: '',
-                suggestions: [],
-                showSuggestions: false,
-
-                async searchProducts() {
-                    if (this.searchQuery.length < 2) {
-                        this.suggestions = [];
-                        return;
+        function loadCartCount() {
+            fetch('/cart/count')
+                .then(response => response.json())
+                .then(data => {
+                    const cartBadge = document.getElementById('cartCount') || document.getElementById('guestCartCount');
+                    if (cartBadge) {
+                        const count = data.count || 0;
+                        cartBadge.textContent = count;
+                        cartBadge.style.display = count > 0 ? 'flex' : 'none';
                     }
-
-                    try {
-                        const response = await fetch(`/api/search-suggestions?q=${encodeURIComponent(this.searchQuery)}`);
-                        const data = await response.json();
-                        this.suggestions = data.suggestions || [];
-                    } catch (error) {
-                        console.error('Search error:', error);
-                        this.suggestions = [];
-                    }
-                },
-
-                selectProduct(product) {
-                    window.location.href = `/products/${product.slug}`;
-                }
-            }
+                })
+                .catch(error => {
+                    console.log('Could not load cart count');
+                });
         }
 
-        // Initialize AOS
-        AOS.init({
-            duration: 600,
-            easing: 'ease-out-cubic',
-            once: true
-        });
+        // Global add to cart function
+        window.addToCart = function(productId, quantity = 1) {
+            fetch('/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    quantity: quantity
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadCartCount(); // Reload cart count
 
-        // Initialize GLightbox
-        const lightbox = GLightbox({
-            touchNavigation: true,
-            loop: true,
-            autoplayVideos: false
-        });
+                    // Show success message
+                    if (typeof showNotification === 'function') {
+                        showNotification('Produk berhasil ditambahkan ke keranjang!', 'success');
+                    } else {
+                        alert('Produk berhasil ditambahkan ke keranjang!');
+                    }
+                } else {
+                    alert(data.message || 'Gagal menambahkan produk ke keranjang');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat menambahkan produk ke keranjang');
+            });
+        };
 
         // Navbar scroll effect
         window.addEventListener('scroll', function() {

@@ -7,6 +7,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ShoppingCart;
 use App\Models\Payment;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -19,7 +20,7 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
-        $query = auth()->user()->orders()->with(['items.product', 'payments']);
+        $query = Auth::orders()->with(['items.product', 'payments']);
 
         // Filter by status
         if ($request->filled('status')) {
@@ -39,10 +40,10 @@ class OrderController extends Controller
 
         // Get order statistics
         $stats = [
-            'total_orders' => auth()->user()->orders()->count(),
-            'completed_orders' => auth()->user()->orders()->where('status', 'delivered')->count(),
-            'pending_orders' => auth()->user()->orders()->whereIn('status', ['pending', 'confirmed', 'processing'])->count(),
-            'total_spent' => auth()->user()->orders()->where('payment_status', 'paid')->sum('total_cents') / 100
+            'total_orders' => Auth()->user::orders()->count(),
+            'completed_orders' => Auth()->user::orders()->where('status', 'delivered')->count(),
+            'pending_orders' => Auth()->user::orders()->whereIn('status', ['pending', 'confirmed', 'processing'])->count(),
+            'total_spent' => Auth()->user::orders()->where('payment_status', 'paid')->sum('total_cents') / 100
         ];
 
         return view('orders.index', compact('orders', 'stats'));
@@ -54,7 +55,7 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         // Check if user owns this order
-        if ($order->user_id !== auth()->id() && !auth()->user()->role->name === 'admin') {
+        if ($order->user_id !== Auth::id() && !Auth::user()->role || Auth::user()->role->name !== 'admin') {
             abort(403);
         }
 
@@ -101,7 +102,7 @@ class OrderController extends Controller
 
         try {
             // Get user's cart
-            $cart = ShoppingCart::where('user_id', auth()->id())->first();
+            $cart = ShoppingCart::where('user_id', Auth::id())->first();
 
             if (!$cart || $cart->item_count == 0) {
                 throw new \Exception('Keranjang kosong');
@@ -140,7 +141,7 @@ class OrderController extends Controller
 
             // Create order
             $order = Order::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'order_number' => $orderNumber,
                 'status' => 'pending',
                 'payment_status' => 'pending',
@@ -208,7 +209,7 @@ class OrderController extends Controller
 
             // Log activity
             activity('order_created')
-                ->causedBy(auth()->user())
+                ->causedBy(auth::user())
                 ->performedOn($order)
                 ->withProperties(['order_number' => $orderNumber, 'total' => $total])
                 ->log('Order created');
@@ -230,7 +231,7 @@ class OrderController extends Controller
     public function cancel(Order $order)
     {
         // Check if user owns this order
-        if ($order->user_id !== auth()->id()) {
+        if ($order->user_id !== Auth::id()) {
             abort(403);
         }
 
@@ -262,7 +263,7 @@ class OrderController extends Controller
 
             // Log activity
             activity('order_cancelled')
-                ->causedBy(auth()->user())
+                ->causedBy(auth::user())
                 ->performedOn($order)
                 ->log('Order cancelled by customer');
 
@@ -282,15 +283,16 @@ class OrderController extends Controller
     public function reorder(Order $order)
     {
         // Check if user owns this order
-        if ($order->user_id !== auth()->id()) {
+        if ($order->user_id !== Auth::id()) {
             abort(403);
         }
 
         try {
             $cart = ShoppingCart::firstOrCreate(
-                ['user_id' => auth()->id()],
+                ['user_id' => Auth::id()],
                 ['item_count' => 0, 'total_cents' => 0]
             );
+
 
             $addedItems = 0;
             $unavailableItems = [];
@@ -370,7 +372,7 @@ class OrderController extends Controller
     public function track(Order $order)
     {
         // Check if user owns this order
-        if ($order->user_id !== auth()->id()) {
+        if ($order->user_id !== Auth::id()) {
             abort(403);
         }
 
@@ -577,7 +579,7 @@ class OrderController extends Controller
 
             // Log activity
             activity('order_status_updated')
-                ->causedBy(auth()->user())
+                ->causedBy(auth::user())
                 ->performedOn($order)
                 ->withProperties([
                     'old_status' => $oldStatus,
@@ -627,7 +629,7 @@ class OrderController extends Controller
 
         try {
             $timestamp = now()->format('Y-m-d H:i:s');
-            $user = auth()->user()->first_name . ' ' . auth()->user()->last_name;
+            $user = Auth::user()->first_name . ' ' . Auth::user()->last_name;
             $newNote = "[{$timestamp}] {$user}: {$request->note}";
 
             $order->update([
@@ -635,8 +637,8 @@ class OrderController extends Controller
             ]);
 
             // Log activity
-            activity('order_note_added')
-                ->causedBy(auth()->user())
+             activity('order_note_added')
+                ->causedBy(auth::user())
                 ->performedOn($order)
                 ->withProperties(['note' => $request->note])
                 ->log('Note added to order');
@@ -839,5 +841,136 @@ class OrderController extends Controller
     {
         // Simple 10% tax
         return (int) ($subtotal * 0.1);
+    }
+
+    /**
+     * Show order review form
+     */
+    public function review(Order $order)
+    {
+        // Check if user owns this order
+        if ($order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Check if order can be reviewed (must be delivered)
+        if ($order->status !== 'delivered') {
+            return redirect()->route('orders.show', $order)
+                ->with('error', 'You can only review delivered orders.');
+        }
+
+        // Load order items that haven't been reviewed yet
+        $order->load(['items' => function($query) {
+            $query->with('product:id,name,slug')
+                ->whereDoesntHave('reviews', function($q) {
+                    $q->where('user_id', Auth::id());
+                });
+        }]);
+
+        return view('orders.review', compact('order'));
+    }
+
+    /**
+     * Store order reviews
+     */
+    public function storeReview(Request $request, Order $order)
+    {
+        // Check if user owns this order
+        if ($order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Check if order can be reviewed
+        if ($order->status !== 'delivered') {
+            return redirect()->route('orders.show', $order)
+                ->with('error', 'You can only review delivered orders.');
+        }
+
+        $request->validate([
+            'reviews' => 'required|array|min:1',
+            'reviews.*.rating' => 'required|integer|between:1,5',
+            'reviews.*.title' => 'nullable|string|max:150',
+            'reviews.*.review' => 'nullable|string|max:1000',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $createdReviews = 0;
+
+            foreach ($request->reviews as $itemId => $reviewData) {
+                // Validate order item belongs to this order
+                $orderItem = $order->items()->where('id', $itemId)->first();
+                if (!$orderItem) {
+                    continue;
+                }
+
+                // Check if review already exists
+                $existingReview = \App\Models\ProductReview::where('user_id', Auth::id())
+                                                        ->where('product_id', $orderItem->product_id)
+                                                        ->where('order_item_id', $orderItem->id)
+                                                        ->first();
+
+                if ($existingReview) {
+                    continue; // Skip if already reviewed
+                }
+
+                // Create review
+                \App\Models\ProductReview::create([
+                    'product_id' => $orderItem->product_id,
+                    'user_id' => Auth::id(),
+                    'order_item_id' => $orderItem->id,
+                    'rating' => $reviewData['rating'],
+                    'title' => $reviewData['title'] ?? null,
+                    'review' => $reviewData['review'] ?? null,
+                    'is_verified' => true, // Verified purchase
+                    'is_approved' => true, // Auto-approve verified purchases
+                ]);
+
+                $createdReviews++;
+            }
+
+            // Update product ratings for reviewed products
+            $reviewedProducts = $order->items()
+                                    ->whereIn('id', array_keys($request->reviews))
+                                    ->with('product')
+                                    ->get()
+                                    ->pluck('product')
+                                    ->unique('id');
+
+            foreach ($reviewedProducts as $product) {
+                $this->updateProductRating($product);
+            }
+
+            DB::commit();
+
+            $message = $createdReviews > 0
+                ? "Successfully submitted {$createdReviews} review(s). Thank you for your feedback!"
+                : "No new reviews were submitted.";
+
+            return redirect()->route('orders.show', $order)->with('success', $message);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->withErrors(['error' => 'Failed to submit reviews. Please try again.']);
+        }
+    }
+
+    /**
+     * Update product rating (helper method)
+     */
+    private function updateProductRating($product)
+    {
+        $reviews = \App\Models\ProductReview::where('product_id', $product->id)
+                                            ->where('is_approved', true)
+                                            ->get();
+
+        $averageRating = $reviews->avg('rating') ?: 0;
+        $reviewCount = $reviews->count();
+
+        $product->update([
+            'rating_average' => round($averageRating, 2),
+            'rating_count' => $reviewCount
+        ]);
     }
 }

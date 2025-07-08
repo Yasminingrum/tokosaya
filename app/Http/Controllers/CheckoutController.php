@@ -51,16 +51,16 @@ class CheckoutController extends Controller
         }
 
         // Get user data
-        $user = Auth::user()->load('addresses');
-        $defaultAddress = $user->addresses->where('is_default', true)->first();
+        $user = Auth()->user::load('customerAddresses');
+        $defaultAddress = $user->customerAddresses->where('is_default', true)->first();
 
         // Get shipping methods
-        $shippingMethods = ShippingMethod::active()
+        $shippingMethods = ShippingMethod::where('is_active', true) // Changed active() to where condition
             ->orderBy('sort_order')
             ->get();
 
         // Get payment methods
-        $paymentMethods = PaymentMethod::active()
+        $paymentMethods = PaymentMethod::where('is_active', true) // Changed active() to where condition
             ->orderBy('sort_order')
             ->get();
 
@@ -316,7 +316,9 @@ class CheckoutController extends Controller
 
         try {
             $coupon = Coupon::where('code', $request->coupon_code)
-                ->active()
+                ->where('is_active', true) // Changed active() to where condition
+                ->where('starts_at', '<=', now())
+                ->where('expires_at', '>=', now())
                 ->first();
 
             if (!$coupon) {
@@ -366,7 +368,7 @@ class CheckoutController extends Controller
         ]);
 
         try {
-            $result = $this->orderService->applyCoupon($request->coupon_code, $this->cartService->getCart());
+            $result = $this()->orderService::applyCoupon($request->coupon_code, $this->cartService->getCart());
 
             if ($result['success']) {
                 session(['checkout.coupon' => $result['coupon']]);
@@ -415,7 +417,7 @@ class CheckoutController extends Controller
     private function prepareShippingData(Request $request)
     {
         if ($request->filled('address_id')) {
-            $address = Auth::user()->addresses()->find($request->address_id);
+            $address = Auth()->user::customerAddresses()->find($request->address_id);
 
             return [
                 'address_id' => $address->id,

@@ -332,6 +332,61 @@ class Order extends Model
         return $this->discount_cents > 0;
     }
 
+    /**
+     * Check if this order has any reviews
+     *
+     * @return bool
+     */
+    public function hasReview()
+    {
+        return $this->items()->whereHas('review')->exists();
+    }
+
+    /**
+     * Get all reviews for this order
+     */
+    public function reviews()
+    {
+        return ProductReview::whereIn('order_item_id', $this->items()->pluck('id'));
+    }
+
+    /**
+     * Check if a specific product in this order has been reviewed
+     *
+     * @param int $productId
+     * @return bool
+     */
+    public function hasReviewForProduct($productId)
+    {
+        return $this->items()
+            ->where('product_id', $productId)
+            ->whereHas('review')
+            ->exists();
+    }
+
+    /**
+     * Get count of reviewed items in this order
+     *
+     * @return int
+     */
+    public function getReviewedItemsCount()
+    {
+        return $this->items()->whereHas('review')->count();
+    }
+
+    /**
+     * Check if all items in this order have been reviewed
+     *
+     * @return bool
+     */
+    public function isFullyReviewed()
+    {
+        $totalItems = $this->items()->count();
+        $reviewedItems = $this->getReviewedItemsCount();
+
+        return $totalItems > 0 && $totalItems === $reviewedItems;
+    }
+
     public function hasShipping()
     {
         return $this->shipping_cents > 0;

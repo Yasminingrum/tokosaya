@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
@@ -16,6 +17,7 @@ use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
+    use AuthorizesRequests;
     protected $paymentService;
     protected $orderService;
 

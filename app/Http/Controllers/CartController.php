@@ -11,27 +11,33 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CartController extends Controller
 {
     /**
-     * ✅ ADDED: Constructor to check user role
+     * ✅ FIXED: Constructor with improved role checking
      */
     public function __construct()
     {
         // Apply middleware to check if user can use cart
         $this->middleware(function ($request, $next) {
-            // If user is logged in and is admin, redirect to admin dashboard
-            if (Auth::check() && !Auth::user()->canUseCart()) {
-                if ($request->expectsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Admin tidak dapat menggunakan shopping cart'
-                    ], 403);
-                }
+            // Check if user is logged in
+            if (Auth::check()) {
+                $user = Auth::user();
 
-                return redirect()->route('admin.dashboard')
-                    ->with('error', 'Admin tidak dapat mengakses shopping cart. Gunakan panel admin untuk mengelola produk.');
+                // Check if user can use cart
+                if (!$this->userCanUseCart($user)) {
+                    if ($request->expectsJson()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Admin tidak dapat menggunakan shopping cart'
+                        ], 403);
+                    }
+
+                    return redirect()->route('admin.dashboard')
+                        ->with('error', 'Admin tidak dapat mengakses shopping cart. Gunakan panel admin untuk mengelola produk.');
+                }
             }
 
             return $next($request);
@@ -39,19 +45,44 @@ class CartController extends Controller
     }
 
     /**
+     * Check if user can use shopping cart
+     */
+    private function userCanUseCart($user): bool
+    {
+        // Jika user tidak memiliki role, anggap sebagai customer (default)
+        if (!$user->role) {
+            return true;
+        }
+
+        // Hanya role 'customer' yang bisa menggunakan cart
+        // Admin dan staff tidak boleh menggunakan cart
+        return $user->role->name === 'customer';
+    }
+
+    /**
      * Display cart contents
      */
     public function index()
     {
-        $cart = $this->getOrCreateCart();
-        $cartItems = $cart->items()->with(['product.images', 'variant'])->get();
+        try {
+            $cart = $this->getOrCreateCart();
+            $cartItems = $cart->items()->with(['product.images', 'variant'])->get();
 
-        $summary = $this->calculateCartSummary($cartItems);
+            $summary = $this->calculateCartSummary($cartItems);
 
-        // Get recently viewed products
-        $recentlyViewed = $this->getRecentlyViewedProducts();
+            // Get recently viewed products
+            $recentlyViewed = $this->getRecentlyViewedProducts();
 
-        return view('cart.index', compact('cartItems', 'summary', 'recentlyViewed'));
+            return view('cart.index', compact('cartItems', 'summary', 'recentlyViewed'));
+
+        } catch (\Exception $e) {
+            Log::error('Error loading cart: ' . $e->getMessage());
+            return view('cart.index', [
+                'cartItems' => collect(),
+                'summary' => $this->getEmptyCartSummary(),
+                'recentlyViewed' => collect()
+            ])->with('error', 'Terjadi kesalahan saat memuat keranjang.');
+        }
     }
 
     /**
@@ -72,10 +103,12 @@ class CartController extends Controller
                     'errors' => $validator->errors()
                 ], 422);
             }
-            return back()->withErrors($validator);
+            return back()->with('errors', $validator->errors());
         }
 
         try {
+            DB::beginTransaction();
+
             $product = Product::findOrFail($request->product_id);
             $variant = $request->variant_id ? ProductVariant::findOrFail($request->variant_id) : null;
 
@@ -131,15 +164,17 @@ class CartController extends Controller
             $this->updateCartTotals($cart);
 
             // Log activity
-            activity('cart_add')
-                ->causedBy(Auth::user())
-                ->withProperties([
+            if (Auth::check()) {
+                Log::info('Product added to cart', [
+                    'user_id' => Auth::id(),
                     'product_id' => $product->id,
                     'product_name' => $product->name,
                     'quantity' => $request->quantity,
                     'variant_id' => $variant?->id
-                ])
-                ->log('Product added to cart');
+                ]);
+            }
+
+            DB::commit();
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -153,6 +188,9 @@ class CartController extends Controller
             return back()->with('success', 'Product berhasil ditambahkan ke keranjang!');
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error adding to cart: ' . $e->getMessage());
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -160,7 +198,7 @@ class CartController extends Controller
                 ], 400);
             }
 
-            return back()->withErrors(['error' => $e->getMessage()]);
+            return back()->with('error', $e->getMessage());
         }
     }
 
@@ -180,10 +218,12 @@ class CartController extends Controller
                     'errors' => $validator->errors()
                 ], 422);
             }
-            return back()->withErrors($validator);
+            return back()->with('errors', $validator->errors());
         }
 
         try {
+            DB::beginTransaction();
+
             $cart = $this->getOrCreateCart();
             $cartItem = $cart->items()->findOrFail($itemId);
 
@@ -205,6 +245,8 @@ class CartController extends Controller
             // Update cart totals
             $this->updateCartTotals($cart);
 
+            DB::commit();
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
@@ -217,6 +259,9 @@ class CartController extends Controller
             return back()->with('success', 'Keranjang berhasil diperbarui!');
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating cart item: ' . $e->getMessage());
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -224,7 +269,7 @@ class CartController extends Controller
                 ], 400);
             }
 
-            return back()->withErrors(['error' => $e->getMessage()]);
+            return back()->with('error', $e->getMessage());
         }
     }
 
@@ -234,23 +279,27 @@ class CartController extends Controller
     public function remove($itemId)
     {
         try {
+            DB::beginTransaction();
+
             $cart = $this->getOrCreateCart();
             $cartItem = $cart->items()->findOrFail($itemId);
 
             // Log before deletion
-            activity('cart_remove')
-                ->causedBy(Auth::user())
-                ->withProperties([
+            if (Auth::check()) {
+                Log::info('Product removed from cart', [
+                    'user_id' => Auth::id(),
                     'product_id' => $cartItem->product_id,
                     'product_name' => $cartItem->product->name,
                     'quantity' => $cartItem->quantity
-                ])
-                ->log('Product removed from cart');
+                ]);
+            }
 
             $cartItem->delete();
 
             // Update cart totals
             $this->updateCartTotals($cart);
+
+            DB::commit();
 
             if (request()->expectsJson()) {
                 return response()->json([
@@ -264,6 +313,9 @@ class CartController extends Controller
             return back()->with('success', 'Item berhasil dihapus dari keranjang!');
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error removing cart item: ' . $e->getMessage());
+
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -271,7 +323,7 @@ class CartController extends Controller
                 ], 400);
             }
 
-            return back()->withErrors(['error' => $e->getMessage()]);
+            return back()->with('error', $e->getMessage());
         }
     }
 
@@ -281,19 +333,25 @@ class CartController extends Controller
     public function clear()
     {
         try {
+            DB::beginTransaction();
+
             $cart = $this->getOrCreateCart();
 
             // Log before clearing
-            activity('cart_clear')
-                ->causedBy(Auth::user())
-                ->withProperties(['items_count' => $cart->item_count])
-                ->log('Cart cleared');
+            if (Auth::check()) {
+                Log::info('Cart cleared', [
+                    'user_id' => Auth::id(),
+                    'items_count' => $cart->item_count
+                ]);
+            }
 
             $cart->items()->delete();
             $cart->update([
                 'item_count' => 0,
                 'total_cents' => 0
             ]);
+
+            DB::commit();
 
             if (request()->expectsJson()) {
                 return response()->json([
@@ -305,6 +363,9 @@ class CartController extends Controller
             return redirect()->route('cart.index')->with('success', 'Keranjang berhasil dikosongkan!');
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error clearing cart: ' . $e->getMessage());
+
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -312,7 +373,7 @@ class CartController extends Controller
                 ], 400);
             }
 
-            return back()->withErrors(['error' => $e->getMessage()]);
+            return back()->with('error', $e->getMessage());
         }
     }
 
@@ -321,8 +382,13 @@ class CartController extends Controller
      */
     public function count()
     {
-        $cart = $this->getOrCreateCart();
-        return response()->json(['count' => $cart->item_count]);
+        try {
+            $cart = $this->getOrCreateCart();
+            return response()->json(['count' => $cart->item_count]);
+        } catch (\Exception $e) {
+            Log::error('Error getting cart count: ' . $e->getMessage());
+            return response()->json(['count' => 0]);
+        }
     }
 
     /**
@@ -330,12 +396,20 @@ class CartController extends Controller
      */
     public function total()
     {
-        $cart = $this->getOrCreateCart();
+        try {
+            $cart = $this->getOrCreateCart();
 
-        return response()->json([
-            'total' => $cart->total_cents,
-            'formatted_total' => 'Rp ' . number_format($cart->total_cents / 100, 0, ',', '.')
-        ]);
+            return response()->json([
+                'total' => $cart->total_cents,
+                'formatted_total' => 'Rp ' . number_format($cart->total_cents / 100, 0, ',', '.')
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting cart total: ' . $e->getMessage());
+            return response()->json([
+                'total' => 0,
+                'formatted_total' => 'Rp 0'
+            ]);
+        }
     }
 
     /**
@@ -547,20 +621,46 @@ class CartController extends Controller
     }
 
     /**
+     * Get empty cart summary
+     */
+    private function getEmptyCartSummary()
+    {
+        return [
+            'subtotal' => 0,
+            'discount' => 0,
+            'shipping' => 0,
+            'total' => 0,
+            'item_count' => 0,
+            'applied_coupon' => null,
+            'formatted' => [
+                'subtotal' => 'Rp 0',
+                'discount' => 'Rp 0',
+                'shipping' => 'Rp 0',
+                'total' => 'Rp 0'
+            ]
+        ];
+    }
+
+    /**
      * Get recently viewed products
      */
     private function getRecentlyViewedProducts()
     {
-        $key = 'recently_viewed_' . (Auth::id() ?: session()->getId());
-        $productIds = session()->get($key, []);
+        try {
+            $key = 'recently_viewed_' . (Auth::id() ?: session()->getId());
+            $productIds = session()->get($key, []);
 
-        if (empty($productIds)) {
+            if (empty($productIds)) {
+                return collect();
+            }
+
+            return Product::whereIn('id', array_slice($productIds, 0, 4))
+                ->where('status', 'active')
+                ->with('images')
+                ->get();
+        } catch (\Exception $e) {
+            Log::error('Error getting recently viewed products: ' . $e->getMessage());
             return collect();
         }
-
-        return Product::whereIn('id', array_slice($productIds, 0, 4))
-            ->where('status', 'active')
-            ->with('images')
-            ->get();
     }
 }

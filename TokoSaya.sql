@@ -1478,12 +1478,12 @@ FOR EACH ROW
 BEGIN
     DECLARE parent_path VARCHAR(500);
     DECLARE parent_level TINYINT;
-    
+
     IF NEW.parent_id IS NOT NULL THEN
         SELECT path, level INTO parent_path, parent_level
         FROM categories
         WHERE id = NEW.parent_id;
-        
+
         IF parent_path IS NULL THEN
             SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Invalid parent category';

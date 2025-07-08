@@ -79,6 +79,17 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
+    public function canUseCart(): bool
+    {
+        // Jika user tidak memiliki role, anggap sebagai customer
+        if (!$this->role) {
+            return true;
+        }
+
+        // Hanya role 'customer' yang bisa menggunakan cart
+        return $this->role->name === 'customer';
+    }
+
     /**
      * Relationship: User has many Orders
      */
@@ -104,12 +115,21 @@ class User extends Authenticatable
     }
 
     /**
-     * Relationship: User has many Addresses
+     * Get customer addresses
      */
-    public function addresses()
+    public function customerAddresses()
     {
         return $this->hasMany(CustomerAddress::class);
     }
+
+    /**
+     * Alias for addresses (backward compatibility)
+     */
+    public function addresses()
+    {
+        return $this->customerAddresses();
+    }
+
 
     /**
      * Relationship: User has many Shopping Carts
@@ -168,14 +188,6 @@ class User extends Authenticatable
     public function isCustomer()
     {
         return $this->hasRole('customer');
-    }
-
-    /**
-     * Helper method: Check if user should see shopping cart
-     */
-    public function canUseCart()
-    {
-        return $this->isCustomer();
     }
 
     /**

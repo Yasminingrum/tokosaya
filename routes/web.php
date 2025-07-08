@@ -235,6 +235,35 @@ Route::middleware('auth')->prefix('orders')->name('orders.')->group(function () 
     // Order actions
     Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
     Route::post('/{order}/reorder', [OrderController::class, 'reorder'])->name('reorder');
+
+    // Order review routes
+    Route::get('/{order}/review', [OrderController::class, 'review'])->name('review');
+    Route::post('/{order}/review', [OrderController::class, 'storeReview'])->name('review.store');
+
+    // Individual item review routes (alternative approach)
+    Route::get('/order-items/{orderItem}/review', [ReviewController::class, 'create'])
+        ->name('order-items.review.create');
+
+    Route::post('/order-items/{orderItem}/review', [ReviewController::class, 'store'])
+        ->name('order-items.review.store');
+
+    Route::get('/reviews/{review}/edit', [ReviewController::class, 'edit'])
+        ->name('reviews.edit')
+        ->middleware('can:update,review');
+
+    Route::put('/reviews/{review}', [ReviewController::class, 'update'])
+        ->name('reviews.update')
+        ->middleware('can:update,review');
+
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])
+        ->name('reviews.destroy')
+        ->middleware('can:delete,review');
+});
+
+// Profile review routes
+Route::middleware('auth')->group(function () {
+    Route::get('/profile/reviews', [ProfileController::class, 'reviews'])
+        ->name('profile.reviews');
 });
 
 // ============================================================================
