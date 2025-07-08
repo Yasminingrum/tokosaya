@@ -412,7 +412,7 @@
                                     <li><a class="dropdown-item" href="{{ route('orders.index') }}">
                                         <i class="fas fa-shopping-bag me-2"></i>Pesanan Saya
                                     </a></li>
-                                    <li><a class="dropdown-item" href="{{ route('profile.addresses') }}">
+                                    <li><a class="dropdown-item" href="{{ route('profile.addresses.index') }}">
                                         <i class="fas fa-map-marker-alt me-2"></i>Alamat
                                     </a></li>
                                     <li><a class="dropdown-item" href="{{ route('wishlist.index') }}">
@@ -636,8 +636,26 @@
         document.addEventListener('alpine:init', () => {
             // Cart Store
             Alpine.store('cart', {
-                count: {{ app('App\Services\CartService')->getItemCount() }},
-                total: {{ app('App\Services\CartService')->getTotal() }},
+                count: 0,
+                total: 0,
+                loading: false,
+
+                async init() {
+                    await this.loadCartData();
+                },
+
+                async loadCartData() {
+                    try {
+                        const response = await fetch('/cart/data');
+                        const data = await response.json();
+                        this.count = data.count || 0;
+                        this.total = data.total || 0;
+                    } catch (error) {
+                        console.log('Could not load cart data');
+                        this.count = 0;
+                        this.total = 0;
+                    }
+                },
 
                 updateCount(count) {
                     this.count = count;
@@ -650,12 +668,33 @@
 
             // Wishlist Store
             Alpine.store('wishlist', {
-                count: {{ auth()->check() ? auth()->user()->wishlists()->count() : 0 }},
+                count: 0,
+
+                async init() {
+                    // Load wishlist count if user is authenticated
+                    if (document.querySelector('meta[name="user-authenticated"]')) {
+                        await this.loadWishlistData();
+                    }
+                },
+
+                async loadWishlistData() {
+                    try {
+                        const response = await fetch('/wishlist/count');
+                        const data = await response.json();
+                        this.count = data.count || 0;
+                    } catch (error) {
+                        this.count = 0;
+                    }
+                },
 
                 updateCount(count) {
                     this.count = count;
                 }
             });
+
+            // Initialize stores
+            Alpine.store('cart').init();
+            Alpine.store('wishlist').init();
         });
 
         // Search Component

@@ -5,17 +5,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'role_id',
         'username',
         'email',
-        'password',
+        'password', // or 'password_hash' if using custom column
         'first_name',
         'last_name',
         'phone',
@@ -23,147 +27,213 @@ class User extends Authenticatable
         'date_of_birth',
         'gender',
         'is_active',
-        'last_login_at',
-        'login_attempts',
-        'locked_until',
     ];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
     protected $hidden = [
         'password',
+        'password_hash', // if using custom column
         'remember_token',
-        'login_attempts',
-        'locked_until',
     ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'phone_verified_at' => 'datetime',
-        'date_of_birth' => 'date',
-        'is_active' => 'boolean',
-        'last_login_at' => 'datetime',
-        'locked_until' => 'datetime',
-        'password' => 'hashed',
-    ];
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
+            'date_of_birth' => 'date',
+            'is_active' => 'boolean',
+            'password' => 'hashed',
+        ];
+    }
 
-    // Relationships
+    /**
+     * Get the password field for authentication
+     * Override this if using custom password column
+     */
+    public function getAuthPassword()
+    {
+        // If using 'password_hash' column instead of 'password'
+        if (isset($this->attributes['password_hash'])) {
+            return $this->password_hash;
+        }
+
+        return $this->password;
+    }
+
+    /**
+     * Relationship: User belongs to Role
+     */
     public function role()
     {
         return $this->belongsTo(Role::class);
     }
 
-    public function addresses()
-    {
-        return $this->hasMany(CustomerAddress::class);
-    }
-
-    public function defaultAddress()
-    {
-        return $this->hasOne(CustomerAddress::class)->where('is_default', true);
-    }
-
+    /**
+     * Relationship: User has many Orders
+     */
     public function orders()
     {
         return $this->hasMany(Order::class);
     }
 
-    public function reviews()
-    {
-        return $this->hasMany(ProductReview::class);
-    }
-
-    public function cart()
-    {
-        return $this->hasOne(ShoppingCart::class);
-    }
-
+    /**
+     * Relationship: User has many Wishlists
+     */
     public function wishlists()
     {
         return $this->hasMany(Wishlist::class);
     }
 
+    /**
+     * Relationship: User has many Notifications
+     */
     public function notifications()
     {
         return $this->hasMany(Notification::class);
     }
 
-    public function couponUsage()
+    /**
+     * Relationship: User has many Addresses
+     */
+    public function addresses()
     {
-        return $this->hasMany(CouponUsage::class);
+        return $this->hasMany(CustomerAddress::class);
     }
 
-    public function createdProducts()
+    /**
+     * Relationship: User has many Shopping Carts
+     */
+    public function carts()
     {
-        return $this->hasMany(Product::class, 'created_by');
+        return $this->hasMany(ShoppingCart::class);
     }
 
-    public function createdPages()
+    /**
+     * Relationship: User has many Reviews
+     */
+    public function reviews()
     {
-        return $this->hasMany(Page::class, 'created_by');
+        return $this->hasMany(ProductReview::class);
     }
 
-    public function uploadedMedia()
+    /**
+     * Relationship: User has many Activity Logs
+     */
+    public function activities()
     {
-        return $this->hasMany(MediaFile::class, 'uploaded_by');
+        return $this->hasMany(ActivityLog::class);
     }
 
-    // Scopes
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
-    public function scopeCustomers($query)
-    {
-        return $query->whereHas('role', function ($q) {
-            $q->where('name', 'customer');
-        });
-    }
-
-    public function scopeAdmins($query)
-    {
-        return $query->whereHas('role', function ($q) {
-            $q->whereIn('name', ['admin', 'super_admin']);
-        });
-    }
-
-    // Helper methods
-    public function getFullNameAttribute()
-    {
-        return "{$this->first_name} {$this->last_name}";
-    }
-
+    /**
+     * Helper method: Check if user has specific role
+     */
     public function hasRole($roleName)
     {
         return $this->role && $this->role->name === $roleName;
     }
 
-    public function hasPermission($permission)
-    {
-        return $this->role && $this->role->hasPermission($permission);
-    }
-
-    public function isCustomer()
-    {
-        return $this->hasRole('customer');
-    }
-
+    /**
+     * Helper method: Check if user is admin
+     */
     public function isAdmin()
     {
         return $this->hasRole('admin') || $this->hasRole('super_admin');
     }
 
-    public function isSuperAdmin()
+    /**
+     * Helper method: Check if user is customer
+     */
+    public function isCustomer()
     {
-        return $this->hasRole('super_admin');
+        return $this->hasRole('customer');
     }
 
-    public function isLocked()
+    /**
+     * Helper method: Get user's full name
+     */
+    public function getFullNameAttribute()
     {
-        return $this->locked_until && $this->locked_until->isFuture();
+        return $this->first_name . ' ' . $this->last_name;
     }
 
-    public function canLogin()
+    /**
+     * Helper method: Get user's active cart
+     */
+    public function getActiveCart()
     {
-        return $this->is_active && !$this->isLocked();
+        return $this->carts()
+            ->where('expires_at', '>', now())
+            ->orWhereNull('expires_at')
+            ->first();
+    }
+
+    /**
+     * Helper method: Get unread notifications count
+     */
+    public function getUnreadNotificationsCount()
+    {
+        try {
+            return $this->notifications()->where('is_read', false)->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Helper method: Get wishlist count
+     */
+    public function getWishlistCount()
+    {
+        try {
+            return $this->wishlists()->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Scope: Active users only
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope: Users by role
+     */
+    public function scopeWithRole($query, $roleName)
+    {
+        return $query->whereHas('role', function ($q) use ($roleName) {
+            $q->where('name', $roleName);
+        });
+    }
+
+    /**
+     * Scope: Customers only
+     */
+    public function scopeCustomers($query)
+    {
+        return $query->withRole('customer');
+    }
+
+    /**
+     * Scope: Admins only
+     */
+    public function scopeAdmins($query)
+    {
+        return $query->whereHas('role', function ($q) {
+            $q->whereIn('name', ['admin', 'super_admin']);
+        });
     }
 }

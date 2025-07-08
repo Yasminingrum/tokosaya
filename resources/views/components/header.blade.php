@@ -334,7 +334,7 @@
                                 </span>
                                 @endif
                             </a>
-                            <a href="{{ route('profile.addresses') }}"
+                            <a href="{{ route('profile.addresses.index') }}"
                                class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
                                @click="userMenuOpen = false">
                                 <i class="fas fa-map-marker-alt w-5 text-purple-600 mr-3"></i>

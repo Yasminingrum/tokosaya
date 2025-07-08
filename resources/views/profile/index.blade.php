@@ -38,19 +38,19 @@
                                 <div class="row text-center">
                                     <div class="col-4">
                                         <div class="stat-item">
-                                            <h6 class="stat-number">{{ $totalOrders }}</h6>
-                                            <small class="text-muted">Orders</small>
-                                        </div>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="stat-item">
-                                            <h6 class="stat-number">{{ $totalSpent }}</h6>
+                                            <h6 class="stat-number">{{ 'Rp ' . number_format(($stats['total_spent'] ?? 0) / 100, 0, ',', '.') }}</h6>
                                             <small class="text-muted">Spent</small>
                                         </div>
                                     </div>
                                     <div class="col-4">
                                         <div class="stat-item">
-                                            <h6 class="stat-number">{{ $loyaltyPoints ?? 0 }}</h6>
+                                            <h6 class="stat-number">{{ 'Rp ' . number_format(($stats['total_spent'] ?? 0) / 100, 0, ',', '.') }}</h6>
+                                            <small class="text-muted">Spent</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-item">
+                                            <h6 class="stat-number">{{ $stats['wishlist_count'] ?? 0 }}</h6>
                                             <small class="text-muted">Points</small>
                                         </div>
                                     </div>
@@ -72,25 +72,25 @@
                                 <i class="fas fa-user-edit"></i>
                                 <span>Edit Profile</span>
                             </a>
-                            <a href="{{ route('profile.orders') }}"
-                               class="nav-item {{ request()->routeIs('profile.orders') ? 'active' : '' }}">
+                            <a href="{{ route('orders.index') }}"
+                               class="nav-item {{ request()->routeIs('orders.index') ? 'active' : '' }}">
                                 <i class="fas fa-shopping-bag"></i>
                                 <span>Order History</span>
-                                @if($pendingOrders > 0)
-                                    <span class="badge bg-warning">{{ $pendingOrders }}</span>
+                                @if(($stats['total_orders'] ?? 0) > 0)
+                                    <span class="badge bg-warning">{{ $stats['total_orders'] }}</span>
                                 @endif
                             </a>
-                            <a href="{{ route('profile.addresses') }}"
-                               class="nav-item {{ request()->routeIs('profile.addresses') ? 'active' : '' }}">
+                            <a href="{{ route('profile.addresses.index') }}"
+                               class="nav-item {{ request()->routeIs('profile.addresses.index') ? 'active' : '' }}">
                                 <i class="fas fa-map-marker-alt"></i>
                                 <span>Addresses</span>
                             </a>
-                            <a href="{{ route('profile.wishlist') }}"
-                               class="nav-item {{ request()->routeIs('profile.wishlist') ? 'active' : '' }}">
+                            <a href="{{ route('wishlist.index') }}"
+                               class="nav-item {{ request()->routeIs('wishlist.index') ? 'active' : '' }}">
                                 <i class="fas fa-heart"></i>
                                 <span>Wishlist</span>
-                                @if($wishlistCount > 0)
-                                    <span class="badge bg-danger">{{ $wishlistCount }}</span>
+                                @if(($stats['wishlist_count'] ?? 0) > 0)
+                                    <span class="badge bg-danger">{{ $stats['wishlist_count'] }}</span>
                                 @endif
                             </a>
                             <a href="{{ route('profile.reviews') }}"
@@ -208,7 +208,7 @@
                                     <i class="fas fa-clock text-primary me-2"></i>
                                     Recent Orders
                                 </h6>
-                                <a href="{{ route('profile.orders') }}" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ route('orders.index') }}" class="btn btn-sm btn-outline-primary">
                                     View All
                                 </a>
                             </div>
@@ -290,7 +290,7 @@
                                         <i class="fas fa-chevron-right"></i>
                                     </a>
 
-                                    <a href="{{ route('profile.addresses') }}" class="action-item">
+                                    <a href="{{ route('profile.addresses.index') }}" class="action-item">
                                         <div class="action-icon bg-success">
                                             <i class="fas fa-plus"></i>
                                         </div>

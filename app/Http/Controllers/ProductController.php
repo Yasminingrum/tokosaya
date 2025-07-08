@@ -13,49 +13,115 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
-    /**
-     * Display products listing (Public)
-     */
+ /**
+ * Display products listing (Public) - WORKING VERSION
+ */
     public function index(Request $request)
     {
         try {
-            // Query paling sederhana - TANPA cache, tanpa collection
-            $products = Product::where('status', 'active')
+            // Query sederhana tanpa kompleksitas berlebihan
+            $query = Product::where('status', 'active')
                 ->select([
                     'id', 'name', 'slug', 'price_cents', 'compare_price_cents',
-                    'stock_quantity', 'category_id', 'brand_id', 'created_at'
-                ])
-                ->with([
+                    'stock_quantity', 'category_id', 'brand_id', 'created_at',
+                    'rating_average', 'rating_count', 'featured'
+                ]);
+
+            // Apply basic filters
+            if ($request->filled('search')) {
+                $search = $request->get('search');
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+                });
+            }
+
+            if ($request->filled('category_id')) {
+                $query->where('category_id', $request->get('category_id'));
+            }
+
+            if ($request->filled('brand_id')) {
+                $query->where('brand_id', $request->get('brand_id'));
+            }
+
+            // Sorting
+            switch ($request->get('sort', 'newest')) {
+                case 'price_low':
+                    $query->orderBy('price_cents', 'asc');
+                    break;
+                case 'price_high':
+                    $query->orderBy('price_cents', 'desc');
+                    break;
+                case 'popular':
+                    $query->orderBy('rating_average', 'desc')->orderBy('sale_count', 'desc');
+                    break;
+                case 'name':
+                    $query->orderBy('name', 'asc');
+                    break;
+                default:
+                    $query->orderBy('created_at', 'desc');
+            }
+
+            // Get products dengan relationship
+            $products = $query->with([
                     'category:id,name,slug',
                     'brand:id,name,slug'
                 ])
-                ->orderBy('created_at', 'desc')
                 ->paginate(12);
 
-            // Data minimal untuk view
+            // Get data untuk filter
             $categories = Category::where('is_active', true)
                                 ->select('id', 'name', 'slug')
+                                ->orderBy('name')
                                 ->get();
 
             $brands = Brand::where('is_active', true)
                         ->select('id', 'name', 'slug')
+                        ->orderBy('name')
                         ->get();
 
             return view('products.index', compact('products', 'categories', 'brands'));
 
         } catch (\Exception $e) {
-            \Log::error('Product index error: ' . $e->getMessage());
+            // Log error tapi tetap return view
+            \Illuminate\Support\Facades\Log::error('Product index error: ' . $e->getMessage());
 
-            // Fallback: return empty view
-            $products = collect()->paginate(12);
+            // Return dengan data kosong
+            $products = new \Illuminate\Pagination\LengthAwarePaginator(
+                collect([]),
+                0,
+                12,
+                1,
+                ['path' => $request->url()]
+            );
             $categories = collect();
             $brands = collect();
 
             return view('products.index', compact('products', 'categories', 'brands'));
         }
+    }
+    /**
+     * Handle ketika tidak ada produk atau terjadi error
+     */
+    private function handleEmptyProducts($request)
+    {
+        // Buat dummy pagination object
+        $products = new \Illuminate\Pagination\LengthAwarePaginator(
+            collect([]), // empty collection
+            0, // total
+            12, // per page
+            1, // current page
+            ['path' => $request->url()]
+        );
+
+        $categories = collect();
+        $brands = collect();
+
+        return view('products.index', compact('products', 'categories', 'brands'));
     }
 
     /**
@@ -98,41 +164,38 @@ class ProductController extends Controller
         ));
     }
 
-    /**
-     * Search products
+/**
+     * Search suggestions for autocomplete (AJAX)
      */
-    public function search(Request $request)
+    public function searchSuggestions(Request $request)
     {
-        $query = trim($request->get('q'));
+        $query = $request->get('q');
 
-        if (empty($query)) {
-            return redirect()->route('products.index');
+        if (strlen($query) < 2) {
+            return response()->json(['suggestions' => []]);
         }
 
-        $cacheKey = 'product_search_' . md5($query);
-
-        $results = Cache::remember($cacheKey, 900, function () use ($query) {
-            // Search in products
+        try {
             $products = Product::where('status', 'active')
-                ->where(function($q) use ($query) {
-                    $q->where('name', 'LIKE', "%{$query}%")
-                      ->orWhere('description', 'LIKE', "%{$query}%")
-                      ->orWhere('short_description', 'LIKE', "%{$query}%")
-                      ->orWhere('sku', 'LIKE', "%{$query}%");
-                })
-                ->with(['category', 'brand', 'images'])
+                ->where('name', 'like', "%{$query}%")
+                ->select('id', 'name', 'slug', 'price_cents')
+                ->limit(5)
                 ->get();
 
-            $collection = new ProductCollection($products);
-            return $collection->smartSearch($query);
-        });
+            $suggestions = $products->map(function($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'price' => 'Rp ' . number_format($product->price_cents / 100, 0, ',', '.'),
+                    'image' => asset('images/placeholder-product.jpg')
+                ];
+            });
 
-        return view('products.search', [
-            'query' => $query,
-            'results' => $results['results'],
-            'total' => $results['total_found'],
-            'suggestions' => $results['suggestions']
-        ]);
+            return response()->json(['suggestions' => $suggestions]);
+        } catch (\Exception $e) {
+            return response()->json(['suggestions' => []]);
+        }
     }
 
     /**
