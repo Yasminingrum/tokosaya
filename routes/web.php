@@ -1,553 +1,482 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
-use App\Http\Controllers\{
-    HomeController,
-    AuthController,
-    ProductController,
-    CartController,
-    OrderController,
-    CheckoutController,
-    PaymentController,
-    CategoryController,
-    WishlistController,
-    ReviewController,
-    ProfileController
-};
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\ReviewController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| TokoSaya Web Routes - Complete & Optimized
+| Web Routes
 |--------------------------------------------------------------------------
 |
-| Complete route configuration based on existing controllers and views
-| with proper middleware and route organization
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
 |
 */
 
-// ============================================================================
-// HEALTH CHECK & SYSTEM STATUS
-// ============================================================================
+// Public Routes (Accessible by all users)
+Route::group([], function () {
+    // Homepage
+    Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get('/health', function () {
-    return response()->json([
-        'status' => 'healthy',
-        'timestamp' => now()->toISOString(),
-        'version' => config('app.version', '1.0.0')
-    ]);
-})->name('health.check');
+    // About page
+    Route::get('/about', [HomeController::class, 'about'])->name('about');
 
-// ============================================================================
-// HOMEPAGE & STATIC PAGES
-// ============================================================================
+    // Contact page
+    Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
+    // Handle contact form submission
+    Route::post('/contact', [HomeController::class, 'contactStore'])->name('contact.store');
 
-// Static pages with fallback closures
-Route::get('/about', [HomeController::class, 'about'])->name('about');
-Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
-Route::get('/faq', [HomeController::class, 'faq'])->name('faq');
-Route::get('/privacy', [HomeController::class, 'privacy'])->name('privacy');
-Route::get('/terms', [HomeController::class, 'terms'])->name('terms');
+    // Privacy policy page
+    Route::get('/privacy-policy', [HomeController::class, 'privacy'])->name('privacy');
 
-// Contact form submission
-Route::post('/contact', [HomeController::class, 'contactStore'])->name('contact.store');
+    // Terms of service page
+    Route::get('/terms-of-service', [HomeController::class, 'terms'])->name('terms');
 
-// Newsletter subscription
-Route::post('/newsletter/subscribe', [HomeController::class, 'newsletterSubscribe'])->name('newsletter.subscribe');
-Route::get('/newsletter/unsubscribe/{token}', [HomeController::class, 'newsletterUnsubscribe'])->name('newsletter.unsubscribe');
+    // FAQ page
+    Route::get('/faq', [HomeController::class, 'faq'])->name('faq');
 
-// ============================================================================
-// SEARCH ROUTES
-// ============================================================================
+    // Sitemap page
+    Route::get('/sitemap', [HomeController::class, 'sitemap'])->name('sitemap');
 
-Route::prefix('search')->name('search.')->group(function () {
-    Route::get('/', [ProductController::class, 'search'])->name('index');
-    Route::post('/', [ProductController::class, 'search'])->name('perform');
-    Route::get('/suggestions', [HomeController::class, 'searchSuggestions'])->name('suggestions');
+    // Search redirect
+    Route::get('/search', [HomeController::class, 'search'])->name('search');
+
+    // Products listing
+    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+
+    // Single product
+    Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+
+    // Product reviews
+    Route::get('/products/{product}/reviews', [ReviewController::class, 'show'])->name('reviews.show');
+
+    // Categories listing
+    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+
+    // Category with products
+    Route::get('/categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
+
+    // Products by brand
+    Route::get('/brand/{brand}', [ProductController::class, 'brand'])->name('products.brand');
+
+    // Featured products
+    Route::get('/products/featured', [ProductController::class, 'featured'])->name('products.featured');
+
+    // Cart contents
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+
+    // Add product to cart
+    Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+
+    // Update cart item quantity
+    Route::put('/cart/item/{itemId}', [CartController::class, 'update'])->name('cart.update');
+
+    // Remove item from cart
+    Route::delete('/cart/item/{itemId}', [CartController::class, 'remove'])->name('cart.remove');
+
+    // Clear entire cart
+    Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
+
+    // Payment gateway callback
+    Route::post('/payment/callback/{gateway}', [PaymentController::class, 'callback'])->name('payment.callback');
+
+    // View public shared wishlist
+    Route::get('/wishlist/public/{token}', [WishlistController::class, 'public'])->name('wishlist.public');
 });
 
-// Alternative route untuk kompatibilitas
-Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');
-
-// Global search redirect
-Route::post('/search', [HomeController::class, 'search'])->name('global.search');
-
-// ============================================================================
-// AUTHENTICATION ROUTES
-// ============================================================================
-
-Route::middleware('guest')->group(function () {
-    // Login
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
-
-    // Registration
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])->name('register.attempt');
-
-    // Password Reset
-    Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
-    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
-    Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
-    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
-});
-
-// Logout (authenticated users only)
-Route::post('/logout', [AuthController::class, 'logout'])
-    ->middleware('auth')
-    ->name('logout');
-
-// Dashboard redirect
-Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', function () {
-        return redirect()->route('profile.index');
-    })->name('dashboard');
-});
-
-// ============================================================================
-// PRODUCT CATALOG ROUTES
-// ============================================================================
-
-Route::prefix('products')->name('products.')->group(function () {
-    Route::get('/', [ProductController::class, 'index'])->name('index');
-    Route::get('/{product:slug}', [ProductController::class, 'show'])->name('show');
-
-    // AJAX routes
-    Route::get('/ajax/list', [ProductController::class, 'index'])->name('ajax.list');
-    Route::get('/featured', [ProductController::class, 'featured'])->name('featured');
-    Route::get('/trending', [HomeController::class, 'trending'])->name('trending');
-});
-
-// Simple product listing (fallback)
-Route::get('/products-simple', function() {
-    $products = \App\Models\Product::where('status', 'active')
-                                   ->with(['category:id,name,slug', 'brand:id,name,slug'])
-                                   ->paginate(12);
-    $categories = \App\Models\Category::where('is_active', true)->get();
-    $brands = \App\Models\Brand::where('is_active', true)->get();
-    return view('products.simple', compact('products', 'categories', 'brands'));
-})->name('products.simple');
-
-// ============================================================================
-// CATEGORY ROUTES
-// ============================================================================
-
-Route::prefix('categories')->name('categories.')->group(function () {
-    Route::get('/', [CategoryController::class, 'index'])->name('index');
-    Route::get('/{category:slug}', [CategoryController::class, 'show'])->name('show');
-});
-
-// ============================================================================
-// BRAND ROUTES
-// ============================================================================
-
-Route::prefix('brands')->name('brands.')->group(function () {
-    Route::get('/', function () {
-        $brands = \App\Models\Brand::where('is_active', true)->withCount('products')->get();
-        return view('brands.index', compact('brands'));
-    })->name('index');
-
-    Route::get('/{brand:slug}', function (\App\Models\Brand $brand) {
-        $products = \App\Models\Product::where('brand_id', $brand->id)
-                                      ->where('status', 'active')
-                                      ->with(['category', 'images'])
-                                      ->paginate(24);
-        return view('brands.show', compact('brand', 'products'));
-    })->name('show');
-});
-
-// ============================================================================
-// SHOPPING CART ROUTES - ✅ SIMPLE FIX
-// ============================================================================
-
-Route::prefix('cart')->name('cart.')->group(function () {
-    Route::get('/', [CartController::class, 'index'])->name('index');
-    Route::post('/add', [CartController::class, 'add'])->name('add');
-    Route::put('/update/{item}', [CartController::class, 'update'])->name('update');
-    Route::delete('/remove/{item}', [CartController::class, 'remove'])->name('remove');
-    Route::delete('/clear', [CartController::class, 'clear'])->name('clear');
-
-    // Cart utilities
-    Route::get('/count', [CartController::class, 'getCount'])->name('count');
-    Route::get('/total', [CartController::class, 'getTotal'])->name('total');
-    Route::get('/mini', [CartController::class, 'getMini'])->name('mini');
-    Route::get('/data', function() {
-        // Return cart data for AJAX
-        return response()->json([
-            'count' => session('cart_count', 0),
-            'total' => session('cart_total', 0)
-        ]);
-    })->name('data');
-
-    // Coupon operations
-    Route::post('/apply-coupon', [CartController::class, 'applyCoupon'])->name('apply-coupon');
-    Route::delete('/remove-coupon', [CartController::class, 'removeCoupon'])->name('remove-coupon');
-});
-
-// ============================================================================
-// WISHLIST ROUTES (Authenticated Users)
-// ============================================================================
-
-Route::middleware('auth')->prefix('wishlist')->name('wishlist.')->group(function () {
-    Route::get('/', [WishlistController::class, 'index'])->name('index');
-    Route::post('/add/{product}', [WishlistController::class, 'add'])->name('add');
-    Route::delete('/remove/{product}', [WishlistController::class, 'remove'])->name('remove');
-    Route::delete('/clear', [WishlistController::class, 'clear'])->name('clear');
-    Route::post('/move-to-cart/{product}', [WishlistController::class, 'moveToCart'])->name('move-to-cart');
-    Route::post('/toggle', [WishlistController::class, 'toggle'])->name('toggle');
-    Route::get('/count', [WishlistController::class, 'getCount'])->name('count');
-});
-
-// ============================================================================
-// CHECKOUT ROUTES
-// ============================================================================
-
-Route::middleware(['auth'])->prefix('checkout')->name('checkout.')->group(function () {
-    Route::get('/', [CheckoutController::class, 'index'])->name('index');
-    Route::get('/shipping', [CheckoutController::class, 'shipping'])->name('shipping');
-    Route::post('/shipping', [CheckoutController::class, 'storeShipping'])->name('shipping.store');
-    Route::get('/payment', [CheckoutController::class, 'payment'])->name('payment');
-    Route::post('/payment', [CheckoutController::class, 'storePayment'])->name('payment.store');
-    Route::get('/review', [CheckoutController::class, 'review'])->name('review');
-    Route::post('/place-order', [CheckoutController::class, 'placeOrder'])->name('place-order');
-    Route::get('/success/{order}', [CheckoutController::class, 'success'])->name('success');
-
-    // Shipping calculations
-    Route::post('/calculate-shipping', [CheckoutController::class, 'calculateShipping'])->name('calculate-shipping');
-});
-
-// ============================================================================
-// ORDER MANAGEMENT ROUTES (Authenticated Users)
-// ============================================================================
-
-Route::middleware('auth')->prefix('orders')->name('orders.')->group(function () {
-    Route::get('/', [OrderController::class, 'index'])->name('index');
-    Route::get('/{order}', [OrderController::class, 'show'])->name('show');
-    Route::get('/{order}/invoice', [OrderController::class, 'invoice'])->name('invoice');
-    Route::get('/{order}/tracking', [OrderController::class, 'tracking'])->name('tracking');
-
-    // Order actions
-    Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
-    Route::post('/{order}/reorder', [OrderController::class, 'reorder'])->name('reorder');
-
-    // Order review routes
-    Route::get('/{order}/review', [OrderController::class, 'review'])->name('review');
-    Route::post('/{order}/review', [OrderController::class, 'storeReview'])->name('review.store');
-
-    // Individual item review routes (alternative approach)
-    Route::get('/order-items/{orderItem}/review', [ReviewController::class, 'create'])
-        ->name('order-items.review.create');
-
-    Route::post('/order-items/{orderItem}/review', [ReviewController::class, 'store'])
-        ->name('order-items.review.store');
-
-    Route::get('/reviews/{review}/edit', [ReviewController::class, 'edit'])
-        ->name('reviews.edit')
-        ->middleware('can:update,review');
-
-    Route::put('/reviews/{review}', [ReviewController::class, 'update'])
-        ->name('reviews.update')
-        ->middleware('can:update,review');
-
-    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])
-        ->name('reviews.destroy')
-        ->middleware('can:delete,review');
-});
-
-// Profile review routes
-Route::middleware('auth')->group(function () {
-    Route::get('/profile/reviews', [ProfileController::class, 'reviews'])
-        ->name('profile.reviews');
-});
-
-// ============================================================================
-// PAYMENT ROUTES
-// ============================================================================
-
-Route::prefix('payment')->name('payment.')->group(function () {
-    Route::post('/process/{order}', [PaymentController::class, 'process'])->name('process');
-    Route::get('/return/{order}', [PaymentController::class, 'return'])->name('return');
-    Route::post('/notify/{order}', [PaymentController::class, 'notify'])->name('notify');
-    Route::get('/cancel/{order}', [PaymentController::class, 'cancel'])->name('cancel');
-
-    // Payment methods
-    Route::get('/methods', [PaymentController::class, 'getMethods'])->name('methods');
-
-    // Manual payment confirmation
-    Route::middleware('auth')->group(function () {
-        Route::get('/{payment}/upload-proof', [PaymentController::class, 'showUploadProof'])->name('upload-proof');
-        Route::post('/{payment}/upload-proof', [PaymentController::class, 'uploadProof'])->name('upload-proof.store');
-    });
-});
-
-// ============================================================================
-// USER PROFILE ROUTES (Authenticated Users) - COMPLETE
-// ============================================================================
-
-Route::middleware('auth')->prefix('profile')->name('profile.')->group(function () {
-    // Main profile pages
-    Route::get('/', [ProfileController::class, 'index'])->name('index');
-    Route::get('/edit', [ProfileController::class, 'edit'])->name('edit');
-    Route::put('/update', [ProfileController::class, 'update'])->name('update');
-
-    // Avatar management
-    Route::post('/upload-avatar', [ProfileController::class, 'uploadAvatar'])->name('upload-avatar');
-
-    // Password management & Security ✅ FIXED
-    Route::get('/security', function() {
-        $user = Auth::user();
-        return view('profile.security', compact('user'));
-    })->name('security');
-
-    Route::post('/change-password', [ProfileController::class, 'changePassword'])->name('changePassword');
-
-    // Order management (profile context)
-    Route::get('/orders', [ProfileController::class, 'orders'])->name('orders');
-
-    // Review management
-    Route::get('/reviews', [ProfileController::class, 'reviews'])->name('reviews');
-
-    // Notification management
-    Route::get('/notifications', [ProfileController::class, 'notifications'])->name('notifications');
-    Route::post('/notifications/{notification}/mark-read', function($notificationId) {
-        if (!Auth::check()) {
-            return response()->json(['error' => 'Authentication required'], 401);
-        }
-
-        \App\Models\Notification::where('id', $notificationId)
-            ->where('user_id', Auth::id())
-            ->update(['is_read' => true, 'read_at' => now()]);
-        return response()->json(['success' => true]);
-    })->name('notifications.mark-read');
-
-    // Loyalty program ✅ FIXED
-    Route::get('/loyalty', [ProfileController::class, 'loyalty'])->name('loyalty');
-
-    // Downloads
-    Route::get('/downloads', [ProfileController::class, 'downloads'])->name('downloads');
-
-    // Settings page ✅ ADDED
-    Route::get('/settings', function() {
-        $user = Auth::user();
-        return view('profile.settings', compact('user'));
-    })->name('settings');
-
-    // GDPR compliance routes
-    Route::get('/export-data', [ProfileController::class, 'exportData'])->name('export-data');
-    Route::post('/delete-account', [ProfileController::class, 'deleteAccount'])->name('delete-account');
-
-    // Address management - COMPLETE
-    Route::prefix('addresses')->name('addresses.')->group(function () {
-        Route::get('/', [ProfileController::class, 'addresses'])->name('index');
-        Route::post('/', [ProfileController::class, 'storeAddress'])->name('store');
-        Route::put('/{address}', [ProfileController::class, 'updateAddress'])->name('update');
-        Route::delete('/{address}', [ProfileController::class, 'deleteAddress'])->name('destroy');
-        Route::post('/{address}/set-default', [ProfileController::class, 'setDefaultAddress'])->name('set-default');
-    });
-
-    // Wishlist alias (redirect to main wishlist)
-    Route::get('/wishlist', function() {
-        return redirect()->route('wishlist.index');
-    })->name('wishlist');
-});
-
-// SUPPORT ROUTES ✅ ADDED
-Route::middleware('auth')->prefix('support')->name('support.')->group(function () {
-    Route::get('/tickets', function() {
-        $tickets = collect([]); // Mock data for now
-        return view('support.tickets', compact('tickets'));
-    })->name('tickets');
-
-    Route::post('/tickets', function() {
-        return redirect()->back()->with('success', 'Support ticket created successfully');
-    })->name('tickets.store');
-});
-
-// LOYALTY PROGRAM ROUTES ✅ ADDED
-Route::get('/loyalty/program', function() {
-    if (!Auth::check()) {
-        return redirect()->route('login');
-    }
-
-    $user = Auth::user();
-    $loyaltyPoints = 0;
-    $currentTier = 'Bronze';
-
-    return view('loyalty.program', compact('user', 'loyaltyPoints', 'currentTier'));
-})->name('loyalty.program');
-
-// ============================================================================
-// PRODUCT REVIEWS ROUTES
-// ============================================================================
-
-Route::prefix('reviews')->name('reviews.')->group(function () {
-    // Public review viewing
-    Route::get('/product/{product}', [ReviewController::class, 'productReviews'])->name('product');
-    Route::get('/{review}', [ReviewController::class, 'show'])->name('show');
-
-    // Authenticated review actions
-    Route::middleware('auth')->group(function () {
-        Route::post('/product/{product}', [ReviewController::class, 'store'])->name('store');
-        Route::put('/{review}', [ReviewController::class, 'update'])->name('update');
-        Route::delete('/{review}', [ReviewController::class, 'destroy'])->name('destroy');
-
-        // Review helpfulness
-        Route::post('/{review}/helpful', [ReviewController::class, 'markHelpful'])->name('helpful');
-    });
-});
-
-// ============================================================================
-// ADMIN ROUTES (Basic)
-// ============================================================================
-
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard.index');
-});
-
-// ============================================================================
-// API ROUTES FOR AJAX CALLS
-// ============================================================================
-
-Route::prefix('api')->name('api.')->group(function () {
+// AJAX Routes
+Route::group(['prefix' => 'api'], function () {
     // Search suggestions
-    Route::get('/search-suggestions', [HomeController::class, 'searchSuggestions'])->name('search-suggestions');
+    Route::get('/search-suggestions', [ProductController::class, 'searchSuggestions'])->name('products.search.suggestions');
 
-    // Product quick stats (authenticated)
-    Route::middleware('auth')->group(function() {
-        Route::get('/quick-stats', [HomeController::class, 'quickStats'])->name('quick-stats');
+    // Track visitor
+    Route::post('/track-visitor', [HomeController::class, 'trackVisitor'])->name('track.visitor');
 
-        // Wishlist API
-        Route::post('/wishlist/{product}', function($productId) {
-            if (!Auth::check()) {
-                return response()->json(['error' => 'Authentication required'], 401);
-            }
+    // Quick stats
+    Route::get('/quick-stats', [HomeController::class, 'quickStats'])->name('quick.stats');
 
-            $user = Auth::user();
-            $exists = \App\Models\Wishlist::where('user_id', $user->id)
-                                          ->where('product_id', $productId)
-                                          ->exists();
+    // Category tree for select dropdown
+    Route::get('/categories/tree', [CategoryController::class, 'getTree'])->name('categories.tree');
 
-            if ($exists) {
-                \App\Models\Wishlist::where('user_id', $user->id)
-                                    ->where('product_id', $productId)
-                                    ->delete();
-                return response()->json(['success' => true, 'action' => 'removed', 'message' => 'Removed from wishlist']);
-            } else {
-                \App\Models\Wishlist::create([
-                    'user_id' => $user->id,
-                    'product_id' => $productId
-                ]);
-                return response()->json(['success' => true, 'action' => 'added', 'message' => 'Added to wishlist']);
-            }
-        })->name('wishlist.toggle');
+    // Get cart count
+    Route::get('/cart/count', [CartController::class, 'count'])->name('cart.count');
+
+    // Get cart total
+    Route::get('/cart/total', [CartController::class, 'total'])->name('cart.total');
+
+    // Apply coupon to cart
+    Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
+
+    // Remove applied coupon from cart
+    Route::delete('/cart/coupon', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
+
+    // Checkout AJAX Routes
+    Route::prefix('checkout')->group(function () {
+        // Calculate shipping rates
+        Route::get('/shipping/calculate', [CheckoutController::class, 'calculateShipping'])->middleware('cart.not_empty')->name('checkout.shipping.calculate');
+
+        // Validate coupon code
+        Route::get('/coupon/validate', [CheckoutController::class, 'validateCoupon'])->middleware('cart.not_empty')->name('checkout.coupon.validate');
+
+        // Apply coupon code
+        Route::post('/coupon', [CheckoutController::class, 'applyCoupon'])->middleware('cart.not_empty')->name('checkout.coupon.apply');
+
+        // Remove applied coupon
+        Route::delete('/coupon', [CheckoutController::class, 'removeCoupon'])->middleware('cart.not_empty')->name('checkout.coupon.remove');
     });
 
-    // Public APIs
-    Route::get('/trending-products', [HomeController::class, 'trending'])->name('trending-products');
-    Route::post('/track-visitor', [HomeController::class, 'trackVisitor'])->name('track-visitor');
-});
+    // Verify payment status
+    Route::get('/payment/verify', [PaymentController::class, 'verify'])->middleware('auth')->name('payment.verify');
 
-// ============================================================================
-// UTILITY ROUTES
-// ============================================================================
+    // Order AJAX Routes
+    Route::prefix('orders')->group(function () {
+        // Add note to order
+        Route::post('/{order}/note', [OrderController::class, 'addNote'])->middleware('auth:admin')->name('admin.orders.add_note');
 
-// Sitemap
-Route::get('/sitemap', [HomeController::class, 'sitemap'])->name('sitemap');
-
-// Visitor tracking
-Route::post('/track-visit', [HomeController::class, 'trackVisitor'])->name('track-visit');
-
-// Error pages
-Route::get('/404', [HomeController::class, 'notFound'])->name('404');
-
-// ============================================================================
-// DEVELOPMENT ROUTES (Non-production only)
-// ============================================================================
-
-if (app()->environment(['local', 'testing'])) {
-    Route::prefix('dev')->name('dev.')->group(function () {
-        Route::get('/clear-cache', function () {
-            Artisan::call('cache:clear');
-            Artisan::call('config:clear');
-            Artisan::call('view:clear');
-            Artisan::call('route:clear');
-            return 'All caches cleared!';
-        })->name('clear-cache');
-
-        Route::get('/debug-auth', function() {
-            try {
-                $dbCheck = DB::connection()->getPdo() ? 'Connected' : 'Failed';
-                $columns = DB::select("DESCRIBE users");
-                $rolesCount = DB::table('roles')->count();
-                $roles = DB::table('roles')->get();
-                $sampleUser = DB::table('users')->first();
-                $authConfig = config('auth');
-
-                return response()->json([
-                    'database' => $dbCheck,
-                    'user_columns' => $columns,
-                    'roles_count' => $rolesCount,
-                    'roles' => $roles,
-                    'sample_user' => $sampleUser,
-                    'auth_config' => $authConfig
-                ]);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-            }
-        })->name('debug-auth');
+        // Bulk update orders
+        Route::post('/bulk-update', [OrderController::class, 'bulkUpdate'])->middleware('auth:admin')->name('admin.orders.bulk_update');
     });
-}
 
-/*
-|--------------------------------------------------------------------------
-| Route Model Binding
-|--------------------------------------------------------------------------
-*/
+    // Wishlist AJAX Routes
+    Route::prefix('wishlist')->middleware(['auth', 'user.status'])->group(function () {
+        // Add product to wishlist
+        Route::post('/add', [WishlistController::class, 'add'])->name('wishlist.add');
 
-Route::bind('product', function ($value) {
-    return \App\Models\Product::where('slug', $value)->firstOrFail();
+        // Remove product from wishlist
+        Route::post('/remove/{product}', [WishlistController::class, 'remove'])->name('wishlist.remove');
+
+        // Clear entire wishlist
+        Route::post('/clear', [WishlistController::class, 'clear'])->name('wishlist.clear');
+
+        // Toggle product in wishlist
+        Route::post('/toggle/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+
+        // Move product to cart
+        Route::post('/move-to-cart/{product}', [WishlistController::class, 'moveToCart'])->name('wishlist.move_to_cart');
+
+        // Check if product is in wishlist
+        Route::get('/check/{product}', [WishlistController::class, 'check'])->name('wishlist.check');
+
+        // Get wishlist count
+        Route::get('/count', [WishlistController::class, 'count'])->name('wishlist.count');
+
+        // Get wishlist suggestions
+        Route::get('/suggestions', [WishlistController::class, 'suggestions'])->name('wishlist.suggestions');
+
+        // Share wishlist
+        Route::post('/share', [WishlistController::class, 'share'])->name('wishlist.share');
+
+        // Bulk operations on wishlist
+        Route::post('/bulk-action', [WishlistController::class, 'bulkAction'])->name('wishlist.bulk_action');
+    });
+
+    // Review AJAX Routes
+    Route::prefix('reviews')->group(function () {
+        // Mark review as helpful
+        Route::post('/{review}/helpful', [ReviewController::class, 'helpful'])->middleware(['auth', 'user.status'])->name('reviews.helpful');
+
+        // Remove helpful mark from review
+        Route::post('/{review}/unhelpful', [ReviewController::class, 'unhelpful'])->middleware(['auth', 'user.status'])->name('reviews.unhelpful');
+
+        // Bulk operations on reviews
+        Route::post('/bulk-action', [ReviewController::class, 'bulkAction'])->middleware('auth:admin')->name('admin.reviews.bulk_action');
+    });
 });
 
-Route::bind('category', function ($value) {
-    return \App\Models\Category::where('slug', $value)->firstOrFail();
+// Newsletter Routes
+Route::group([], function () {
+    // Newsletter subscription
+    Route::post('/newsletter/subscribe', [HomeController::class, 'newsletterSubscribe'])->name('newsletter.subscribe');
+
+    // Newsletter unsubscribe
+    Route::get('/newsletter/unsubscribe/{token}', [HomeController::class, 'newsletterUnsubscribe'])->name('newsletter.unsubscribe');
 });
 
-Route::bind('brand', function ($value) {
-    return \App\Models\Brand::where('slug', $value)->firstOrFail();
+// Guest Routes (Accessible by non-authenticated users)
+Route::middleware('guest')->group(function () {
+    // Show login form
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+
+    // Handle login
+    Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+
+    // Show registration form
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+
+    // Handle registration
+    Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
 });
 
-Route::bind('address', function ($value) {
-    if (!Auth::check()) {
-        abort(401, 'Authentication required');
-    }
-    return \App\Models\CustomerAddress::where('id', $value)
-                                      ->where('user_id', Auth::id())
-                                      ->firstOrFail();
+// Authenticated Routes (Accessible by authenticated users)
+Route::middleware(['auth', 'user.status'])->group(function () {
+    // Handle logout
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    // Show user dashboard
+    Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
+
+    // Review Routes
+    Route::prefix('reviews')->group(function () {
+        // Store a new review
+        Route::post('/{product}', [ReviewController::class, 'store'])->name('reviews.store');
+
+        // Update an existing review
+        Route::post('/{review}/update', [ReviewController::class, 'update'])->name('reviews.update');
+
+        // Get user's reviews
+        Route::get('/', [ReviewController::class, 'userReviews'])->name('reviews.user');
+    });
+
+    // Wishlist Routes
+    Route::prefix('wishlist')->group(function () {
+        // Display user's wishlist
+        Route::get('/', [WishlistController::class, 'index'])->name('wishlist.index');
+    });
+
+    // Order Routes
+    Route::prefix('orders')->group(function () {
+        // Display customer orders
+        Route::get('/', [OrderController::class, 'index'])->name('orders.index');
+
+        // Show single order
+        Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');
+
+        // Create order from cart
+        Route::post('/store', [OrderController::class, 'store'])->name('orders.store');
+
+        // Cancel order
+        Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+
+        // Reorder (add order items back to cart)
+        Route::post('/{order}/reorder', [OrderController::class, 'reorder'])->name('orders.reorder');
+
+        // Track order
+        Route::get('/{order}/track', [OrderController::class, 'track'])->name('orders.track');
+
+        // Show order review form
+        Route::get('/{order}/review', [OrderController::class, 'review'])->name('orders.review');
+
+        // Store order reviews
+        Route::post('/{order}/review', [OrderController::class, 'storeReview'])->name('orders.store_review');
+    });
+
+    // Checkout Routes
+    Route::prefix('checkout')->group(function () {
+        // Checkout page
+        Route::get('/', [CheckoutController::class, 'index'])->middleware('cart.not_empty')->name('checkout.index');
+
+        // Handle shipping step
+        Route::post('/shipping', [CheckoutController::class, 'shipping'])->middleware('cart.not_empty')->name('checkout.shipping');
+
+        // Handle payment step
+        Route::post('/payment', [CheckoutController::class, 'payment'])->middleware('cart.not_empty')->name('checkout.payment');
+
+        // Order review page
+        Route::get('/review', [CheckoutController::class, 'review'])->middleware('cart.not_empty')->name('checkout.review');
+
+        // Process order
+        Route::post('/process', [CheckoutController::class, 'process'])->middleware('cart.not_empty')->name('checkout.process');
+
+        // Order success page
+        Route::get('/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
+
+        // Order failed page
+        Route::get('/failed', [CheckoutController::class, 'failed'])->name('checkout.failed');
+    });
+
+    // Payment Routes
+    Route::prefix('payment')->group(function () {
+        // Process payment for an order
+        Route::post('/process', [PaymentController::class, 'process'])->name('payment.process');
+
+        // Payment success page
+        Route::get('/success', [PaymentController::class, 'success'])->name('payment.success');
+
+        // Payment failed page
+        Route::get('/failed', [PaymentController::class, 'failed'])->name('payment.failed');
+    });
 });
 
-Route::bind('order', function ($value) {
-    if (!Auth::check()) {
-        abort(401, 'Authentication required');
-    }
-    return \App\Models\Order::where('id', $value)
-                            ->where('user_id', Auth::id())
-                            ->firstOrFail();
+// Profile Routes (Accessible by authenticated users)
+Route::middleware(['auth', 'user.status'])->prefix('profile')->group(function () {
+    // Show profile dashboard
+    Route::get('/', [ProfileController::class, 'index'])->name('profile.index');
+
+    // Show profile edit form
+    Route::get('/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+
+    // Update profile
+    Route::put('/', [ProfileController::class, 'update'])->name('profile.update');
+
+    // Upload avatar
+    Route::post('/avatar', [ProfileController::class, 'uploadAvatar'])->name('profile.avatar.upload');
+
+    // Change password
+    Route::put('/password', [ProfileController::class, 'changePassword'])->name('profile.password.update');
+
+    // Show order history
+    Route::get('/orders', [ProfileController::class, 'orders'])->name('profile.orders');
+
+    // Show addresses
+    Route::get('/addresses', [ProfileController::class, 'addresses'])->name('profile.addresses');
+
+    // Store new address
+    Route::post('/addresses', [ProfileController::class, 'storeAddress'])->name('profile.addresses.store');
+
+    // Update address
+    Route::put('/addresses/{addressId}', [ProfileController::class, 'updateAddress'])->name('profile.addresses.update');
+
+    // Delete address
+    Route::delete('/addresses/{addressId}', [ProfileController::class, 'deleteAddress'])->name('profile.addresses.delete');
+
+    // Set default address
+    Route::put('/addresses/{addressId}/default', [ProfileController::class, 'setDefaultAddress'])->name('profile.addresses.set_default');
+
+    // Show reviews
+    Route::get('/reviews', [ProfileController::class, 'reviews'])->name('profile.reviews');
+
+    // Show notifications
+    Route::get('/notifications', [ProfileController::class, 'notifications'])->name('profile.notifications');
+
+    // Show loyalty/rewards
+    Route::get('/loyalty', [ProfileController::class, 'loyalty'])->name('profile.loyalty');
+
+    // Show downloads
+    Route::get('/downloads', [ProfileController::class, 'downloads'])->name('profile.downloads');
+
+    // Export user data
+    Route::get('/export-data', [ProfileController::class, 'exportData'])->name('profile.export_data');
+
+    // Delete account
+    Route::post('/delete-account', [ProfileController::class, 'deleteAccount'])->name('profile.delete_account');
 });
 
-// ============================================================================
-// FALLBACK ROUTE
-// ============================================================================
+// Admin Routes (Accessible by admin, super_admin, staff roles)
+Route::middleware(['auth', 'role:admin,super_admin,staff'])->prefix('admin')->group(function () {
+    // Admin dashboard
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 
-Route::fallback(function () {
-    return response()->view('errors.404', [], 404);
+    // Analytics data
+    Route::get('/analytics', [AdminDashboardController::class, 'analytics'])->name('admin.analytics');
+
+    // Reports data
+    Route::get('/reports', [AdminDashboardController::class, 'reports'])->name('admin.reports');
+
+    // Sales chart data
+    Route::get('/sales-chart', [AdminDashboardController::class, 'salesChart'])->name('admin.sales_chart');
+
+    // Overview data
+    Route::get('/overview', [AdminDashboardController::class, 'overview'])->name('admin.overview');
+
+    // Export data
+    Route::post('/export', [AdminDashboardController::class, 'export'])->name('admin.export');
+
+    // Admin products listing
+    Route::get('/products', [ProductController::class, 'adminIndex'])->name('admin.products.index');
+
+    // Create product form
+    Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');
+
+    // Store new product
+    Route::post('/products', [ProductController::class, 'store'])->name('admin.products.store');
+
+    // Edit product form
+    Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
+
+    // Update product
+    Route::put('/products/{product}', [ProductController::class, 'update'])->name('admin.products.update');
+
+    // Delete product
+    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('admin.products.destroy');
+
+    // Update product stock
+    Route::post('/products/{product}/stock', [ProductController::class, 'updateStock'])->name('admin.products.stock.update');
+
+    // Toggle product status
+    Route::put('/products/{product}/status', [ProductController::class, 'toggleStatus'])->name('admin.products.status.toggle');
 });
+
+// Admin Routes (Accessible by admin with auth:admin)
+Route::middleware('auth:admin')->prefix('admin')->group(function () {
+    // Admin categories listing
+    Route::get('/categories', [CategoryController::class, 'adminIndex'])->name('admin.categories.index');
+
+    // Create category form
+    Route::get('/categories/create', [CategoryController::class, 'create'])->name('admin.categories.create');
+
+    // Store new category
+    Route::post('/categories', [CategoryController::class, 'store'])->name('admin.categories.store');
+
+    // Edit category form
+    Route::get('/categories/{category}/edit', [CategoryController::class, 'edit'])->name('admin.categories.edit');
+
+    // Update category
+    Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('admin.categories.update');
+
+    // Delete category
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('admin.categories.destroy');
+
+    // Reorder categories
+    Route::post('/categories/reorder', [CategoryController::class, 'reorder'])->name('admin.categories.reorder');
+
+    // Toggle category status
+    Route::put('/categories/{category}/status', [CategoryController::class, 'toggleStatus'])->name('admin.categories.status.toggle');
+
+    // Admin payments listing
+    Route::get('/payments', [PaymentController::class, 'adminIndex'])->name('admin.payments.index');
+
+    // Show payment details
+    Route::get('/payments/{payment}', [PaymentController::class, 'adminShow'])->name('admin.payments.show');
+
+    // Approve manual payment
+    Route::post('/payments/{payment}/approve', [PaymentController::class, 'approve'])->name('admin.payments.approve');
+
+    // Reject manual payment
+    Route::post('/payments/{payment}/reject', [PaymentController::class, 'reject'])->name('admin.payments.reject');
+
+    // Admin orders listing
+    Route::get('/orders', [OrderController::class, 'adminIndex'])->name('admin.orders.index');
+
+    // Show single order
+    Route::get('/orders/{order}', [OrderController::class, 'adminShow'])->name('admin.orders.show');
+
+    // Update order status
+    Route::post('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.update_status');
+
+    // Print invoice
+    Route::get('/orders/{order}/invoice', [OrderController::class, 'printInvoice'])->name('admin.orders.print_invoice');
+
+    // Admin reviews listing
+    Route::get('/reviews', [ReviewController::class, 'adminIndex'])->name('admin.reviews.index');
+
+    // Show single review
+    Route::get('/reviews/{review}', [ReviewController::class, 'adminShow'])->name('admin.reviews.show');
+
+    // Approve review
+    Route::post('/reviews/{review}/approve', [ReviewController::class, 'approve'])->name('admin.reviews.approve');
+
+    // Reject review
+    Route::post('/reviews/{review}/reject', [ReviewController::class, 'reject'])->name('admin.reviews.reject');
+
+    // Delete review
+    Route::post('/reviews/{review}/destroy', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
+});
+
+// Custom 404 Route
+Route::fallback([HomeController::class, 'notFound'])->name('notfound');
+
+// Health Check Route
+Route::get('/health', [HomeController::class, 'health'])->name('health');

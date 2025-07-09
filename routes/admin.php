@@ -17,7 +17,7 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 |
 */
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->prefix('admin')->name('admin.')->group(function () {
 
     // ========================================================================
     // ADMIN DASHBOARD

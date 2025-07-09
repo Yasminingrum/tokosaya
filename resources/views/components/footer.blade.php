@@ -1,163 +1,689 @@
-<!-- Modern Minimalist Footer -->
-<footer class="bg-gray-900 text-white">
-    <!-- Newsletter Section - Simplified -->
-    <div class="bg-gradient-to-r from-blue-600 to-purple-600 py-16">
-        <div class="container mx-auto px-4 text-center">
-            <div class="max-w-2xl mx-auto space-y-6" data-aos="fade-up">
-                <h2 class="text-3xl font-bold">Dapatkan Update Terbaru</h2>
-                <p class="text-blue-100">Berlangganan untuk penawaran eksklusif dan produk terbaru</p>
+<!-- Modern Minimalist Footer - Konsisten dengan Header dan Home -->
+<footer class="bg-[var(--text-dark)] text-white py-[var(--space-3xl)] pb-[var(--space-xl)]">
 
-                <form class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-                      x-data="{ email: '', loading: false }"
-                      @submit.prevent="subscribeNewsletter()">
-                    @csrf
-                    <input type="email"
-                           x-model="email"
-                           placeholder="Email Anda"
-                           class="flex-1 px-6 py-3 rounded-full text-gray-900 focus:ring-2 focus:ring-white focus:outline-none"
-                           required>
-                    <button type="submit"
-                            :disabled="loading"
-                            class="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50">
-                        <span x-show="!loading">Berlangganan</span>
-                        <span x-show="loading">
-                            <i class="fas fa-spinner fa-spin mr-2"></i>Memproses...
-                        </span>
-                    </button>
-                </form>
-            </div>
+    @push('styles')
+    <style>
+        /* Variabel CSS yang konsisten dengan home.blade.php */
+        :root {
+            --primary: #f8bbd9;
+            --primary-dark: #f4a6cd;
+            --primary-light: #fce7f1;
+            --teal: #5fb3b4;
+            --teal-dark: #4a9b9c;
+            --teal-light: #b8e0e1;
+            --cream: #fef7f0;
+            --text-dark: #2d3748;
+            --text-medium: #4a5568;
+            --text-light: #718096;
+            --text-muted: #a0aec0;
+            --radius-lg: 1rem;
+            --radius-xl: 1.5rem;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Base Styles */
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--space-md);
+        }
+
+        /* Newsletter Section */
+        .newsletter-section {
+            background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+            color: white;
+            padding: var(--space-3xl) 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: var(--space-3xl);
+        }
+
+        .newsletter-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="white" opacity="0.1"/></svg>');
+            pointer-events: none;
+        }
+
+        .newsletter-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: var(--space-md);
+        }
+
+        .newsletter-subtitle {
+            font-size: 1.125rem;
+            margin-bottom: var(--space-xl);
+            opacity: 0.9;
+        }
+
+        .newsletter-form {
+            display: flex;
+            gap: var(--space-md);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .newsletter-input {
+            flex: 1;
+            padding: 0.875rem 1.25rem;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 0.875rem;
+            background-color: white;
+            color: var(--text-dark);
+            transition: var(--transition);
+        }
+
+        .newsletter-input:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .newsletter-button {
+            padding: 0.875rem 1.5rem;
+            background-color: var(--primary);
+            color: var(--text-dark);
+            border: none;
+            border-radius: var(--radius-xl);
+            font-weight: 600;
+            transition: var(--transition);
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .newsletter-button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        /* Main Footer Content */
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-2xl);
+            margin-bottom: var(--space-2xl);
+        }
+
+        /* Company Info */
+        .company-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .logo-icon {
+            width: 3rem;
+            height: 3rem;
+            background: linear-gradient(135deg, var(--primary), var(--teal));
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .logo-text {
+            color: white;
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .logo-subtext {
+            color: #cbd5e0;
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+        .company-description {
+            color: #cbd5e0;
+            margin-bottom: var(--space-lg);
+            line-height: 1.6;
+        }
+
+        /* Social Media */
+        .social-links {
+            display: flex;
+            gap: var(--space-md);
+        }
+
+        .social-link {
+            width: 2.5rem;
+            height: 2.5rem;
+            background-color: #4a5568;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #cbd5e0;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .social-link:hover {
+            transform: translateY(-2px);
+        }
+
+        .social-link.instagram:hover {
+            background-color: var(--primary);
+            color: var(--text-dark);
+        }
+
+        .social-link.facebook:hover {
+            background-color: var(--teal);
+            color: white;
+        }
+
+        .social-link.twitter:hover {
+            background-color: var(--teal);
+            color: white;
+        }
+
+        .social-link.youtube:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        /* Footer Navigation */
+        .footer-nav-title {
+            color: white;
+            margin-bottom: var(--space-lg);
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .footer-nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-nav-item {
+            margin-bottom: var(--space-sm);
+        }
+
+        .footer-nav-link {
+            color: #cbd5e0;
+            text-decoration: none;
+            transition: var(--transition);
+            display: block;
+            padding: 0.25rem 0;
+        }
+
+        .footer-nav-link:hover {
+            color: var(--primary);
+            padding-left: 0.5rem;
+        }
+
+        /* Contact Info */
+        .contact-item {
+            margin-bottom: var(--space-lg);
+        }
+
+        .contact-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .contact-label {
+            color: #cbd5e0;
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+        .contact-value {
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .contact-value:hover {
+            color: var(--primary);
+        }
+
+        .contact-subtext {
+            color: #a0aec0;
+            margin: 0;
+            font-size: 0.75rem;
+        }
+
+        /* Payment & Shipping */
+        .footer-divider {
+            border-top: 1px solid #4a5568;
+            padding-top: var(--space-xl);
+            margin-bottom: var(--space-xl);
+        }
+
+        .methods-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-xl);
+        }
+
+        .methods-title {
+            color: #cbd5e0;
+            margin-bottom: var(--space-md);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .methods-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+        }
+
+        .method-badge {
+            background-color: white;
+            border-radius: var(--radius-md);
+            padding: 0.5rem;
+            width: 3rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .method-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .method-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            text-transform: uppercase;
+        }
+
+        /* Trust Badges */
+        .trust-badges {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-lg);
+        }
+
+        .trust-indicators {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-lg);
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            transition: var(--transition);
+        }
+
+        .trust-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .trust-icon {
+            font-size: 1.125rem;
+        }
+
+        .trust-text {
+            color: #cbd5e0;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .certifications {
+            display: flex;
+            gap: var(--space-md);
+        }
+
+        .certification-badge {
+            background-color: white;
+            border-radius: var(--radius-md);
+            padding: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .certification-badge:hover {
+            transform: translateY(-2px);
+        }
+
+        .certification-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* Bottom Footer */
+        .bottom-footer {
+            border-top: 1px solid #4a5568;
+            padding-top: var(--space-xl);
+        }
+
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-lg);
+        }
+
+        .copyright {
+            color: #a0aec0;
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+        .legal-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-lg);
+        }
+
+        .legal-link {
+            color: #cbd5e0;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .legal-link:hover {
+            color: var(--primary);
+        }
+
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 3rem;
+            height: 3rem;
+            background: linear-gradient(135deg, var(--primary), var(--teal));
+            color: white;
+            border: none;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            cursor: pointer;
+            transition: var(--transition);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(0) scale(1.1);
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            .newsletter-form {
+                flex-direction: column;
+                max-width: 100%;
+            }
+
+            .newsletter-input {
+                margin-bottom: var(--space-sm);
+            }
+
+            .newsletter-button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .trust-badges, .footer-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .back-to-top {
+                width: 2.5rem;
+                height: 2.5rem;
+                bottom: 1rem;
+                right: 1rem;
+            }
+
+            .footer-nav-title {
+                font-size: 1rem;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .footer-animate {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        /* Accessibility */
+        .footer-nav-link:focus,
+        .newsletter-button:focus,
+        .back-to-top:focus,
+        .social-link:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
+
+            .back-to-top:hover {
+                transform: none !important;
+            }
+        }
+    </style>
+    @endpush
+
+    <!-- Newsletter Section -->
+    <section class="newsletter-section">
+        <div class="newsletter-bg"></div>
+        <div class="footer-container">
+            <h2 class="newsletter-title">Dapatkan Update Terbaru</h2>
+            <p class="newsletter-subtitle">Berlangganan newsletter untuk penawaran eksklusif dan produk terbaru</p>
+
+            <form action="{{ route('newsletter.subscribe') }}" method="POST" class="newsletter-form">
+                @csrf
+                <input type="email" name="email" placeholder="Masukkan email Anda" required class="newsletter-input" aria-label="Masukkan email untuk berlangganan newsletter">
+                <button type="submit" class="newsletter-button">
+                    <i class="fas fa-paper-plane"></i> Berlangganan
+                </button>
+            </form>
         </div>
-    </div>
+    </section>
 
-    <!-- Main Footer Content - Clean Layout -->
-    <div class="py-16">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-
-                <!-- Company Info -->
-                <div class="lg:col-span-1">
-                    <div class="flex items-center space-x-3 mb-6">
-                        <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                            <i class="fas fa-store text-white text-xl"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-xl font-bold">TokoSaya</h2>
-                            <p class="text-sm text-gray-400">Belanja Mudah & Terpercaya</p>
-                        </div>
+    <!-- Main Footer Content -->
+    <div class="footer-container">
+        <div class="footer-grid">
+            <!-- Company Info -->
+            <div class="footer-animate">
+                <div class="company-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-store"></i>
                     </div>
-
-                    <p class="text-gray-300 mb-6 leading-relaxed">
-                        Platform e-commerce modern yang menghadirkan pengalaman berbelanja online terbaik dengan produk berkualitas dan pelayanan terpercaya.
-                    </p>
-
-                    <!-- Social Media - Minimalist -->
-                    <div class="flex space-x-4">
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors group">
-                            <i class="fab fa-instagram text-gray-400 group-hover:text-white"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors group">
-                            <i class="fab fa-facebook text-gray-400 group-hover:text-white"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-400 transition-colors group">
-                            <i class="fab fa-twitter text-gray-400 group-hover:text-white"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors group">
-                            <i class="fab fa-youtube text-gray-400 group-hover:text-white"></i>
-                        </a>
+                    <div>
+                        <h3 class="logo-text">Toko<span style="color: var(--primary);">Saya</span></h3>
+                        <p class="logo-subtext">Belanja Mudah & Terpercaya</p>
                     </div>
                 </div>
 
-                <!-- Quick Links -->
-                <div>
-                    <h3 class="text-lg font-semibold mb-6 text-white">Navigasi</h3>
-                    <ul class="space-y-3">
-                        <li><a href="{{ route('home') }}" class="footer-link">Beranda</a></li>
-                        <li><a href="{{ route('products.index') }}" class="footer-link">Semua Produk</a></li>
-                        <li><a href="{{ route('categories.index') }}" class="footer-link">Kategori</a></li>
-                        <li><a href="{{ route('brands.index') }}" class="footer-link">Brand</a></li>
-                        <li><a href="{{ route('products.index', ['featured' => 1]) }}" class="footer-link">Produk Unggulan</a></li>
-                        <li><a href="{{ route('products.index', ['sale' => 1]) }}" class="footer-link">Promo & Diskon</a></li>
-                    </ul>
+                <p class="company-description">
+                    Platform e-commerce modern yang menghadirkan pengalaman berbelanja online terbaik dengan produk berkualitas dan pelayanan terpercaya.
+                </p>
+
+                <!-- Social Media -->
+                <div class="social-links">
+                    <a href="#" class="social-link instagram" aria-label="Kunjungi Instagram kami">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" class="social-link facebook" aria-label="Kunjungi Facebook kami">
+                        <i class="fab fa-facebook"></i>
+                    </a>
+                    <a href="#" class="social-link twitter" aria-label="Kunjungi Twitter kami">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" class="social-link youtube" aria-label="Kunjungi YouTube kami">
+                        <i class="fab fa-youtube"></i>
+                    </a>
                 </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="footer-animate">
+                <h3 class="footer-nav-title">Navigasi</h3>
+                <ul class="footer-nav-list">
+                    <li class="footer-nav-item">
+                        <a href="{{ route('home') }}" class="footer-nav-link">Beranda</a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="{{ route('products.index') }}" class="footer-nav-link">Semua Produk</a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="{{ route('categories.index') }}" class="footer-nav-link">Kategori</a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="{{ route('brands.index') }}" class="footer-nav-link">Brand</a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="{{ route('products.index', ['featured' => 1]) }}" class="footer-nav-link">Produk Unggulan</a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="{{ route('products.index', ['sale' => 1]) }}" class="footer-nav-link">Promo & Diskon</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Customer Service -->
+            <div class="footer-animate">
+                <h3 class="footer-nav-title">Bantuan</h3>
+                <ul class="footer-nav-list">
+                    <li class="footer-nav-item">
+                        <a href="{{ route('contact') }}" class="footer-nav-link">Hubungi Kami</a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="{{ route('faq') }}" class="footer-nav-link">FAQ</a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="{{ route('shopping-guide') }}" class="footer-nav-link">Panduan Belanja</a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="{{ route('return-policy') }}" class="footer-nav-link">Kebijakan Return</a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="{{ route('warranty') }}" class="footer-nav-link">Garansi Produk</a>
+                    </li>
+                    <li class="footer-nav-item">
+                        <a href="{{ route('track-order') }}" class="footer-nav-link">Lacak Pesanan</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="footer-animate">
+                <h3 class="footer-nav-title">Kontak</h3>
 
                 <!-- Customer Service -->
-                <div>
-                    <h3 class="text-lg font-semibold mb-6 text-white">Bantuan</h3>
-                    <ul class="space-y-3">
-                        <li><a href="{{ route('contact') }}" class="footer-link">Hubungi Kami</a></li>
-                        <li><a href="{{ route('faq') }}" class="footer-link">FAQ</a></li>
-                        <li><a href="#" class="footer-link">Panduan Belanja</a></li>
-                        <li><a href="#" class="footer-link">Kebijakan Return</a></li>
-                        <li><a href="#" class="footer-link">Garansi Produk</a></li>
-                        <li><a href="#" class="footer-link">Lacak Pesanan</a></li>
-                    </ul>
+                <div class="contact-item">
+                    <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-sm);">
+                        <div class="contact-icon" style="background-color: var(--teal);">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                        <div>
+                            <p class="contact-label">Customer Service</p>
+                            <a href="tel:+6280412345678" class="contact-value">0804-1-234-5678</a>
+                            <p class="contact-subtext">24/7 - Gratis</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Contact Info -->
-                <div>
-                    <h3 class="text-lg font-semibold mb-6 text-white">Kontak</h3>
-                    <div class="space-y-4">
-
-                        <!-- Customer Service -->
-                        <div class="flex items-start space-x-3">
-                            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                                <i class="fas fa-headset text-white text-sm"></i>
-                            </div>
-                            <div>
-                                <p class="text-gray-300 text-sm">Customer Service</p>
-                                <a href="tel:+6280412345678" class="text-white font-medium hover:text-blue-400 transition-colors">
-                                    0804-1-234-5678
-                                </a>
-                                <p class="text-xs text-gray-400">24/7 - Gratis</p>
-                            </div>
+                <!-- Email Support -->
+                <div class="contact-item">
+                    <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-sm);">
+                        <div class="contact-icon" style="background-color: var(--success);">
+                            <i class="fas fa-envelope"></i>
                         </div>
-
-                        <!-- Email -->
-                        <div class="flex items-start space-x-3">
-                            <div class="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                                <i class="fas fa-envelope text-white text-sm"></i>
-                            </div>
-                            <div>
-                                <p class="text-gray-300 text-sm">Email Support</p>
-                                <a href="mailto:support@tokosaya.id" class="text-white font-medium hover:text-green-400 transition-colors">
-                                    support@tokosaya.id
-                                </a>
-                                <p class="text-xs text-gray-400">Respon dalam 24 jam</p>
-                            </div>
+                        <div>
+                            <p class="contact-label">Email Support</p>
+                            <a href="mailto:support@tokosaya.id" class="contact-value">support@tokosaya.id</a>
+                            <p class="contact-subtext">Respon dalam 24 jam</p>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- WhatsApp -->
-                        <div class="flex items-start space-x-3">
-                            <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                                <i class="fab fa-whatsapp text-white text-sm"></i>
-                            </div>
-                            <div>
-                                <p class="text-gray-300 text-sm">WhatsApp</p>
-                                <a href="https://wa.me/6281234567890" target="_blank" class="text-white font-medium hover:text-green-400 transition-colors">
-                                    +62 812-3456-7890
-                                </a>
-                                <p class="text-xs text-gray-400">Chat langsung</p>
-                            </div>
+                <!-- WhatsApp -->
+                <div class="contact-item">
+                    <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-sm);">
+                        <div class="contact-icon" style="background-color: #25d366;">
+                            <i class="fab fa-whatsapp"></i>
                         </div>
-
+                        <div>
+                            <p class="contact-label">WhatsApp</p>
+                            <a href="https://wa.me/6281234567890" target="_blank" class="contact-value">+62 812-3456-7890</a>
+                            <p class="contact-subtext">Chat langsung</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Payment & Shipping - Compact -->
-    <div class="border-t border-gray-800 py-8">
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
+        <!-- Payment & Shipping Methods -->
+        <div class="footer-divider">
+            <div class="methods-grid">
                 <!-- Payment Methods -->
                 <div>
-                    <h4 class="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">Metode Pembayaran</h4>
-                    <div class="flex flex-wrap gap-3">
-                        @foreach(['visa', 'mastercard', 'bca', 'mandiri', 'bni', 'gopay', 'ovo', 'dana'] as $payment)
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-12 h-8">
-                            <img src="{{ asset("images/payments/{$payment}.png") }}" alt="{{ ucfirst($payment) }}" class="h-4 object-contain">
+                    <h4 class="methods-title">Metode Pembayaran</h4>
+                    <div class="methods-container">
+                        @php
+                        $paymentMethods = ['visa', 'mastercard', 'bca', 'mandiri', 'bni', 'gopay', 'ovo', 'dana'];
+                        @endphp
+                        @foreach($paymentMethods as $payment)
+                        <div class="method-badge">
+                            <div class="method-text">{{ $payment }}</div>
                         </div>
                         @endforeach
                     </div>
@@ -165,216 +691,169 @@
 
                 <!-- Shipping Partners -->
                 <div>
-                    <h4 class="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">Partner Pengiriman</h4>
-                    <div class="flex flex-wrap gap-3">
-                        @foreach(['jne', 'jnt', 'sicepat', 'pos', 'tiki', 'anteraja'] as $shipping)
-                        <div class="bg-white rounded-lg p-2 flex items-center justify-center w-12 h-8">
-                            <img src="{{ asset("images/shipping/{$shipping}.png") }}" alt="{{ strtoupper($shipping) }}" class="h-4 object-contain">
+                    <h4 class="methods-title">Partner Pengiriman</h4>
+                    <div class="methods-container">
+                        @php
+                        $shippingMethods = ['jne', 'jnt', 'sicepat', 'pos', 'tiki', 'anteraja'];
+                        @endphp
+                        @foreach($shippingMethods as $shipping)
+                        <div class="method-badge">
+                            <div class="method-text">{{ strtoupper($shipping) }}</div>
                         </div>
                         @endforeach
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Trust Badges - Minimal -->
-    <div class="border-t border-gray-800 py-6">
-        <div class="container mx-auto px-4">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-
+        <!-- Trust Badges -->
+        <div class="footer-divider">
+            <div class="trust-badges">
                 <!-- Trust Indicators -->
-                <div class="flex flex-wrap items-center gap-6 text-sm">
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-shield-alt text-green-400"></i>
-                        <span class="text-gray-300">100% Original</span>
+                <div class="trust-indicators">
+                    <div class="trust-item">
+                        <i class="fas fa-shield-alt trust-icon" style="color: var(--success);"></i>
+                        <span class="trust-text">100% Original</span>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-lock text-blue-400"></i>
-                        <span class="text-gray-300">SSL Secure</span>
+                    <div class="trust-item">
+                        <i class="fas fa-lock trust-icon" style="color: var(--teal);"></i>
+                        <span class="trust-text">SSL Secure</span>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-undo text-yellow-400"></i>
-                        <span class="text-gray-300">30 Hari Return</span>
+                    <div class="trust-item">
+                        <i class="fas fa-undo trust-icon" style="color: var(--warning);"></i>
+                        <span class="trust-text">30 Hari Return</span>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-shipping-fast text-purple-400"></i>
-                        <span class="text-gray-300">Gratis Ongkir</span>
+                    <div class="trust-item">
+                        <i class="fas fa-shipping-fast trust-icon" style="color: var(--primary);"></i>
+                        <span class="trust-text">Gratis Ongkir</span>
                     </div>
                 </div>
 
                 <!-- Certifications -->
-                <div class="flex items-center gap-4">
-                    <img src="{{ asset('images/certifications/ssl.png') }}" alt="SSL Certificate" class="h-8 opacity-80">
-                    <img src="{{ asset('images/certifications/verified.png') }}" alt="Verified" class="h-8 opacity-80">
+                <div class="certifications">
+                    <div class="certification-badge">
+                        <div class="certification-text">SSL</div>
+                    </div>
+                    <div class="certification-badge">
+                        <div class="certification-text">VERIFIED</div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Bottom Footer - Clean -->
-    <div class="border-t border-gray-800 py-6">
-        <div class="container mx-auto px-4">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
-
+        <!-- Bottom Footer -->
+        <div class="bottom-footer">
+            <div class="footer-content">
                 <!-- Copyright -->
-                <div class="text-center md:text-left">
-                    <p class="text-gray-400">
-                        © {{ date('Y') }} TokoSaya. All rights reserved.
-                    </p>
+                <div>
+                    <p class="copyright">© {{ date('Y') }} TokoSaya. All rights reserved.</p>
                 </div>
 
                 <!-- Legal Links -->
-                <div class="flex flex-wrap items-center gap-6">
-                    <a href="{{ route('privacy-policy') }}" class="footer-link">Kebijakan Privasi</a>
-                    <a href="{{ route('terms-of-service') }}" class="footer-link">Syarat & Ketentuan</a>
-                    <a href="{{ route('about') }}" class="footer-link">Tentang Kami</a>
+                <div class="legal-links">
+                    <a href="{{ route('privacy') }}" class="legal-link">Kebijakan Privasi</a>
+                    <a href="{{ route('terms') }}" class="legal-link">Syarat & Ketentuan</a>
+                    <a href="{{ route('about') }}" class="legal-link">Tentang Kami</a>
+                    <a href="{{ route('sitemap') }}" class="legal-link">Sitemap</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Back to Top Button - Modern -->
-    <button id="back-to-top"
-            class="fixed bottom-8 right-8 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 transform translate-y-16 opacity-0 z-50 hover:scale-110"
-            onclick="scrollToTop()">
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="back-to-top" aria-label="Kembali ke atas" onclick="scrollToTop()">
         <i class="fas fa-chevron-up"></i>
     </button>
 </footer>
 
 @push('scripts')
 <script>
-// Newsletter subscription with better UX
-function subscribeNewsletter() {
-    const form = event.target;
-    const email = form.querySelector('input[type="email"]').value;
-    const button = form.querySelector('button[type="submit"]');
+// Newsletter form handling
+document.addEventListener('DOMContentLoaded', function() {
+    const newsletterForm = document.querySelector('.newsletter-form');
+    if (newsletterForm) {
+        newsletterForm.addEventListener('submit', function(e) {
+            const button = this.querySelector('button[type="submit"]');
+            const originalText = button.innerHTML;
 
-    // Set loading state
-    this.loading = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+            button.disabled = true;
 
-    fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({ email })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showFooterNotification('Berhasil berlangganan newsletter!', 'success');
-            form.reset();
-            this.email = '';
-        } else {
-            showFooterNotification(data.message || 'Gagal berlangganan', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Newsletter error:', error);
-        showFooterNotification('Terjadi kesalahan, silakan coba lagi', 'error');
-    })
-    .finally(() => {
-        this.loading = false;
-    });
-}
-
-// Back to top with smooth animation
-function scrollToTop() {
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
-}
-
-// Show/hide back to top button
-let isBackToTopVisible = false;
-
-function toggleBackToTop() {
-    const backToTopBtn = document.getElementById('back-to-top');
-    const shouldShow = window.pageYOffset > 300;
-
-    if (shouldShow && !isBackToTopVisible) {
-        backToTopBtn.classList.remove('translate-y-16', 'opacity-0');
-        backToTopBtn.classList.add('translate-y-0', 'opacity-100');
-        isBackToTopVisible = true;
-    } else if (!shouldShow && isBackToTopVisible) {
-        backToTopBtn.classList.add('translate-y-16', 'opacity-0');
-        backToTopBtn.classList.remove('translate-y-0', 'opacity-100');
-        isBackToTopVisible = false;
-    }
-}
-
-// Throttled scroll listener
-let ticking = false;
-
-function requestTick() {
-    if (!ticking) {
-        requestAnimationFrame(toggleBackToTop);
-        ticking = true;
-        setTimeout(() => { ticking = false; }, 100);
-    }
-}
-
-window.addEventListener('scroll', requestTick);
-
-// Footer notification system
-function showFooterNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `fixed bottom-8 left-8 z-50 px-6 py-3 rounded-lg shadow-lg text-white transform transition-all duration-300 translate-y-16 ${
-        type === 'success' ? 'bg-green-500' :
-        type === 'error' ? 'bg-red-500' :
-        type === 'warning' ? 'bg-yellow-500' :
-        'bg-blue-500'
-    }`;
-    notification.innerHTML = `
-        <div class="flex items-center space-x-2">
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-            <span>${message}</span>
-            <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-white/80 hover:text-white">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.classList.remove('translate-y-16');
-        notification.classList.add('translate-y-0');
-    }, 100);
-
-    setTimeout(() => {
-        notification.classList.add('translate-y-16');
-        notification.classList.remove('translate-y-0');
-        setTimeout(() => {
-            if (document.body.contains(notification)) {
-                document.body.removeChild(notification);
-            }
-        }, 300);
-    }, 4000);
-}
-
-// Lazy loading for footer images
-if ('IntersectionObserver' in window) {
-    const lazyImages = document.querySelectorAll('footer img[data-src]');
-    const imageObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                img.src = img.dataset.src;
-                img.classList.remove('lazy');
-                imageObserver.unobserve(img);
-            }
+            // Let form submit naturally, but provide visual feedback
+            setTimeout(() => {
+                if (button) {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }
+            }, 3000);
         });
-    });
 
-    lazyImages.forEach(img => imageObserver.observe(img));
-}
+        // Email validation
+        const emailInput = newsletterForm.querySelector('input[type="email"]');
+        if (emailInput) {
+            emailInput.addEventListener('input', function() {
+                const email = this.value;
+                const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+                if (email.length > 0) {
+                    if (isValid) {
+                        this.style.borderColor = 'var(--success)';
+                        this.style.boxShadow = '0 0 0 3px rgba(104, 211, 145, 0.1)';
+                    } else {
+                        this.style.borderColor = 'var(--danger)';
+                        this.style.boxShadow = '0 0 0 3px rgba(252, 129, 129, 0.1)';
+                    }
+                } else {
+                    this.style.borderColor = 'transparent';
+                    this.style.boxShadow = 'none';
+                }
+            });
+        }
+    }
+
+    // Back to top functionality
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+
+    // Show/hide back to top button
+    let isBackToTopVisible = false;
+
+    function toggleBackToTop() {
+        const backToTopBtn = document.getElementById('back-to-top');
+        const shouldShow = window.pageYOffset > 300;
+
+        if (shouldShow && !isBackToTopVisible) {
+            backToTopBtn.classList.add('visible');
+            isBackToTopVisible = true;
+        } else if (!shouldShow && isBackToTopVisible) {
+            backToTopBtn.classList.remove('visible');
+            isBackToTopVisible = false;
+        }
+    }
+
+    // Throttled scroll listener
+    let ticking = false;
+
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(toggleBackToTop);
+            ticking = true;
+            setTimeout(() => { ticking = false; }, 100);
+        }
+    }
+
+    window.addEventListener('scroll', requestTick);
+
+    // Initialize back to top button
+    toggleBackToTop();
+});
 
 // Footer animation on scroll
-const footerElements = document.querySelectorAll('footer .container > div > div');
+const footerElements = document.querySelectorAll('.footer-animate');
 if ('IntersectionObserver' in window) {
     const footerObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -388,40 +867,15 @@ if ('IntersectionObserver' in window) {
         rootMargin: '0px 0px -50px 0px'
     });
 
-    footerElements.forEach((el, index) => {
+    footerElements.forEach(el => {
         el.style.opacity = '0';
         el.style.transform = 'translateY(20px)';
-        el.style.transition = `opacity 0.6s ease-out ${index * 0.1}s, transform 0.6s ease-out ${index * 0.1}s`;
+        el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
         footerObserver.observe(el);
     });
 }
 
-// Newsletter form validation
-document.addEventListener('DOMContentLoaded', function() {
-    const newsletterForm = document.querySelector('form[x-data]');
-    if (newsletterForm) {
-        const emailInput = newsletterForm.querySelector('input[type="email"]');
-
-        emailInput.addEventListener('input', function() {
-            const email = this.value;
-            const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-            if (email.length > 0) {
-                if (isValid) {
-                    this.classList.remove('ring-red-300');
-                    this.classList.add('ring-green-300');
-                } else {
-                    this.classList.remove('ring-green-300');
-                    this.classList.add('ring-red-300');
-                }
-            } else {
-                this.classList.remove('ring-red-300', 'ring-green-300');
-            }
-        });
-    }
-});
-
-// Link tracking for analytics
+// Link tracking for analytics (optional)
 document.querySelectorAll('footer a').forEach(link => {
     link.addEventListener('click', function() {
         if (typeof gtag !== 'undefined') {
@@ -450,232 +904,13 @@ document.querySelectorAll('footer a[href*="facebook"], footer a[href*="instagram
     });
 });
 
-// Export for global use
-window.showFooterNotification = showFooterNotification;
+// Handle newsletter success/error messages from session
+@if(session('newsletter_success'))
+    window.showNotification('{{ session('newsletter_success') }}', 'success');
+@endif
+
+@if(session('newsletter_error'))
+    window.showNotification('{{ session('newsletter_error') }}', 'error');
+@endif
 </script>
-@endpush
-
-@push('styles')
-<style>
-/* Modern Footer Styles */
-.footer-link {
-    @apply text-gray-300 hover:text-white transition-colors duration-200 text-sm;
-}
-
-.footer-link:hover {
-    @apply text-white;
-}
-
-/* Newsletter form styles */
-.newsletter-input {
-    @apply transition-all duration-300;
-}
-
-.newsletter-input:focus {
-    @apply ring-2 ring-white ring-opacity-50;
-}
-
-/* Back to top button */
-#back-to-top {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#back-to-top:hover {
-    transform: translateY(0) scale(1.1);
-}
-
-/* Social media icons hover effect */
-.social-icon {
-    @apply transition-all duration-300;
-}
-
-.social-icon:hover {
-    @apply transform scale-110;
-}
-
-/* Payment and shipping logos */
-.payment-logo,
-.shipping-logo {
-    @apply transition-opacity duration-300 hover:opacity-80;
-    filter: grayscale(0.2);
-}
-
-.payment-logo:hover,
-.shipping-logo:hover {
-    filter: grayscale(0);
-}
-
-/* Trust badges animation */
-.trust-badge {
-    @apply transition-all duration-300;
-}
-
-.trust-badge:hover {
-    @apply transform scale-105;
-}
-
-/* Newsletter section gradient overlay */
-.newsletter-section {
-    position: relative;
-    overflow: hidden;
-}
-
-.newsletter-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
-    pointer-events: none;
-}
-
-/* Footer animation classes */
-.footer-fade-in {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-}
-
-.footer-fade-in.animate {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .footer-link {
-        @apply text-base py-1;
-    }
-
-    #back-to-top {
-        @apply w-10 h-10 bottom-6 right-6;
-    }
-
-    .social-icon {
-        @apply w-8 h-8;
-    }
-}
-
-@media (max-width: 480px) {
-    .newsletter-section {
-        @apply py-12;
-    }
-
-    .newsletter-section h2 {
-        @apply text-2xl;
-    }
-
-    .payment-logo,
-    .shipping-logo {
-        @apply w-10 h-6;
-    }
-}
-
-/* Dark mode enhancements */
-@media (prefers-color-scheme: dark) {
-    .newsletter-input {
-        @apply bg-gray-800 text-white border-gray-700;
-    }
-}
-
-/* High contrast mode */
-@media (prefers-contrast: high) {
-    .footer-link {
-        @apply underline;
-    }
-
-    .footer-link:hover {
-        @apply no-underline;
-    }
-}
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-    .footer-fade-in,
-    .social-icon,
-    .trust-badge,
-    #back-to-top {
-        transition: none !important;
-    }
-
-    .social-icon:hover,
-    .trust-badge:hover,
-    #back-to-top:hover {
-        transform: none !important;
-    }
-}
-
-/* Custom scrollbar for footer content */
-.footer-scroll::-webkit-scrollbar {
-    width: 4px;
-}
-
-.footer-scroll::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-}
-
-.footer-scroll::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
-}
-
-.footer-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
-}
-
-/* Loading state for newsletter form */
-.newsletter-loading {
-    @apply opacity-75 pointer-events-none;
-}
-
-/* Success state animation */
-@keyframes checkmark {
-    0% {
-        transform: scale(0);
-        opacity: 0;
-    }
-    50% {
-        transform: scale(1.3);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-.success-checkmark {
-    animation: checkmark 0.6s ease-out;
-}
-
-/* Newsletter form focus styles */
-.newsletter-form input:focus {
-    @apply outline-none ring-2 ring-white ring-opacity-50;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
-}
-
-/* Footer grid responsive enhancement */
-@media (min-width: 1024px) {
-    .footer-grid {
-        display: grid;
-        grid-template-columns: 1.5fr 1fr 1fr 1fr;
-        gap: 2rem;
-    }
-}
-
-/* Smooth reveal animation for footer sections */
-.footer-section {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-}
-
-.footer-section.revealed {
-    opacity: 1;
-    transform: translateY(0);
-}
-</style>
 @endpush

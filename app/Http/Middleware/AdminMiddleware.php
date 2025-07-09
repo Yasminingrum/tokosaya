@@ -6,7 +6,8 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AdminMiddleware
 {
@@ -33,8 +34,15 @@ class AdminMiddleware
 
         $user = Auth::user();
 
-        // Check if user has admin role
-        if (!$user->isAdmin()) {
+        // Check if user has admin role - FIXED VERSION
+        if (!$this->isAdminUser($user)) {
+            Log::warning('Unauthorized admin access attempt', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'role_id' => $user->role_id,
+                'ip' => $request->ip()
+            ]);
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -42,7 +50,7 @@ class AdminMiddleware
                 ], 403);
             }
 
-            return redirect()->route('home')->with('error', 'You do not have permission to access this area');
+            return redirect()->route('dashboard')->with('error', 'You do not have permission to access admin area');
         }
 
         // Check if account is active
@@ -60,5 +68,34 @@ class AdminMiddleware
         }
 
         return $next($request);
+    }
+
+    /**
+     * Check if user is admin using safe database query
+     *
+     * @param \App\Models\User $user
+     * @return bool
+     */
+    private function isAdminUser($user)
+    {
+        try {
+            // Direct database query - most reliable
+            $role = DB::table('roles')->where('id', $user->role_id)->first();
+
+            if ($role) {
+                $adminRoles = ['admin', 'super_admin', 'superadmin'];
+                return in_array($role->name, $adminRoles);
+            }
+
+            return false;
+
+        } catch (\Exception $e) {
+            Log::error('Admin role check failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return false;
+        }
     }
 }

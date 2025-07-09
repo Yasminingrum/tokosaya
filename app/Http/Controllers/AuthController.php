@@ -36,6 +36,7 @@ class AuthController extends Controller
             ])->withInput();
         }
 
+        // Validate input
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required|string|min:6'
@@ -57,14 +58,14 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
         $remember = $request->has('remember');
 
-        // Debug: Log attempt
+        // Log attempt
         Log::info('Login attempt', [
             'email' => $credentials['email'],
             'remember' => $remember,
             'ip' => $request->ip()
         ]);
 
-        // Check if user exists first
+        // Check if user exists
         $user = User::where('email', $credentials['email'])->first();
         if (!$user) {
             Log::warning('Login failed - user not found', ['email' => $credentials['email']]);
@@ -82,32 +83,59 @@ class AuthController extends Controller
             ])->withInput($request->except('password'));
         }
 
+        // Attempt authentication
         if (Auth::attempt($credentials, $remember)) {
             RateLimiter::clear($key);
 
+            // Regenerate session
+            $request->session()->regenerate();
+
+            // Clear any previous intended URL
+            session()->forget('url.intended');
+
+            // Get authenticated user
+            $user = Auth::user();
+
+            // Get user role
+            $userRole = $this->getUserRole($user);
+
+            // Determine if user is admin
+            $isAdmin = $this->isAdminRole($userRole);
+
             // Log successful login
             Log::info('User logged in successfully', [
-                'user_id' => Auth::id(),
-                'email' => Auth::user()->email,
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'role_id' => $user->role_id,
+                'role_name' => $userRole,
+                'is_admin' => $isAdmin,
                 'ip' => $request->ip()
             ]);
 
-            // Create activity log if function exists
+            // Log activity
             $this->logActivity('login', 'User logged in successfully');
 
-            $request->session()->regenerate();
+            // Redirect based on role
+            if ($isAdmin) {
+                Log::info('ADMIN LOGIN - Redirecting to admin dashboard', [
+                    'user_id' => $user->id,
+                    'role' => $userRole
+                ]);
 
-            // Redirect based on role - Safe role checking
-            $user = Auth::user();
-            $userRole = $this->getUserRole($user);
+                return redirect()->to('/admin/dashboard')
+                    ->with('success', 'Login berhasil! Selamat datang admin.');
+            } else {
+                Log::info('CUSTOMER LOGIN - Redirecting to profile', [
+                    'user_id' => $user->id,
+                    'role' => $userRole
+                ]);
 
-            if (in_array($userRole, ['admin', 'super_admin'])) {
-                return redirect()->intended('/admin/dashboard')->with('success', 'Login berhasil! Selamat datang admin.');
+                return redirect()->to('/profile')
+                    ->with('success', 'Login berhasil! Selamat datang kembali.');
             }
-
-            return redirect()->intended('/dashboard')->with('success', 'Login berhasil! Selamat datang kembali.');
         }
 
+        // Login failed
         RateLimiter::hit($key);
 
         Log::warning('Login failed - invalid credentials', [
@@ -155,7 +183,7 @@ class AuthController extends Controller
         }
 
         try {
-            // Get customer role using direct query
+            // Get customer role
             $customerRole = DB::table('roles')->where('name', 'customer')->first();
 
             if (!$customerRole) {
@@ -190,7 +218,7 @@ class AuthController extends Controller
             // Auto login
             Auth::login($user);
 
-            return redirect('/dashboard')->with('success', 'Registrasi berhasil! Selamat datang di TokoSaya.');
+            return redirect('/profile')->with('success', 'Registrasi berhasil! Selamat datang di TokoSaya.');
 
         } catch (\Exception $e) {
             Log::error('Registration failed', [
@@ -331,7 +359,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Show dashboard - SAFE VERSION WITHOUT MODEL DEPENDENCIES
+     * Show dashboard
      */
     public function dashboard()
     {
@@ -367,24 +395,52 @@ class AuthController extends Controller
     }
 
     /**
-     * Helper: Get user role safely
+     * Get user role safely
      */
     private function getUserRole($user)
     {
         try {
             if (Schema::hasTable('roles')) {
                 $role = DB::table('roles')->where('id', $user->role_id)->first();
+
+                Log::info('getUserRole executed', [
+                    'user_id' => $user->id,
+                    'role_id' => $user->role_id,
+                    'role_found' => $role ? $role->name : 'null'
+                ]);
+
                 return $role ? $role->name : 'customer';
             }
         } catch (\Exception $e) {
-            Log::warning('Failed to get user role', ['error' => $e->getMessage()]);
+            Log::error('Failed to get user role', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
         }
 
         return 'customer';
     }
 
     /**
-     * Helper: Get user orders using direct DB query
+     * Check if role is admin
+     */
+    private function isAdminRole($roleName)
+    {
+        $adminRoles = ['admin', 'super_admin', 'superadmin'];
+
+        $isAdmin = in_array($roleName, $adminRoles);
+
+        Log::info('Admin role check', [
+            'role_name' => $roleName,
+            'admin_roles' => $adminRoles,
+            'is_admin' => $isAdmin
+        ]);
+
+        return $isAdmin;
+    }
+
+    /**
+     * Get user orders using direct DB query
      */
     private function getUserOrders($userId, $limit = null)
     {
@@ -408,7 +464,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Helper: Get user addresses using direct DB query
+     * Get user addresses using direct DB query
      */
     private function getUserAddresses($userId)
     {
@@ -428,7 +484,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Helper: Get wishlist count using direct DB query
+     * Get wishlist count using direct DB query
      */
     private function getWishlistCount($userId)
     {
@@ -446,7 +502,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Helper: Get notifications using direct DB query
+     * Get notifications using direct DB query
      */
     private function getNotifications($userId, $limit = null)
     {
@@ -471,7 +527,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Helper: Calculate order statistics
+     * Calculate order statistics
      */
     private function calculateOrderStats($userId)
     {
@@ -513,7 +569,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Helper: Determine password field name
+     * Determine password field name
      */
     private function getPasswordField()
     {
@@ -537,33 +593,21 @@ class AuthController extends Controller
     }
 
     /**
-     * Helper: Log activity safely
+     * Log activity safely
      */
     private function logActivity($action, $description, $user = null)
     {
         try {
-            if (function_exists('activity')) {
-                $activityLog = activity($action);
-
-                if ($user) {
-                    $activityLog->causedBy($user);
-                } else {
-                    $activityLog->causedBy(Auth::user());
-                }
-
-                $activityLog->log($description);
-            } else {
-                // Alternative: Direct database insert if activity helper doesn't exist
-                if (Schema::hasTable('activity_logs')) {
-                    DB::table('activity_logs')->insert([
-                        'user_id' => $user ? $user->id : Auth::id(),
-                        'action' => $action,
-                        'description' => $description,
-                        'ip_address' => request()->ip(),
-                        'user_agent' => request()->userAgent(),
-                        'created_at' => now(),
-                    ]);
-                }
+            // Check if we should use activity logs
+            if (Schema::hasTable('activity_logs')) {
+                DB::table('activity_logs')->insert([
+                    'user_id' => $user ? $user->id : Auth::id(),
+                    'action' => $action,
+                    'description' => $description,
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                    'created_at' => now(),
+                ]);
             }
         } catch (\Exception $e) {
             Log::warning('Activity logging failed', [
