@@ -441,7 +441,7 @@
                 <i class="fas fa-th-large me-1"></i>
                 Kategori
             </a>
-            <a href="{{ route('brands.index') }}" class="quick-link">
+            <a href="{{ route('products.brand') }}" class="quick-link">
                 <i class="fas fa-tags me-1"></i>
                 Brand
             </a>
@@ -669,7 +669,7 @@ function performSearch() {
 
     if (searchTerm.length > 0) {
         // Redirect to search page with query
-        const searchUrl = '{{ route("search.index") }}?q=' + encodeURIComponent(searchTerm);
+        const searchUrl = '{{ route("search") }}?q=' + encodeURIComponent(searchTerm);
         window.location.href = searchUrl;
     } else {
         // If no search term, go to products page

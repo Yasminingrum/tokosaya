@@ -587,7 +587,7 @@
                         <a href="{{ route('categories.index') }}" class="footer-nav-link">Kategori</a>
                     </li>
                     <li class="footer-nav-item">
-                        <a href="{{ route('brands.index') }}" class="footer-nav-link">Brand</a>
+                        <a href="{{ route('products.brand') }}" class="footer-nav-link">Brand</a>
                     </li>
                     <li class="footer-nav-item">
                         <a href="{{ route('products.index', ['featured' => 1]) }}" class="footer-nav-link">Produk Unggulan</a>

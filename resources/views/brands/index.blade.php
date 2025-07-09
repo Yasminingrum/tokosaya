@@ -43,7 +43,7 @@
 <section class="bg-gray-50 py-8 sticky top-0 z-40 shadow-sm">
     <div class="container mx-auto px-4">
         <div class="max-w-6xl mx-auto">
-            <form action="{{ route('brands.index') }}" method="GET" class="flex flex-col lg:flex-row gap-4 items-center">
+            <form action="{{ route('products.brand') }}" method="GET" class="flex flex-col lg:flex-row gap-4 items-center">
                 <!-- Search Input -->
                 <div class="flex-1 relative">
                     <input type="text"
@@ -90,7 +90,7 @@
 
             <!-- Advanced Filters -->
             <div x-ref="filters" class="mt-6 p-6 bg-white border border-gray-200 rounded-lg {{ request()->hasAny(['category', 'min_products']) ? '' : 'hidden' }}">
-                <form action="{{ route('brands.index') }}" method="GET" class="space-y-4">
+                <form action="{{ route('products.brand') }}" method="GET" class="space-y-4">
                     <input type="hidden" name="search" value="{{ request('search') }}">
                     <input type="hidden" name="sort" value="{{ request('sort') }}">
 
@@ -124,7 +124,7 @@
                             <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                                 Terapkan Filter
                             </button>
-                            <a href="{{ route('brands.index') }}" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <a href="{{ route('products.brand') }}" class="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                                 Reset
                             </a>
                         </div>
@@ -308,7 +308,7 @@
 
                     @if(request()->hasAny(['search', 'category', 'min_products']))
                     <div class="space-y-3">
-                        <a href="{{ route('brands.index') }}"
+                        <a href="{{ route('products.brand') }}"
                            class="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
                             <i class="fas fa-refresh"></i>
                             Lihat Semua Brand
@@ -341,7 +341,7 @@
 
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 @foreach($featuredCategories as $category)
-                <a href="{{ route('brands.index', ['category' => $category->id]) }}"
+                <a href="{{ route('products.brand', ['category' => $category->id]) }}"
                    class="group bg-white rounded-lg p-6 text-center hover:shadow-lg transition-all duration-300"
                    data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
                     @if($category->icon)

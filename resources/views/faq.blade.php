@@ -530,7 +530,7 @@
                     <a href="#" class="quick-link">
                         <i class="fas fa-credit-card"></i>Metode Pembayaran
                     </a>
-                    <a href="{{ route('orders.track') }}" class="quick-link">
+                    <a href="{{ route('orders.track', $order) }}" class="quick-link">
                         <i class="fas fa-truck"></i>Lacak Pesanan
                     </a>
                     <a href="{{ route('contact') }}" class="quick-link">

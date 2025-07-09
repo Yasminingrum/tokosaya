@@ -388,7 +388,7 @@
                        class="nav-link {{ request()->routeIs('categories.*') ? 'active' : '' }}">
                         Kategori
                     </a>
-                    <a href="{{ route('brands.index') }}"
+                    <a href="{{ route('products.brand') }}"
                        class="nav-link {{ request()->routeIs('brands.*') ? 'active' : '' }}">
                         Brand
                     </a>
@@ -449,7 +449,7 @@
                 <i class="fas fa-tags w-5 mr-3"></i>
                 Kategori
             </a>
-            <a href="{{ route('brands.index') }}"
+            <a href="{{ route('products.brand') }}"
                class="flex items-center px-6 py-3 text-[var(--text-medium)] hover:bg-gray-50 hover:text-[var(--teal)] transition-colors {{ request()->routeIs('brands.*') ? 'bg-blue-50 text-[var(--teal)] border-r-2 border-[var(--teal)]' : '' }}"
                @click="mobileMenuOpen = false">
                 <i class="fas fa-store w-5 mr-3"></i>

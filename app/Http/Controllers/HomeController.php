@@ -162,7 +162,7 @@ class HomeController extends Controller
             ];
         }
 
-        return view('pages.about', compact('page'));
+        return view('about', compact('page'));
     }
 
     /**
@@ -185,7 +185,7 @@ class HomeController extends Controller
             ];
         }
 
-        return view('pages.contact', compact('page'));
+        return view('contact', compact('page'));
     }
 
     /**

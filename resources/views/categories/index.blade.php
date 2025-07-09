@@ -11,7 +11,7 @@
         border-radius: 12px;
         overflow: hidden;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #954C2E 0%, #EFE4D2 100%);
         color: white;
         position: relative;
         min-height: 200px;
@@ -148,7 +148,7 @@
 
     .filter-tab.active {
         background: white;
-        color: #2563eb;
+        color: #954C2E;
         font-weight: 600;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
@@ -208,7 +208,7 @@
     }
 
     .search-input:focus {
-        border-color: #2563eb;
+        border-color: #954C2E;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
 </style>
@@ -320,11 +320,11 @@
             <div class="row g-4" id="categoriesGrid">
                 @foreach($categories as $index => $category)
                 <div class="col-lg-3 col-md-4 col-sm-6" data-category="{{ strtolower($category->name) }}">
-                    <div class="card category-card {{ $this->getCategoryClass($category->name, $index) }} h-100">
+                    <div class="card category-card {{ getCategoryClass($category->name, $index) }} h-100">
                         <a href="{{ route('categories.show', $category->slug) }}" class="category-link">
                             <div class="card-body text-center d-flex flex-column justify-content-center">
                                 <div class="category-icon">
-                                    {!! $this->getCategoryIcon($category->name) !!}
+                                    {!! getCategoryIcon($category->name) !!}
                                 </div>
                                 <h5 class="category-name">{{ $category->name }}</h5>
                                 <p class="category-count">
@@ -343,7 +343,7 @@
             </div>
 
             <!-- Load More Button -->
-            @if($categories->hasPages())
+            @if(method_exists($categories, 'hasPages') && $categories->hasPages())
             <div class="text-center mt-5">
                 <div class="d-flex justify-content-center">
                     {{ $categories->appends(request()->query())->links() }}

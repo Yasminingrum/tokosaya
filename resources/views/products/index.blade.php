@@ -290,7 +290,7 @@
 
                         <!-- Product Name -->
                         <h6 class="card-title">
-                            <a href="{{ route('products.show', $product->slug) }}"
+                            <a href="{{ route('products.show', $product->id) }}"
                                class="text-decoration-none text-dark">
                                 {{ Str::limit($product->name, 50) }}
                             </a>
@@ -399,6 +399,7 @@
 @endsection
 
 @push('scripts')
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <script>
     // Remove Filter Function
     function removeFilter(filterName) {
@@ -411,18 +412,31 @@
     function addToCart(productId) {
         if (!productId) return;
 
+        // Check if user is logged in
+        @guest
+        // If not logged in, redirect to login
+        window.location.href = '{{ route("login") }}';
+        return;
+        @endguest
+
         fetch('{{ route("cart.add") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 product_id: productId,
                 quantity: 1
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 showToast('Produk berhasil ditambahkan ke keranjang!', 'success');
@@ -441,15 +455,28 @@
     function addToWishlist(productId) {
         if (!productId) return;
 
+        // Check if user is logged in
+        @guest
+        // If not logged in, redirect to login
+        window.location.href = '{{ route("login") }}';
+        return;
+        @endguest
+
         @auth
         fetch('/api/wishlist/toggle/' + productId, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 showToast(data.message, 'success');
@@ -461,8 +488,6 @@
             console.error('Error:', error);
             showToast('Terjadi kesalahan. Silakan coba lagi.', 'danger');
         });
-        @else
-        window.location.href = '{{ route("login") }}';
         @endauth
     }
 

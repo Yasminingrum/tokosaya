@@ -247,6 +247,133 @@ class ProductController extends Controller
     }
 
     /**
+     * Display brands listing page
+     */
+    public function brandIndex(Request $request)
+    {
+        try {
+            $query = Brand::where('is_active', true);
+
+            // Search filter
+            if ($request->filled('search')) {
+                $search = $request->get('search');
+                $query->where('name', 'like', "%{$search}%");
+            }
+
+            // Category filter
+            if ($request->filled('category')) {
+                $query->whereHas('products', function($q) use ($request) {
+                    $q->where('category_id', $request->get('category'))
+                    ->where('status', 'active');
+                });
+            }
+
+            // Min products filter
+            if ($request->filled('min_products')) {
+                $query->where('product_count', '>=', $request->get('min_products'));
+            }
+
+            // Sorting
+            switch ($request->get('sort', 'name_asc')) {
+                case 'name_desc':
+                    $query->orderBy('name', 'desc');
+                    break;
+                case 'products_asc':
+                    $query->orderBy('product_count', 'asc');
+                    break;
+                case 'products_desc':
+                    $query->orderBy('product_count', 'desc');
+                    break;
+                default: // name_asc
+                    $query->orderBy('name', 'asc');
+            }
+
+            // Get brands with products count
+            $brands = $query->withCount(['products' => function($q) {
+                                $q->where('status', 'active');
+                            }])
+                            ->paginate(12);
+
+            // Get categories for filter
+            $categories = Category::where('is_active', true)
+                                ->withCount(['products' => function($q) {
+                                    $q->where('status', 'active');
+                                }])
+                                ->having('products_count', '>', 0)
+                                ->orderBy('name')
+                                ->get();
+
+            // Calculate statistics
+            $statistics = [
+                'total_brands' => Brand::where('is_active', true)->count(),
+                'total_products' => Product::where('status', 'active')->count(),
+                'happy_customers' => User::whereHas('role', function($q) {
+                    $q->where('name', 'customer');
+                })->count(),
+            ];
+
+            // Get featured categories for bottom section
+            $featuredCategories = Category::where('is_active', true)
+                                        ->withCount(['products' => function($q) {
+                                            $q->where('status', 'active');
+                                        }])
+                                        ->orderBy('products_count', 'desc')
+                                        ->limit(6)
+                                        ->get();
+
+            // Sort options for dropdown
+            $sortOptions = [
+                'name_asc' => 'Nama A-Z',
+                'name_desc' => 'Nama Z-A',
+                'products_desc' => 'Produk Terbanyak',
+                'products_asc' => 'Produk Tersedikit',
+            ];
+
+            return view('brands.index', compact(
+                'brands',
+                'categories',
+                'statistics',
+                'featuredCategories',
+                'sortOptions'
+            ));
+
+        } catch (\Exception $e) {
+            Log::error('Brand index error: ' . $e->getMessage());
+
+            // Return empty data if error occurs
+            $brands = new \Illuminate\Pagination\LengthAwarePaginator(
+                collect([]),
+                0,
+                12,
+                1,
+                ['path' => $request->url()]
+            );
+
+            $categories = collect();
+            $statistics = [
+                'total_brands' => 0,
+                'total_products' => 0,
+                'happy_customers' => 0,
+            ];
+            $featuredCategories = collect();
+            $sortOptions = [
+                'name_asc' => 'Nama A-Z',
+                'name_desc' => 'Nama Z-A',
+                'products_desc' => 'Produk Terbanyak',
+                'products_asc' => 'Produk Tersedikit',
+            ];
+
+            return view('brands.index', compact(
+                'brands',
+                'categories',
+                'statistics',
+                'featuredCategories',
+                'sortOptions'
+            ))->with('error', 'Terjadi kesalahan saat memuat data brand.');
+        }
+    }
+
+    /**
      * Admin products listing
      */
     public function adminIndex(Request $request)

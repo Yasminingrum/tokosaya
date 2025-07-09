@@ -784,22 +784,6 @@
                     </a>
                 </div>
             </div>
-
-            <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="200">
-                <div class="contact-card h-100">
-                    <div class="contact-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                        <i class="fas fa-shipping-fast"></i>
-                    </div>
-                    <h5 class="fw-bold mb-3">Lacak Pesanan</h5>
-                    <p class="text-muted mb-4 small">
-                        Pantau status pengiriman pesanan Anda secara real-time
-                    </p>
-                    <a href="{{ route('orders.track') }}" class="btn btn-outline-warning rounded-pill btn-sm">
-                        Lacak Sekarang
-                    </a>
-                </div>
-            </div>
-
             <div class="col-lg-3 col-md-6" data-aos="zoom-in" data-aos-delay="300">
                 <div class="contact-card h-100">
                     <div class="contact-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">

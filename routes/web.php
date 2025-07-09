@@ -66,8 +66,11 @@ Route::group([], function () {
     // Category with products
     Route::get('/categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
 
-    // Products by brand
-    Route::get('/brand/{brand}', [ProductController::class, 'brand'])->name('products.brand');
+    // Brands listing (tanpa parameter)
+    Route::get('/brands', [ProductController::class, 'brandIndex'])->name('products.brand');
+
+    // Products by specific brand (dengan parameter)
+    Route::get('/brands/{brand}', [ProductController::class, 'brand'])->name('brands.show');
 
     // Featured products
     Route::get('/products/featured', [ProductController::class, 'featured'])->name('products.featured');
