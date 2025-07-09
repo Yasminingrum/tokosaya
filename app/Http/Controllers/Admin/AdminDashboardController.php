@@ -178,7 +178,7 @@ class AdminDashboardController extends Controller
     {
         try {
             if (Schema::hasTable('products')) {
-                return DB::table('products')
+                $products = DB::table('products')
                     ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
                     ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
                     ->select(
@@ -194,11 +194,22 @@ class AdminDashboardController extends Controller
                     ->where('products.status', 'active')
                     ->orderBy('products.sale_count', 'desc')
                     ->limit($limit)
-                    ->get()
-                    ->map(function ($product) {
-                        $product->primary_image_url = '/images/placeholder-product.jpg';
-                        return $product;
-                    });
+                    ->get();
+
+                // Convert stdClass to array - FIX for stdClass error
+                return $products->map(function ($product) {
+                    return [
+                        'id' => (int) $product->id,
+                        'name' => (string) $product->name,
+                        'price_cents' => (int) $product->price_cents,
+                        'stock_quantity' => (int) $product->stock_quantity,
+                        'sale_count' => (int) $product->sale_count,
+                        'revenue_cents' => (int) $product->revenue_cents,
+                        'category_name' => (string) ($product->category_name ?? 'No Category'),
+                        'brand_name' => (string) ($product->brand_name ?? 'No Brand'),
+                        'primary_image_url' => '/images/placeholder-product.jpg'
+                    ];
+                });
             }
         } catch (\Exception $e) {
             Log::warning('Failed to get top products', ['error' => $e->getMessage()]);
@@ -252,7 +263,7 @@ class AdminDashboardController extends Controller
     {
         try {
             if (Schema::hasTable('activity_logs')) {
-                return DB::table('activity_logs')
+                $activities = DB::table('activity_logs')
                     ->leftJoin('users', 'activity_logs.user_id', '=', 'users.id')
                     ->select(
                         'activity_logs.*',
@@ -261,12 +272,22 @@ class AdminDashboardController extends Controller
                     )
                     ->orderBy('activity_logs.created_at', 'desc')
                     ->limit($limit)
-                    ->get()
-                    ->map(function ($activity) {
-                        $activity->icon = $this->getActivityIcon($activity->action);
-                        $activity->color = $this->getActivityColor($activity->action);
-                        return $activity;
-                    });
+                    ->get();
+
+                // Convert stdClass to array - FIX for stdClass error
+                return $activities->map(function ($activity) {
+                    return [
+                        'id' => (int) $activity->id,
+                        'action' => (string) $activity->action,
+                        'description' => (string) ($activity->description ?? ''),
+                        'created_at' => $activity->created_at,
+                        'first_name' => (string) ($activity->first_name ?? 'System'),
+                        'last_name' => (string) ($activity->last_name ?? ''),
+                        'user_name' => trim(($activity->first_name ?? '') . ' ' . ($activity->last_name ?? '')) ?: 'System',
+                        'icon' => $this->getActivityIcon($activity->action),
+                        'color' => $this->getActivityColor($activity->action)
+                    ];
+                });
             }
         } catch (\Exception $e) {
             Log::warning('Failed to get recent activities', ['error' => $e->getMessage()]);

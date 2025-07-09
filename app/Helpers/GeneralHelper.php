@@ -1,372 +1,194 @@
 <?php
 
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
+/**
+ * Additional Global Helper Functions for TokoSaya
+ * This file extends the existing GeneralHelper.php
+ * Add these functions to your existing GeneralHelper.php file
+ */
 
+use App\Helpers\PriceHelper;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-if (!function_exists('format_weight')) {
+if (!function_exists('format_currency')) {
     /**
-     * Format weight from grams
-     */
-    function format_weight($weightGrams)
-    {
-        if ($weightGrams < 1000) {
-            return $weightGrams . ' gram';
-        } else {
-            $kg = $weightGrams / 1000;
-            return number_format($kg, 1) . ' kg';
-        }
-    }
-}
-
-if (!function_exists('format_dimensions')) {
-    /**
-     * Format product dimensions
-     */
-    function format_dimensions($lengthMm, $widthMm, $heightMm)
-    {
-        if (!$lengthMm || !$widthMm || !$heightMm) {
-            return '-';
-        }
-
-        $length = $lengthMm / 10; // Convert to cm
-        $width = $widthMm / 10;
-        $height = $heightMm / 10;
-
-        return "{$length} x {$width} x {$height} cm";
-    }
-}
-
-if (!function_exists('format_file_size')) {
-    /**
-     * Format file size in human readable format
-     */
-    function format_file_size($bytes)
-    {
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-
-        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
-            $bytes /= 1024;
-        }
-
-        return round($bytes, 2) . ' ' . $units[$i];
-    }
-}
-
-if (!function_exists('generate_sku')) {
-    /**
-     * Generate unique SKU
-     */
-    function generate_sku($prefix = 'TSY')
-    {
-        return strtoupper($prefix) . '-' . date('Ymd') . '-' . strtoupper(Str::random(6));
-    }
-}
-
-if (!function_exists('format_phone_number')) {
-    /**
-     * Format Indonesian phone number
-     */
-    function format_phone_number($phone)
-    {
-        // Remove all non-numeric characters
-        $phone = preg_replace('/[^0-9]/', '', $phone);
-
-        // Convert to +62 format
-        if (substr($phone, 0, 1) === '0') {
-            $phone = '62' . substr($phone, 1);
-        } elseif (substr($phone, 0, 2) !== '62') {
-            $phone = '62' . $phone;
-        }
-
-        return '+' . $phone;
-    }
-}
-
-if (!function_exists('mask_email')) {
-    /**
-     * Mask email address for privacy
-     */
-    function mask_email($email)
-    {
-        $parts = explode('@', $email);
-        $username = $parts[0];
-        $domain = $parts[1];
-
-        if (strlen($username) <= 2) {
-            $maskedUsername = str_repeat('*', strlen($username));
-        } else {
-            $maskedUsername = substr($username, 0, 1) .
-                            str_repeat('*', strlen($username) - 2) .
-                            substr($username, -1);
-        }
-
-        return $maskedUsername . '@' . $domain;
-    }
-}
-
-if (!function_exists('format_date_indonesia')) {
-    /**
-     * Format date in Indonesian format
-     */
-    function format_date_indonesia($date, $includeTime = false)
-    {
-        if (!$date) {
-            return '-';
-        }
-
-        $carbonDate = \Carbon\Carbon::parse($date);
-
-        $months = [
-            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-        ];
-
-        $day = $carbonDate->day;
-        $month = $months[$carbonDate->month];
-        $year = $carbonDate->year;
-
-        $formatted = "{$day} {$month} {$year}";
-
-        if ($includeTime) {
-            $time = $carbonDate->format('H:i');
-            $formatted .= " pukul {$time}";
-        }
-
-        return $formatted;
-    }
-}
-
-if (!function_exists('time_ago_indonesia')) {
-    /**
-     * Get time ago in Indonesian
-     */
-    function time_ago_indonesia($date)
-    {
-        if (!$date) {
-            return '-';
-        }
-
-        $carbonDate = \Carbon\Carbon::parse($date);
-        $now = \Carbon\Carbon::now();
-
-        $diffInSeconds = $now->diffInSeconds($carbonDate);
-        $diffInMinutes = $now->diffInMinutes($carbonDate);
-        $diffInHours = $now->diffInHours($carbonDate);
-        $diffInDays = $now->diffInDays($carbonDate);
-        $diffInWeeks = $now->diffInWeeks($carbonDate);
-        $diffInMonths = $now->diffInMonths($carbonDate);
-        $diffInYears = $now->diffInYears($carbonDate);
-
-        if ($diffInSeconds < 60) {
-            return 'Baru saja';
-        } elseif ($diffInMinutes < 60) {
-            return $diffInMinutes . ' menit yang lalu';
-        } elseif ($diffInHours < 24) {
-            return $diffInHours . ' jam yang lalu';
-        } elseif ($diffInDays < 7) {
-            return $diffInDays . ' hari yang lalu';
-        } elseif ($diffInWeeks < 4) {
-            return $diffInWeeks . ' minggu yang lalu';
-        } elseif ($diffInMonths < 12) {
-            return $diffInMonths . ' bulan yang lalu';
-        } else {
-            return $diffInYears . ' tahun yang lalu';
-        }
-    }
-}
-
-if (!function_exists('slug_generator')) {
-    /**
-     * Generate URL-friendly slug
+     * Format price from cents to Rupiah currency
      *
-     * @param string $text
-     * @param string $separator
+     * @param int $cents
+     * @param bool $showSymbol
      * @return string
      */
-    function slug_generator($text, $separator = '-')
+    function format_currency($cents, $showSymbol = true)
     {
-        // Convert to lowercase
-        $text = strtolower($text);
-
-        // Replace Indonesian characters
-        $replacements = [
-            'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a', 'å' => 'a',
-            'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e',
-            'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i',
-            'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o',
-            'ù' => 'u', 'ú' => 'u', 'û' => 'u', 'ü' => 'u',
-            'ç' => 'c', 'ñ' => 'n'
-        ];
-
-        $text = strtr($text, $replacements);
-
-        // Remove special characters and replace with separator
-        $text = preg_replace('/[^a-z0-9]+/', $separator, $text);
-
-        // Remove leading/trailing separators
-        $text = trim($text, $separator);
-
-        return $text;
+        return PriceHelper::format($cents, $showSymbol);
     }
 }
 
-if (!function_exists('format_stock_status')) {
+if (!function_exists('format_price')) {
     /**
-     * Format stock status with color coding
+     * Alias for format_currency
+     *
+     * @param int $cents
+     * @param bool $showSymbol
+     * @return string
+     */
+    function format_price($cents, $showSymbol = true)
+    {
+        return format_currency($cents, $showSymbol);
+    }
+}
+
+if (!function_exists('price_to_cents')) {
+    /**
+     * Convert rupiah to cents
+     *
+     * @param float $rupiah
+     * @return int
+     */
+    function price_to_cents($rupiah)
+    {
+        return PriceHelper::toCents($rupiah);
+    }
+}
+
+if (!function_exists('currency_symbol')) {
+    /**
+     * Get currency symbol
+     *
+     * @return string
+     */
+    function currency_symbol()
+    {
+        return PriceHelper::symbol();
+    }
+}
+
+if (!function_exists('format_number')) {
+    /**
+     * Format number with Indonesian format
+     *
+     * @param int|float $number
+     * @param int $decimals
+     * @return string
+     */
+    function format_number($number, $decimals = 0)
+    {
+        return number_format($number, $decimals, ',', '.');
+    }
+}
+
+if (!function_exists('percentage')) {
+    /**
+     * Calculate percentage
+     *
+     * @param float $value
+     * @param float $total
+     * @param int $decimals
+     * @return float
+     */
+    function percentage($value, $total, $decimals = 1)
+    {
+        if ($total == 0) {
+            return 0;
+        }
+        return round(($value / $total) * 100, $decimals);
+    }
+}
+
+if (!function_exists('short_number')) {
+    /**
+     * Format large numbers to short format (1K, 1M, etc)
+     *
+     * @param int $number
+     * @return string
+     */
+    function short_number($number)
+    {
+        if ($number >= 1000000000) {
+            return round($number / 1000000000, 1) . 'B';
+        } elseif ($number >= 1000000) {
+            return round($number / 1000000, 1) . 'M';
+        } elseif ($number >= 1000) {
+            return round($number / 1000, 1) . 'K';
+        }
+
+        return (string) $number;
+    }
+}
+
+if (!function_exists('status_badge')) {
+    /**
+     * Generate Bootstrap badge HTML for status
+     *
+     * @param string $status
+     * @param array $colors
+     * @return string
+     */
+    function status_badge($status, $colors = [])
+    {
+        $defaultColors = [
+            'active' => 'success',
+            'inactive' => 'secondary',
+            'pending' => 'warning',
+            'confirmed' => 'info',
+            'processing' => 'primary',
+            'shipped' => 'info',
+            'delivered' => 'success',
+            'cancelled' => 'danger',
+            'refunded' => 'secondary',
+            'draft' => 'secondary',
+            'published' => 'success',
+            'discontinued' => 'dark'
+        ];
+
+        $allColors = array_merge($defaultColors, $colors);
+        $color = $allColors[$status] ?? 'secondary';
+        $label = ucfirst(str_replace('_', ' ', $status));
+
+        return "<span class=\"badge bg-{$color}\">{$label}</span>";
+    }
+}
+
+if (!function_exists('stock_badge')) {
+    /**
+     * Generate stock status badge
      *
      * @param int $stock
      * @param int $minLevel
-     * @return array
+     * @return string
      */
-    function format_stock_status($stock, $minLevel = 5)
+    function stock_badge($stock, $minLevel = 0)
     {
-        if ($stock <= 0) {
-            return [
-                'status' => 'Habis',
-                'class' => 'text-danger',
-                'badge' => 'badge-danger'
-            ];
+        if ($stock == 0) {
+            return '<span class="badge bg-danger">Out of Stock</span>';
         } elseif ($stock <= $minLevel) {
-            return [
-                'status' => 'Stok Menipis',
-                'class' => 'text-warning',
-                'badge' => 'badge-warning'
-            ];
+            return '<span class="badge bg-warning">Low Stock</span>';
         } else {
-            return [
-                'status' => 'Tersedia',
-                'class' => 'text-success',
-                'badge' => 'badge-success'
-            ];
+            return '<span class="badge bg-success">In Stock</span>';
         }
     }
 }
 
-if (!function_exists('generate_order_number')) {
+if (!function_exists('time_ago')) {
     /**
-     * Generate unique order number
+     * Get human readable time ago
      *
-     * @param string $prefix
+     * @param string|Carbon $datetime
      * @return string
      */
-    function generate_order_number($prefix = 'TSY')
+    function time_ago($datetime)
     {
-        $date = date('ymd');
-        $random = strtoupper(Str::random(4));
-        $timestamp = substr(time(), -4);
-
-        return $prefix . $date . $random . $timestamp;
-    }
-}
-
-if (!function_exists('calculate_shipping_weight')) {
-    /**
-     * Calculate total shipping weight
-     *
-     * @param array $items
-     * @return int Weight in grams
-     */
-    function calculate_shipping_weight($items)
-    {
-        $totalWeight = 0;
-
-        foreach ($items as $item) {
-            $weight = $item['weight_grams'] ?? 0;
-            $quantity = $item['quantity'] ?? 1;
-            $totalWeight += $weight * $quantity;
+        if (is_string($datetime)) {
+            $datetime = \Carbon\Carbon::parse($datetime);
         }
 
-        // Minimum weight 100g for shipping calculation
-        return max($totalWeight, 100);
-    }
-}
-
-if (!function_exists('format_rating')) {
-    /**
-     * Format rating display
-     *
-     * @param float $rating
-     * @param int $maxRating
-     * @return array
-     */
-    function format_rating($rating, $maxRating = 5)
-    {
-        $rating = round($rating, 1);
-        $fullStars = floor($rating);
-        $halfStar = ($rating - $fullStars) >= 0.5;
-        $emptyStars = $maxRating - $fullStars - ($halfStar ? 1 : 0);
-
-        return [
-            'rating' => $rating,
-            'full_stars' => $fullStars,
-            'half_star' => $halfStar,
-            'empty_stars' => $emptyStars,
-            'percentage' => ($rating / $maxRating) * 100
-        ];
-    }
-}
-
-if (!function_exists('validate_indonesian_phone')) {
-    /**
-     * Validate Indonesian phone number
-     *
-     * @param string $phone
-     * @return bool
-     */
-    function validate_indonesian_phone($phone)
-    {
-        // Remove all non-numeric characters
-        $phone = preg_replace('/[^0-9]/', '', $phone);
-
-        // Check if starts with valid Indonesian prefixes
-        $validPrefixes = ['08', '628', '62'];
-
-        foreach ($validPrefixes as $prefix) {
-            if (substr($phone, 0, strlen($prefix)) === $prefix) {
-                // Check length (10-15 digits total)
-                return strlen($phone) >= 10 && strlen($phone) <= 15;
-            }
-        }
-
-        return false;
-    }
-}
-
-if (!function_exists('get_image_url')) {
-    /**
-     * Get full image URL with fallback
-     *
-     * @param string|null $imagePath
-     * @param string $fallback
-     * @return string
-     */
-    function get_image_url($imagePath, $fallback = 'images/no-image.png')
-    {
-        if (!$imagePath) {
-            return asset($fallback);
-        }
-
-        // If already a full URL, return as is
-        if (filter_var($imagePath, FILTER_VALIDATE_URL)) {
-            return $imagePath;
-        }
-
-        // Check if file exists
-        if (Storage::disk('public')->exists($imagePath)) {
-            return asset('storage/' . $imagePath);
-        }
-
-        // Return fallback
-        return asset($fallback);
+        return $datetime->diffForHumans();
     }
 }
 
 if (!function_exists('truncate_text')) {
     /**
-     * Truncate text with proper word boundary
+     * Truncate text to specified length
      *
      * @param string $text
      * @param int $length
@@ -379,113 +201,203 @@ if (!function_exists('truncate_text')) {
             return $text;
         }
 
-        $truncated = substr($text, 0, $length);
-        $lastSpace = strrpos($truncated, ' ');
+        return substr($text, 0, $length) . $suffix;
+    }
+}
 
-        if ($lastSpace !== false) {
-            $truncated = substr($truncated, 0, $lastSpace);
+if (!function_exists('avatar_url')) {
+    /**
+     * Generate avatar URL (placeholder or user avatar)
+     *
+     * @param string|null $avatar
+     * @param string $name
+     * @param int $size
+     * @return string
+     */
+    function avatar_url($avatar = null, $name = 'User', $size = 40)
+    {
+        if ($avatar && file_exists(public_path('storage/' . $avatar))) {
+            return asset('storage/' . $avatar);
         }
 
-        return $truncated . $suffix;
+        // Generate initials avatar with UI Avatars
+        $initials = strtoupper(substr($name, 0, 1));
+        if (strpos($name, ' ') !== false) {
+            $parts = explode(' ', $name);
+            $initials = strtoupper(substr($parts[0], 0, 1) . substr($parts[1], 0, 1));
+        }
+
+        return "https://ui-avatars.com/api/?name={$initials}&size={$size}&background=007bff&color=fff";
     }
 }
 
-if (!function_exists('format_order_status')) {
+if (!function_exists('product_image_url')) {
     /**
-     * Format order status with styling
+     * Get product image URL with fallback
      *
-     * @param string $status
-     * @return array
+     * @param string|null $image
+     * @param string $size
+     * @return string
      */
-    function format_order_status($status)
+    function product_image_url($image = null, $size = 'medium')
     {
-        $statuses = [
-            'pending' => [
-                'label' => 'Menunggu Pembayaran',
-                'class' => 'badge-warning',
-                'color' => '#ffc107'
-            ],
-            'confirmed' => [
-                'label' => 'Dikonfirmasi',
-                'class' => 'badge-info',
-                'color' => '#17a2b8'
-            ],
-            'processing' => [
-                'label' => 'Diproses',
-                'class' => 'badge-primary',
-                'color' => '#f5ebe0'
-            ],
-            'shipped' => [
-                'label' => 'Dikirim',
-                'class' => 'badge-secondary',
-                'color' => '#6c757d'
-            ],
-            'delivered' => [
-                'label' => 'Diterima',
-                'class' => 'badge-success',
-                'color' => '#28a745'
-            ],
-            'cancelled' => [
-                'label' => 'Dibatalkan',
-                'class' => 'badge-danger',
-                'color' => '#dc3545'
-            ],
-            'refunded' => [
-                'label' => 'Dikembalikan',
-                'class' => 'badge-dark',
-                'color' => '#343a40'
-            ]
+        if ($image && file_exists(public_path('storage/' . $image))) {
+            return asset('storage/' . $image);
+        }
+
+        // Return placeholder image
+        $dimensions = [
+            'small' => '150x150',
+            'medium' => '300x300',
+            'large' => '600x600'
         ];
 
-        return $statuses[$status] ?? [
-            'label' => ucfirst($status),
-            'class' => 'badge-secondary',
-            'color' => '#6c757d'
-        ];
+        $dim = $dimensions[$size] ?? '300x300';
+        return "https://via.placeholder.com/{$dim}/f8f9fa/6c757d?text=No+Image";
     }
 }
 
-if (!function_exists('format_payment_status')) {
+if (!function_exists('file_size_format')) {
     /**
-     * Format payment status with styling
+     * Format file size in human readable format
      *
-     * @param string $status
-     * @return array
+     * @param int $bytes
+     * @param int $precision
+     * @return string
      */
-    function format_payment_status($status)
+    function file_size_format($bytes, $precision = 2)
     {
-        $statuses = [
-            'pending' => [
-                'label' => 'Menunggu Pembayaran',
-                'class' => 'badge-warning',
-                'color' => '#ffc107'
-            ],
-            'paid' => [
-                'label' => 'Dibayar',
-                'class' => 'badge-success',
-                'color' => '#28a745'
-            ],
-            'failed' => [
-                'label' => 'Gagal',
-                'class' => 'badge-danger',
-                'color' => '#dc3545'
-            ],
-            'refunded' => [
-                'label' => 'Dikembalikan',
-                'class' => 'badge-info',
-                'color' => '#17a2b8'
-            ],
-            'partial' => [
-                'label' => 'Sebagian',
-                'class' => 'badge-secondary',
-                'color' => '#6c757d'
-            ]
-        ];
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
 
-        return $statuses[$status] ?? [
-            'label' => ucfirst($status),
-            'class' => 'badge-secondary',
-            'color' => '#6c757d'
-        ];
+        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
+            $bytes /= 1024;
+        }
+
+        return round($bytes, $precision) . ' ' . $units[$i];
+    }
+}
+
+if (!function_exists('rating_stars')) {
+    /**
+     * Generate star rating HTML
+     *
+     * @param float $rating
+     * @param int $maxStars
+     * @return string
+     */
+    function rating_stars($rating, $maxStars = 5)
+    {
+        $html = '';
+        $fullStars = floor($rating);
+        $halfStar = ($rating - $fullStars) >= 0.5;
+
+        for ($i = 1; $i <= $maxStars; $i++) {
+            if ($i <= $fullStars) {
+                $html .= '<i class="fas fa-star text-warning"></i>';
+            } elseif ($i == $fullStars + 1 && $halfStar) {
+                $html .= '<i class="fas fa-star-half-alt text-warning"></i>';
+            } else {
+                $html .= '<i class="far fa-star text-muted"></i>';
+            }
+        }
+
+        return $html;
+    }
+}
+
+if (!function_exists('setting')) {
+    /**
+     * Get application setting value
+     *
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    function setting($key, $default = null)
+    {
+        try {
+            if (Schema::hasTable('settings')) {
+                $setting = DB::table('settings')
+                    ->where('key_name', $key)
+                    ->first();
+
+                if ($setting) {
+                    return $setting->value;
+                }
+            }
+        } catch (\Exception $e) {
+            // Ignore errors and return default
+        }
+
+        return $default;
+    }
+}
+
+if (!function_exists('flash_message')) {
+    /**
+     * Set flash message
+     *
+     * @param string $type
+     * @param string $message
+     * @return void
+     */
+    function flash_message($type, $message)
+    {
+        session()->flash('flash_message', [
+            'type' => $type,
+            'message' => $message
+        ]);
+    }
+}
+
+if (!function_exists('success_message')) {
+    /**
+     * Set success flash message
+     *
+     * @param string $message
+     * @return void
+     */
+    function success_message($message)
+    {
+        flash_message('success', $message);
+    }
+}
+
+if (!function_exists('error_message')) {
+    /**
+     * Set error flash message
+     *
+     * @param string $message
+     * @return void
+     */
+    function error_message($message)
+    {
+        flash_message('error', $message);
+    }
+}
+
+if (!function_exists('warning_message')) {
+    /**
+     * Set warning flash message
+     *
+     * @param string $message
+     * @return void
+     */
+    function warning_message($message)
+    {
+        flash_message('warning', $message);
+    }
+}
+
+if (!function_exists('info_message')) {
+    /**
+     * Set info flash message
+     *
+     * @param string $message
+     * @return void
+     */
+    function info_message($message)
+    {
+        flash_message('info', $message);
     }
 }

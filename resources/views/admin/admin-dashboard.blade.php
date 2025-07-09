@@ -262,30 +262,40 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($topProducts as $product)
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <img src="{{ $product->primary_image_url }}"
-                                                 class="rounded me-2"
-                                                 style="width: 40px; height: 40px; object-fit: cover;">
-                                            <div>
-                                                <a href="{{ route('admin.products.edit', $product) }}"
-                                                   class="text-decoration-none">
-                                                    {{ Str::limit($product->name, 30) }}
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>{{ number_format($product->sale_count) }}</td>
-                                    <td>{{ \App\Helpers\PriceHelper::format($product->revenue_cents) }}</td>
-                                    <td>
-                                        <span class="badge bg-{{ $product->stock_quantity > 10 ? 'success' : ($product->stock_quantity > 0 ? 'warning' : 'danger') }}">
-                                            {{ $product->stock_quantity }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                @endforeach
+                                @if(isset($topProducts) && $topProducts->count() > 0)
+                                    @foreach($topProducts as $product)
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="{{ $product['primary_image_url'] ?? '/images/placeholder-product.jpg' }}"
+                                                        class="rounded me-2"
+                                                        style="width: 40px; height: 40px; object-fit: cover;"
+                                                        alt="Product">
+                                                    <div>
+                                                        <span class="fw-bold text-primary">
+                                                            {{ strlen($product['name'] ?? '') > 30 ? substr($product['name'], 0, 30) . '...' : ($product['name'] ?? 'Product') }}
+                                                        </span>
+                                                        <br><small class="text-muted">{{ $product['category_name'] ?? 'No Category' }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{{ \App\Helpers\PriceHelper::format($product['price_cents'] ?? 0) }}</td>
+                                            <td>
+                                                <span class="badge {{ ($product['stock_quantity'] ?? 0) > 10 ? 'bg-success' : (($product['stock_quantity'] ?? 0) > 0 ? 'bg-warning' : 'bg-danger') }}">
+                                                    {{ $product['stock_quantity'] ?? 0 }}
+                                                </span>
+                                            </td>
+                                            <td>{{ $product['sale_count'] ?? 0 }}</td>
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">
+                                            <i class="fas fa-box text-muted fa-2x mb-2"></i>
+                                            <br>No products available yet
+                                        </td>
+                                    </tr>
+                                @endif
                             </tbody>
                         </table>
                     </div>
@@ -378,7 +388,7 @@
                         <a href="{{ route('admin.users.index') }}" class="btn btn-info">
                             <i class="fas fa-users me-2"></i>Manage Customers
                         </a>
-                        <a href="{{ route('admin.reports.sales') }}" class="btn btn-primary">
+                        <a href="{{ route('admin.analytics') }}" class="btn btn-primary">
                             <i class="fas fa-chart-bar me-2"></i>View Reports
                         </a>
                         <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#bulkActionsModal">
@@ -399,14 +409,14 @@
                         <div class="activity-item mb-3 pb-2 border-bottom">
                             <div class="d-flex">
                                 <div class="activity-icon me-3">
-                                    <i class="fas fa-{{ $activity->icon }} text-{{ $activity->color }}"></i>
+                                    <i class="fas fa-{{ $activity['icon'] ?? 'circle' }} text-{{ $activity['color'] ?? 'secondary' }}">
                                 </div>
                                 <div class="flex-grow-1">
                                     <div class="activity-content">
-                                        <strong>{{ $activity->user->first_name ?? 'System' }}</strong>
-                                        {{ $activity->description }}
+                                        <strong>{{ $activity['user_name'] ?? 'System' }}</strong>
+                                        {{ $activity['description'] ?? 'No description' }}
                                     </div>
-                                    <small class="text-muted">{{ $activity->created_at->diffForHumans() }}</small>
+                                    <small class="text-muted">{{ \Carbon\Carbon::parse($activity['created_at'])->diffForHumans() }}</small>
                                 </div>
                             </div>
                         </div>
