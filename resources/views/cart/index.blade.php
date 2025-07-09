@@ -1,891 +1,665 @@
 @extends('layouts.app')
 
-@section('title', 'Shopping Cart - TokoSaya')
-@section('meta_description', 'Review your selected items and proceed to checkout securely.')
+@section('title', 'Keranjang Belanja - TokoSaya')
+@section('description', 'Kelola produk di keranjang belanja Anda sebelum melakukan checkout')
 
 @push('styles')
 <style>
-    .cart-container {
-        min-height: 60vh;
-    }
-
     .cart-item {
-        background: white;
+        border: 1px solid #e5e7eb;
         border-radius: 12px;
-        padding: 1.5rem;
+        background: white;
         margin-bottom: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         transition: all 0.3s ease;
     }
 
     .cart-item:hover {
-        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
-    .cart-item-image {
-        width: 120px;
-        height: 120px;
-        border-radius: 8px;
-        overflow: hidden;
-        flex-shrink: 0;
-    }
-
-    .cart-item-image img {
-        width: 100%;
-        height: 100%;
+    .product-image {
+        width: 100px;
+        height: 100px;
         object-fit: cover;
-    }
-
-    .cart-item-info {
-        flex: 1;
-        margin-left: 1.5rem;
-    }
-
-    .product-name {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #1e293b;
-        margin-bottom: 0.5rem;
-        line-height: 1.4;
-    }
-
-    .product-variant {
-        color: #64748b;
-        font-size: 0.9rem;
-        margin-bottom: 0.75rem;
-    }
-
-    .product-price {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #2563eb;
-        margin-bottom: 1rem;
-    }
-
-    .original-price {
-        color: #94a3b8;
-        text-decoration: line-through;
-        font-size: 1rem;
-        margin-left: 0.5rem;
-    }
-
-    .quantity-controls {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
+        border-radius: 8px;
     }
 
     .quantity-input {
-        display: flex;
-        align-items: center;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        overflow: hidden;
-        background: white;
+        width: 80px;
+        text-align: center;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
     }
 
     .quantity-btn {
-        background: #f8fafc;
-        border: none;
-        padding: 0.5rem 0.75rem;
-        cursor: pointer;
-        transition: background 0.2s;
+        width: 35px;
+        height: 35px;
+        border: 1px solid #d1d5db;
+        background: #f9fafb;
         color: #374151;
-        font-weight: 600;
-    }
-
-    .quantity-btn:hover:not(:disabled) {
-        background: #e2e8f0;
-    }
-
-    .quantity-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .quantity-value {
-        padding: 0.5rem 1rem;
-        border: none;
-        text-align: center;
-        min-width: 60px;
-        font-weight: 600;
-        background: white;
-    }
-
-    .cart-actions {
+        border-radius: 6px;
         display: flex;
         align-items: center;
-        gap: 1rem;
-        margin-top: 1rem;
-    }
-
-    .btn-remove {
-        color: #dc2626;
-        background: none;
-        border: none;
-        padding: 0.5rem;
-        cursor: pointer;
+        justify-content: center;
         transition: all 0.2s;
-        border-radius: 4px;
     }
 
-    .btn-remove:hover {
-        background: #fef2f2;
-        color: #b91c1c;
+    .quantity-btn:hover {
+        background: #e5e7eb;
+        border-color: #9ca3af;
     }
 
-    .btn-save-later {
-        color: #059669;
-        background: none;
-        border: none;
-        padding: 0.5rem;
-        cursor: pointer;
-        transition: all 0.2s;
-        border-radius: 4px;
+    .price-text {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 1.1rem;
     }
 
-    .btn-save-later:hover {
-        background: #f0fdf4;
-        color: #047857;
-    }
-
-    .cart-summary {
+    .summary-card {
         background: white;
+        border: 1px solid #e5e7eb;
         border-radius: 12px;
-        padding: 2rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 1.5rem;
         position: sticky;
-        top: 20px;
-        height: fit-content;
-    }
-
-    .summary-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 1.5rem;
-        text-align: center;
+        top: 100px;
     }
 
     .summary-row {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #f1f5f9;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
     }
 
-    .summary-row:last-child {
-        border-bottom: none;
-        padding-top: 1rem;
-        margin-top: 0.5rem;
-        border-top: 2px solid #e2e8f0;
-        font-size: 1.25rem;
+    .summary-row:not(:last-child) {
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .summary-total {
         font-weight: 700;
-    }
-
-    .summary-label {
-        color: #64748b;
-        font-weight: 500;
-    }
-
-    .summary-value {
-        color: #1e293b;
-        font-weight: 600;
-    }
-
-    .discount-value {
-        color: #059669;
-    }
-
-    .total-value {
-        color: #2563eb;
-        font-size: 1.5rem;
-    }
-
-    .coupon-section {
-        margin: 1.5rem 0;
-        padding: 1.5rem;
-        background: #f8fafc;
-        border-radius: 8px;
-    }
-
-    .coupon-input {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .applied-coupon {
-        background: #dcfce7;
-        border: 1px solid #bbf7d0;
-        padding: 0.75rem;
-        border-radius: 8px;
-        margin-top: 1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .coupon-info {
-        color: #166534;
-        font-weight: 500;
-    }
-
-    .btn-remove-coupon {
-        color: #dc2626;
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0.25rem;
-    }
-
-    .checkout-btn {
-        width: 100%;
-        padding: 1rem 2rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-top: 1.5rem;
-    }
-
-    .continue-shopping {
-        text-align: center;
-        margin-top: 1rem;
+        font-size: 1.2rem;
+        color: #1f2937;
     }
 
     .empty-cart {
         text-align: center;
-        padding: 4rem 2rem;
-        color: #64748b;
+        padding: 3rem 1rem;
+        color: #6b7280;
     }
 
-    .empty-cart i {
-        font-size: 5rem;
-        color: #cbd5e1;
-        margin-bottom: 1.5rem;
-    }
-
-    .empty-cart h3 {
-        color: #374151;
+    .empty-cart-icon {
+        font-size: 4rem;
+        color: #d1d5db;
         margin-bottom: 1rem;
     }
 
-    .cart-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2rem;
-        padding-bottom: 1rem;
-        border-bottom: 2px solid #e2e8f0;
-    }
-
-    .cart-count {
-        color: #64748b;
-        font-size: 1rem;
-    }
-
-    .bulk-actions {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-    }
-
-    .select-all {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: #374151;
-        font-weight: 500;
-    }
-
-    .cart-item-checkbox {
-        margin-right: 1rem;
-        transform: scale(1.2);
-    }
-
-    .saved-items {
-        margin-top: 3rem;
-    }
-
-    .saved-item {
-        background: #fefefe;
-        border: 1px dashed #cbd5e1;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        opacity: 0.8;
-    }
-
-    .loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.8);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-    }
-
-    .loading-spinner {
-        width: 50px;
-        height: 50px;
-        border: 4px solid #e2e8f0;
-        border-top: 4px solid #2563eb;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .security-badges {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        margin: 2rem 0;
-        padding: 1rem;
+    .coupon-form {
         background: #f8fafc;
+        border: 1px solid #e5e7eb;
         border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
     }
 
-    .security-badge {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: #059669;
-        font-size: 0.875rem;
-        font-weight: 500;
+    .recently-viewed {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
     }
 
-    @media (max-width: 768px) {
-        .cart-item {
-            flex-direction: column;
-            text-align: center;
-        }
+    .recently-viewed-item {
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.2s;
+    }
 
-        .cart-item-info {
-            margin-left: 0;
-            margin-top: 1rem;
-        }
+    .recently-viewed-item:hover {
+        transform: translateY(-2px);
+        color: inherit;
+        text-decoration: none;
+    }
 
-        .cart-item-image {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto;
-        }
-
-        .quantity-controls {
-            justify-content: center;
-            margin-top: 1rem;
-        }
-
-        .cart-actions {
-            justify-content: center;
-        }
-
-        .cart-header {
-            flex-direction: column;
-            gap: 1rem;
-            text-align: center;
-        }
-
-        .bulk-actions {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .security-badges {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
+    .recently-viewed-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
     }
 </style>
 @endpush
 
 @section('content')
-<div class="container-fluid px-lg-5" x-data="shoppingCart()">
+<div class="container py-4">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Shopping Cart</li>
+            <li class="breadcrumb-item active">Keranjang Belanja</li>
         </ol>
     </nav>
 
-    <div class="cart-container">
-        <!-- Cart Header -->
-        <div class="cart-header" x-show="cartItems.length > 0">
-            <div>
-                <h1 class="h2 fw-bold text-dark mb-1">Shopping Cart</h1>
-                <p class="cart-count mb-0" x-text="`${cartItems.length} item${cartItems.length !== 1 ? 's' : ''} in your cart`"></p>
-            </div>
-
-            <div class="bulk-actions">
-                <label class="select-all">
-                    <input type="checkbox" x-model="selectAll" @change="toggleSelectAll()">
-                    Select All
-                </label>
-                <button class="btn btn-outline-danger btn-sm" @click="removeSelected()"
-                        x-show="selectedItems.length > 0" :disabled="loading">
-                    <i class="fas fa-trash me-2"></i>Remove Selected (<span x-text="selectedItems.length"></span>)
-                </button>
-            </div>
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 fw-bold mb-2">
+                <i class="fas fa-shopping-cart me-2 text-primary"></i>
+                Keranjang Belanja
+            </h1>
+            @if($cartItems && $cartItems->count() > 0)
+                <p class="text-muted">Anda memiliki {{ $cartItems->sum('quantity') }} item dalam keranjang</p>
+            @endif
         </div>
+    </div>
 
+    @if($cartItems && $cartItems->count() > 0)
         <div class="row">
             <!-- Cart Items -->
             <div class="col-lg-8">
-                <!-- Loading State -->
-                <div x-show="loading" class="text-center py-5">
-                    <div class="loading-spinner mx-auto mb-3"></div>
-                    <p class="text-muted">Updating cart...</p>
+                <!-- Select All & Clear Cart -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAll">
+                        <label class="form-check-label" for="selectAll">
+                            Pilih Semua
+                        </label>
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearCart()">
+                        <i class="fas fa-trash me-1"></i>Kosongkan Keranjang
+                    </button>
                 </div>
 
                 <!-- Cart Items List -->
-                <div x-show="!loading && cartItems.length > 0">
-                    <template x-for="(item, index) in cartItems" :key="item.id">
-                        <div class="cart-item d-flex">
-                            <!-- Checkbox -->
-                            <input type="checkbox" class="cart-item-checkbox"
-                                   :value="item.id" x-model="selectedItems">
+                <div id="cart-items-container">
+                    @foreach($cartItems as $item)
+                        <div class="cart-item p-3" data-item-id="{{ $item->id }}">
+                            <div class="row align-items-center">
+                                <!-- Checkbox -->
+                                <div class="col-auto">
+                                    <div class="form-check">
+                                        <input class="form-check-input item-checkbox" type="checkbox" value="{{ $item->id }}">
+                                    </div>
+                                </div>
 
-                            <!-- Product Image -->
-                            <div class="cart-item-image">
-                                <img :src="item.product.image || '{{ asset('images/placeholder.jpg') }}'"
-                                     :alt="item.product.name" loading="lazy">
-                            </div>
+                                <!-- Product Image -->
+                                <div class="col-auto">
+                                    @if($item->product->images && $item->product->images->count() > 0)
+                                        <img src="{{ $item->product->images->first()->image_url }}"
+                                             alt="{{ $item->product->name }}"
+                                             class="product-image">
+                                    @else
+                                        <div class="product-image bg-light d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-image text-muted"></i>
+                                        </div>
+                                    @endif
+                                </div>
 
-                            <!-- Product Info -->
-                            <div class="cart-item-info">
-                                <h3 class="product-name">
-                                    <a :href="`/products/${item.product.slug}`" class="text-decoration-none text-dark">
-                                        <span x-text="item.product.name"></span>
-                                    </a>
-                                </h3>
+                                <!-- Product Info -->
+                                <div class="col">
+                                    <h6 class="fw-semibold mb-1">
+                                        <a href="{{ route('products.show', $item->product) }}" class="text-decoration-none text-dark">
+                                            {{ $item->product->name }}
+                                        </a>
+                                    </h6>
 
-                                <div class="product-variant" x-show="item.variant" x-text="item.variant?.name"></div>
+                                    @if($item->variant)
+                                        <small class="text-muted">Varian: {{ $item->variant->variant_name }} - {{ $item->variant->variant_value }}</small>
+                                    @endif
 
-                                <div class="product-price">
-                                    <span x-text="formatPrice(item.unit_price_cents)"></span>
-                                    <span class="original-price" x-show="item.product.compare_price_cents > item.unit_price_cents"
-                                          x-text="formatPrice(item.product.compare_price_cents)"></span>
+                                    <div class="mt-2">
+                                        <span class="price-text">
+                                            Rp {{ number_format($item->unit_price_cents / 100, 0, ',', '.') }}
+                                        </span>
+                                    </div>
+
+                                    <!-- Stock Status -->
+                                    @php
+                                        $stock = $item->variant ? $item->variant->stock_quantity : $item->product->stock_quantity;
+                                    @endphp
+                                    @if($stock < $item->quantity)
+                                        <div class="text-danger small mt-1">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Stok tidak mencukupi (tersisa {{ $stock }})
+                                        </div>
+                                    @elseif($stock <= 5)
+                                        <div class="text-warning small mt-1">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Stok terbatas (tersisa {{ $stock }})
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <!-- Quantity Controls -->
-                                <div class="quantity-controls">
-                                    <label class="form-label fw-medium mb-0">Qty:</label>
-                                    <div class="quantity-input">
-                                        <button class="quantity-btn" @click="updateQuantity(item.id, item.quantity - 1)"
-                                                :disabled="item.quantity <= 1 || updating === item.id">
+                                <div class="col-auto">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button type="button" class="quantity-btn" onclick="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})">
                                             <i class="fas fa-minus"></i>
                                         </button>
-                                        <input type="number" class="quantity-value" :value="item.quantity"
-                                               @change="updateQuantity(item.id, $event.target.value)"
-                                               min="1" :max="item.product.stock_quantity">
-                                        <button class="quantity-btn" @click="updateQuantity(item.id, item.quantity + 1)"
-                                                :disabled="item.quantity >= item.product.stock_quantity || updating === item.id">
+                                        <input type="number"
+                                               class="form-control quantity-input"
+                                               value="{{ $item->quantity }}"
+                                               min="1"
+                                               max="{{ $stock }}"
+                                               onchange="updateQuantity({{ $item->id }}, this.value)">
+                                        <button type="button" class="quantity-btn" onclick="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})">
                                             <i class="fas fa-plus"></i>
                                         </button>
                                     </div>
+                                </div>
 
-                                    <!-- Stock Warning -->
-                                    <div x-show="item.quantity >= item.product.stock_quantity" class="text-warning small">
-                                        <i class="fas fa-exclamation-triangle me-1"></i>Max stock reached
+                                <!-- Item Total -->
+                                <div class="col-auto text-end">
+                                    <div class="price-text" id="item-total-{{ $item->id }}">
+                                        Rp {{ number_format($item->total_price_cents / 100, 0, ',', '.') }}
                                     </div>
-                                </div>
-
-                                <!-- Item Actions -->
-                                <div class="cart-actions">
-                                    <button class="btn-save-later" @click="saveForLater(item.id)"
-                                            :disabled="updating === item.id">
-                                        <i class="far fa-bookmark me-1"></i>Save for Later
-                                    </button>
-                                    <button class="btn-remove" @click="removeItem(item.id)"
-                                            :disabled="updating === item.id">
-                                        <i class="fas fa-trash me-1"></i>Remove
+                                    <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="removeItem({{ $item->id }})">
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
-                            </div>
-
-                            <!-- Item Total -->
-                            <div class="ms-auto text-end">
-                                <div class="fw-bold fs-5 text-primary" x-text="formatPrice(item.total_price_cents)"></div>
-                                <div class="text-muted small" x-text="`${item.quantity} × ${formatPrice(item.unit_price_cents)}`"></div>
                             </div>
                         </div>
-                    </template>
-                </div>
-
-                <!-- Empty Cart -->
-                <div x-show="!loading && cartItems.length === 0" class="empty-cart">
-                    <i class="fas fa-shopping-cart"></i>
-                    <h3>Your cart is empty</h3>
-                    <p>Looks like you haven't added any items to your cart yet.</p>
-                    <a href="{{ route('products.index') }}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-arrow-left me-2"></i>Continue Shopping
-                    </a>
+                    @endforeach
                 </div>
             </div>
 
             <!-- Cart Summary -->
-            <div class="col-lg-4" x-show="cartItems.length > 0">
-                <div class="cart-summary">
-                    <h2 class="summary-title">Order Summary</h2>
+            <div class="col-lg-4">
+                <div class="summary-card">
+                    <h5 class="fw-bold mb-3">Ringkasan Pesanan</h5>
 
-                    <!-- Summary Rows -->
-                    <div class="summary-row">
-                        <span class="summary-label">Subtotal (<span x-text="getTotalQuantity()"></span> items)</span>
-                        <span class="summary-value" x-text="formatPrice(subtotal)"></span>
-                    </div>
-
-                    <div class="summary-row" x-show="shippingCost > 0">
-                        <span class="summary-label">Shipping</span>
-                        <span class="summary-value" x-text="formatPrice(shippingCost)"></span>
-                    </div>
-
-                    <div class="summary-row" x-show="shippingCost === 0 && subtotal >= freeShippingThreshold">
-                        <span class="summary-label">Shipping</span>
-                        <span class="summary-value text-success">FREE</span>
-                    </div>
-
-                    <div class="summary-row" x-show="tax > 0">
-                        <span class="summary-label">Tax</span>
-                        <span class="summary-value" x-text="formatPrice(tax)"></span>
-                    </div>
-
-                    <div class="summary-row" x-show="discount > 0">
-                        <span class="summary-label">Discount</span>
-                        <span class="summary-value discount-value" x-text="`-${formatPrice(discount)}`"></span>
-                    </div>
-
-                    <div class="summary-row">
-                        <span class="summary-label fw-bold">Total</span>
-                        <span class="summary-value total-value" x-text="formatPrice(total)"></span>
-                    </div>
-
-                    <!-- Free Shipping Progress -->
-                    <div x-show="subtotal < freeShippingThreshold" class="mt-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <small class="text-muted">Free shipping progress</small>
-                            <small class="text-muted" x-text="`${Math.round((subtotal / freeShippingThreshold) * 100)}%`"></small>
-                        </div>
-                        <div class="progress mb-2" style="height: 6px;">
-                            <div class="progress-bar bg-success"
-                                 :style="`width: ${Math.min((subtotal / freeShippingThreshold) * 100, 100)}%`"></div>
-                        </div>
-                        <small class="text-muted">
-                            Add <span class="fw-bold text-success" x-text="formatPrice(freeShippingThreshold - subtotal)"></span>
-                            more for free shipping!
-                        </small>
-                    </div>
-
-                    <!-- Coupon Section -->
-                    <div class="coupon-section">
-                        <div x-show="!appliedCoupon">
-                            <label class="form-label fw-medium">Promo Code</label>
-                            <div class="coupon-input">
-                                <input type="text" class="form-control" placeholder="Enter coupon code"
-                                       x-model="couponCode" @keyup.enter="applyCoupon()">
-                                <button class="btn btn-outline-primary" @click="applyCoupon()"
-                                        :disabled="!couponCode.trim() || applyingCoupon">
-                                    <span x-show="!applyingCoupon">Apply</span>
-                                    <span x-show="applyingCoupon">
-                                        <i class="fas fa-spinner fa-spin"></i>
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div x-show="appliedCoupon" class="applied-coupon">
-                            <div class="coupon-info">
-                                <div class="fw-bold" x-text="appliedCoupon?.code"></div>
-                                <div class="small" x-text="appliedCoupon?.description"></div>
-                            </div>
-                            <button class="btn-remove-coupon" @click="removeCoupon()">
-                                <i class="fas fa-times"></i>
+                    <!-- Coupon Form -->
+                    <div class="coupon-form">
+                        <label class="form-label small fw-semibold">Kode Kupon</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="coupon-code" placeholder="Masukkan kode kupon">
+                            <button class="btn btn-outline-primary" type="button" onclick="applyCoupon()">
+                                Terapkan
                             </button>
                         </div>
+                        <div id="coupon-message" class="mt-2"></div>
                     </div>
 
-                    <!-- Security Badges -->
-                    <div class="security-badges">
-                        <div class="security-badge">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>Secure Checkout</span>
+                    <!-- Summary Details -->
+                    <div class="summary-row">
+                        <span>Subtotal ({{ $summary['item_count'] }} item)</span>
+                        <span id="subtotal">{{ $summary['formatted']['subtotal'] }}</span>
+                    </div>
+
+                    @if(isset($summary['applied_coupon']) && $summary['applied_coupon'])
+                        <div class="summary-row text-success">
+                            <span>
+                                Diskon ({{ $summary['applied_coupon']['code'] }})
+                                <button type="button" class="btn btn-link btn-sm p-0 text-danger" onclick="removeCoupon()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </span>
+                            <span id="discount">-{{ $summary['formatted']['discount'] }}</span>
                         </div>
-                        <div class="security-badge">
-                            <i class="fas fa-lock"></i>
-                            <span>SSL Protected</span>
-                        </div>
+                    @endif
+
+                    <div class="summary-row">
+                        <span>Ongkos Kirim</span>
+                        <span id="shipping">{{ $summary['formatted']['shipping'] }}</span>
+                    </div>
+
+                    <div class="summary-row summary-total">
+                        <span>Total</span>
+                        <span id="total">{{ $summary['formatted']['total'] }}</span>
                     </div>
 
                     <!-- Checkout Button -->
-                    <button class="btn btn-primary checkout-btn" @click="proceedToCheckout()"
-                            :disabled="cartItems.length === 0 || loading">
-                        <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
-                    </button>
+                    @auth
+                        <button type="button" class="btn btn-primary w-100 btn-lg mt-3" onclick="proceedToCheckout()">
+                            <i class="fas fa-credit-card me-2"></i>
+                            Lanjut ke Pembayaran
+                        </button>
+                    @else
+                        <div class="text-center mt-3">
+                            <p class="text-muted small mb-2">Silakan login untuk melanjutkan</p>
+                            <a href="{{ route('login') }}" class="btn btn-primary w-100">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login
+                            </a>
+                        </div>
+                    @endauth
 
-                    <div class="continue-shopping">
-                        <a href="{{ route('products.index') }}" class="text-decoration-none">
-                            <i class="fas fa-arrow-left me-2"></i>Continue Shopping
-                        </a>
-                    </div>
+                    <!-- Continue Shopping -->
+                    <a href="{{ route('products.index') }}" class="btn btn-outline-secondary w-100 mt-2">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Lanjut Belanja
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- Saved Items -->
-        <div class="saved-items" x-show="savedItems.length > 0">
-            <h3 class="fw-bold mb-3">Saved for Later (<span x-text="savedItems.length"></span>)</h3>
+        <!-- Recently Viewed Products -->
+        @if($recentlyViewed && $recentlyViewed->count() > 0)
+            <div class="recently-viewed">
+                <h5 class="fw-bold mb-3">Produk yang Baru Dilihat</h5>
+                <div class="row g-3">
+                    @foreach($recentlyViewed as $product)
+                        <div class="col-lg-3 col-md-4 col-6">
+                            <a href="{{ route('products.show', $product) }}" class="recently-viewed-item d-block">
+                                @if($product->images && $product->images->count() > 0)
+                                    <img src="{{ $product->images->first()->image_url }}"
+                                         alt="{{ $product->name }}"
+                                         class="recently-viewed-image mx-auto d-block">
+                                @else
+                                    <div class="recently-viewed-image mx-auto d-block bg-light d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                @endif
+                                <h6 class="small fw-semibold">{{ Str::limit($product->name, 30) }}</h6>
+                                <p class="small text-primary mb-0">Rp {{ number_format($product->price_cents / 100, 0, ',', '.') }}</p>
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
-            <div class="row">
-                <template x-for="item in savedItems" :key="item.id">
-                    <div class="col-md-3 mb-3">
-                        <div class="saved-item text-center">
-                            <img :src="item.product.image || '{{ asset('images/placeholder.jpg') }}'"
-                                 :alt="item.product.name" class="img-fluid mb-2" style="height: 120px; object-fit: cover;">
-                            <h6 x-text="item.product.name" class="mb-2"></h6>
-                            <p class="text-primary fw-bold mb-2" x-text="formatPrice(item.unit_price_cents)"></p>
-                            <div class="d-flex gap-2 justify-content-center">
-                                <button class="btn btn-sm btn-primary" @click="moveToCart(item.id)">
-                                    Move to Cart
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" @click="removeSavedItem(item.id)">
-                                    Remove
-                                </button>
-                            </div>
+    @else
+        <!-- Empty Cart -->
+        <div class="row">
+            <div class="col-12">
+                <div class="empty-cart">
+                    <div class="empty-cart-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Keranjang Belanja Kosong</h4>
+                    <p class="mb-4">Sepertinya Anda belum menambahkan produk apapun ke keranjang belanja.</p>
+                    <a href="{{ route('products.index') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-shopping-bag me-2"></i>
+                        Mulai Belanja
+                    </a>
+                </div>
+
+                <!-- Recently Viewed Products for Empty Cart -->
+                @if($recentlyViewed && $recentlyViewed->count() > 0)
+                    <div class="recently-viewed">
+                        <h5 class="fw-bold mb-3 text-center">Produk yang Baru Anda Lihat</h5>
+                        <div class="row g-3 justify-content-center">
+                            @foreach($recentlyViewed as $product)
+                                <div class="col-lg-3 col-md-4 col-6">
+                                    <a href="{{ route('products.show', $product) }}" class="recently-viewed-item d-block">
+                                        @if($product->images && $product->images->count() > 0)
+                                            <img src="{{ $product->images->first()->image_url }}"
+                                                 alt="{{ $product->name }}"
+                                                 class="recently-viewed-image mx-auto d-block">
+                                        @else
+                                            <div class="recently-viewed-image mx-auto d-block bg-light d-flex align-items-center justify-content-center">
+                                                <i class="fas fa-image text-muted"></i>
+                                            </div>
+                                        @endif
+                                        <h6 class="small fw-semibold text-center">{{ Str::limit($product->name, 30) }}</h6>
+                                        <p class="small text-primary mb-0 text-center">Rp {{ number_format($product->price_cents / 100, 0, ',', '.') }}</p>
+                                    </a>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
-                </template>
+                @endif
             </div>
         </div>
-    </div>
-
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" x-show="loading">
-        <div class="loading-spinner"></div>
-    </div>
+    @endif
 </div>
 @endsection
 
 @push('scripts')
 <script>
-function shoppingCart() {
-    return {
-        // Properties
-        cartItems: [],
-        savedItems: [],
-        selectedItems: [],
-        selectAll: false,
-        loading: true,
-        updating: null,
-
-        // Pricing
-        subtotal: 0,
-        shippingCost: 0,
-        tax: 0,
-        discount: 0,
-        total: 0,
-        freeShippingThreshold: 50000000,
-
-        // Coupon
-        couponCode: '',
-        appliedCoupon: null,
-        applyingCoupon: false,
-
-        // Initialization method (bukan async di sini)
-        init() {
-            console.log('Initializing shopping cart...');
-            this.loadCart(); // Panggil tanpa await
-        },
-
-        // Load cart method (async terpisah)
-        loadCart() {
-            this.loading = true;
-
-            fetch('{{ route("cart.index") }}', {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                console.log('Cart response status:', response.status);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Cart data received:', data);
-
-                if (data.success) {
-                    this.cartItems = data.items || [];
-                    this.savedItems = data.saved_items || [];
-                    this.appliedCoupon = data.applied_coupon || null;
-
-                    console.log('Cart items loaded:', this.cartItems.length);
-                    this.calculateTotals();
-                } else {
-                    throw new Error(data.message || 'Failed to load cart');
-                }
-            })
-            .catch(error => {
-                console.error('Load cart error:', error);
-                this.showNotification('Failed to load cart: ' + error.message, 'error');
-            })
-            .finally(() => {
-                this.loading = false;
-                console.log('Loading finished, cartItems count:', this.cartItems.length);
-            });
-        },
-
-        // Method lainnya...
-        updateQuantity(itemId, newQuantity) {
-            if (newQuantity < 1) return;
-
-            this.updating = itemId;
-
-            fetch(`{{ route("cart.update", ["itemId" => ":itemId"]) }}`.replace(':itemId', itemId), {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    quantity: parseInt(newQuantity)
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const itemIndex = this.cartItems.findIndex(item => item.id === itemId);
-                    if (itemIndex !== -1) {
-                        this.cartItems[itemIndex].quantity = parseInt(newQuantity);
-                        this.cartItems[itemIndex].total_price_cents = this.cartItems[itemIndex].unit_price_cents * parseInt(newQuantity);
-                    }
-                    this.calculateTotals();
-                } else {
-                    throw new Error(data.message || 'Failed to update quantity');
-                }
-            })
-            .catch(error => {
-                this.showNotification(error.message, 'error');
-            })
-            .finally(() => {
-                this.updating = null;
-            });
-        },
-
-        formatPrice(cents) {
-            return new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0
-            }).format(cents / 100);
-        },
-
-        calculateTotals() {
-            this.subtotal = this.cartItems.reduce((sum, item) => sum + item.total_price_cents, 0);
-            this.shippingCost = this.subtotal >= this.freeShippingThreshold ? 0 : 1500000;
-            this.tax = Math.round(this.subtotal * 0.11);
-
-            this.discount = 0;
-            if (this.appliedCoupon) {
-                if (this.appliedCoupon.type === 'fixed') {
-                    this.discount = this.appliedCoupon.value_cents;
-                } else if (this.appliedCoupon.type === 'percentage') {
-                    this.discount = Math.round(this.subtotal * (this.appliedCoupon.value_cents / 10000));
-                }
-            }
-
-            this.total = Math.max(0, this.subtotal + this.shippingCost + this.tax - this.discount);
-        },
-
-        getTotalQuantity() {
-            return this.cartItems.reduce((sum, item) => sum + item.quantity, 0);
-        },
-
-        showNotification(message, type = 'info') {
-            console.log(`Notification [${type}]: ${message}`);
-
-            const notification = document.createElement('div');
-            notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
-            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-
-            notification.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.remove();
-                }
-            }, 5000);
-        }
-    };
-}
-
-// Auto-save cart changes
-let autoSaveTimeout;
-function autoSaveCart() {
-    clearTimeout(autoSaveTimeout);
-    autoSaveTimeout = setTimeout(() => {
-        // Auto-save cart state to prevent data loss
-        console.log('Auto-saving cart state...');
-    }, 2000);
-}
-
-// Handle page visibility changes
-document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'hidden') {
-        // Save cart state when page becomes hidden
-        autoSaveCart();
-    }
-});
-
-// Prevent accidental page refresh when cart has items
-window.addEventListener('beforeunload', function(e) {
-    const cartData = document.querySelector('[x-data="shoppingCart()"]');
-    if (cartData && cartData.__x && cartData.__x.$data.cartItems.length > 0) {
-        e.preventDefault();
-        e.returnValue = 'You have items in your cart. Are you sure you want to leave?';
-        return e.returnValue;
-    }
-});
-
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Track cart page view
-    fetch('{{ route("track.visitor") }}', {
-        method: 'POST',
+    // Select All functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            itemCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+
+        // Update select all based on individual checkboxes
+        itemCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const allChecked = Array.from(itemCheckboxes).every(cb => cb.checked);
+                const noneChecked = Array.from(itemCheckboxes).every(cb => !cb.checked);
+
+                selectAllCheckbox.checked = allChecked;
+                selectAllCheckbox.indeterminate = !allChecked && !noneChecked;
+            });
+        });
+    }
+});
+
+// Update item quantity
+function updateQuantity(itemId, newQuantity) {
+    if (newQuantity < 1) return;
+
+    const button = event.target.closest('button');
+    const originalContent = button ? button.innerHTML : '';
+
+    if (button) {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
+
+    const updateUrl = '{{ route("cart.update", ":item") }}'.replace(':item', itemId);
+    fetch(updateUrl, {
+        method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
             'Accept': 'application/json'
         },
         body: JSON.stringify({
-            event: 'cart_view',
-            page: 'cart'
+            quantity: parseInt(newQuantity)
         })
-    }).catch(error => {
-        console.error('Analytics tracking error:', error);
-    });
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update item total
+            document.getElementById(`item-total-${itemId}`).textContent = data.item_total;
 
-    // Initialize tooltips
-    const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    tooltips.forEach(tooltip => {
-        new bootstrap.Tooltip(tooltip);
+            // Update cart total
+            document.getElementById('total').textContent = data.cart_total;
+
+            // Update quantity input
+            const quantityInput = document.querySelector(`input[onchange*="${itemId}"]`);
+            if (quantityInput) {
+                quantityInput.value = newQuantity;
+            }
+
+            // Update cart count in header
+            updateCartCount();
+
+            showNotification(data.message, 'success');
+        } else {
+            showNotification(data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Gagal memperbarui keranjang', 'danger');
+    })
+    .finally(() => {
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = originalContent;
+        }
     });
-});
+}
+
+// Remove item from cart
+function removeItem(itemId) {
+    if (!confirm('Apakah Anda yakin ingin menghapus item ini?')) {
+        return;
+    }
+
+    const removeUrl = '{{ route("cart.remove", ":item") }}'.replace(':item', itemId);
+    fetch(removeUrl, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove item from DOM
+            const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
+            if (itemElement) {
+                itemElement.remove();
+            }
+
+            // Check if cart is empty
+            const remainingItems = document.querySelectorAll('.cart-item');
+            if (remainingItems.length === 0) {
+                location.reload(); // Reload to show empty cart view
+            } else {
+                // Update totals
+                updateCartSummary();
+            }
+
+            // Update cart count in header
+            updateCartCount();
+
+            showNotification(data.message, 'success');
+        } else {
+            showNotification(data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Gagal menghapus item', 'danger');
+    });
+}
+
+// Clear entire cart
+function clearCart() {
+    if (!confirm('Apakah Anda yakin ingin mengosongkan keranjang?')) {
+        return;
+    }
+
+    fetch('{{ route("cart.clear") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            showNotification(data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Gagal mengosongkan keranjang', 'danger');
+    });
+}
+
+// Apply coupon
+function applyCoupon() {
+    const couponCode = document.getElementById('coupon-code').value.trim();
+    const messageDiv = document.getElementById('coupon-message');
+
+    if (!couponCode) {
+        messageDiv.innerHTML = '<small class="text-danger">Masukkan kode kupon</small>';
+        return;
+    }
+
+    fetch('{{ route("cart.coupon.apply") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            coupon_code: couponCode
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            messageDiv.innerHTML = `<small class="text-success"><i class="fas fa-check me-1"></i>${data.message}</small>`;
+            // Reload page to show updated summary
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            messageDiv.innerHTML = `<small class="text-danger"><i class="fas fa-times me-1"></i>${data.message}</small>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        messageDiv.innerHTML = '<small class="text-danger">Gagal menerapkan kupon</small>';
+    });
+}
+
+// Remove applied coupon
+function removeCoupon() {
+    fetch('{{ route("cart.coupon.remove") }}', {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Proceed to checkout
+function proceedToCheckout() {
+    window.location.href = '{{ route("checkout.index") }}';
+}
+
+// Update cart summary
+function updateCartSummary() {
+    // This would typically recalculate totals
+    // For now, we'll just reload the page for simplicity
+    location.reload();
+}
+
+// Show notification function
+function showNotification(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '100px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.style.minWidth = '300px';
+
+    alertDiv.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+
+    document.body.appendChild(alertDiv);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            const alert = new bootstrap.Alert(alertDiv);
+            alert.close();
+        }
+    }, 5000);
+}
 </script>
 @endpush

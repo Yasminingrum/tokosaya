@@ -251,84 +251,82 @@ class CartController extends Controller
     /**
      * Update cart item quantity
      */
-    public function update(Request $request, $itemId)
-    {
-        $validator = Validator::make($request->all(), [
-            'quantity' => 'required|integer|min:1|max:10'
-        ]);
+    // Di CartController.php - pastikan parameter name sama dengan route
+public function update(Request $request, $item)
+{
+    $validator = Validator::make($request->all(), [
+        'quantity' => 'required|integer|min:1|max:10'
+    ]);
 
-        if ($validator->fails()) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-            return back()->with('errors', $validator->errors());
+    if ($validator->fails()) {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
         }
-
-        try {
-            DB::beginTransaction();
-
-            $cart = $this->getOrCreateCart();
-            $cartItem = $cart->items()->findOrFail($itemId);
-
-            // Check stock availability
-            $availableStock = $cartItem->variant ?
-                $cartItem->variant->stock_quantity :
-                $cartItem->product->stock_quantity;
-
-            if ($request->quantity > $availableStock) {
-                throw new \Exception('Quantity melebihi stok yang tersedia');
-            }
-
-            // Update cart item
-            $cartItem->update([
-                'quantity' => $request->quantity,
-                'total_price_cents' => $cartItem->unit_price_cents * $request->quantity
-            ]);
-
-            // Update cart totals
-            $this->updateCartTotals($cart);
-
-            DB::commit();
-
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Keranjang berhasil diperbarui',
-                    'item_total' => number_format($cartItem->total_price_cents / 100, 0, ',', '.'),
-                    'cart_total' => number_format($cart->fresh()->total_cents / 100, 0, ',', '.')
-                ]);
-            }
-
-            return back()->with('success', 'Keranjang berhasil diperbarui!');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error updating cart item: ' . $e->getMessage());
-
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage()
-                ], 400);
-            }
-
-            return back()->with('error', $e->getMessage());
-        }
+        return back()->with('errors', $validator->errors());
     }
 
-    /**
-     * Remove item from cart
-     */
-    public function remove($itemId)
+    try {
+        DB::beginTransaction();
+
+        $cart = $this->getOrCreateCart();
+        $cartItem = $cart->items()->findOrFail($item); // ✅ Gunakan $item
+
+        // Check stock availability
+        $availableStock = $cartItem->variant ?
+            $cartItem->variant->stock_quantity :
+            $cartItem->product->stock_quantity;
+
+        if ($request->quantity > $availableStock) {
+            throw new \Exception('Quantity melebihi stok yang tersedia');
+        }
+
+        // Update cart item
+        $cartItem->update([
+            'quantity' => $request->quantity,
+            'total_price_cents' => $cartItem->unit_price_cents * $request->quantity
+        ]);
+
+        // Update cart totals
+        $this->updateCartTotals($cart);
+
+        DB::commit();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Keranjang berhasil diperbarui',
+                'item_total' => number_format($cartItem->total_price_cents / 100, 0, ',', '.'),
+                'cart_total' => number_format($cart->fresh()->total_cents / 100, 0, ',', '.')
+            ]);
+        }
+
+        return back()->with('success', 'Keranjang berhasil diperbarui!');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Error updating cart item: ' . $e->getMessage());
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+
+        return back()->with('error', $e->getMessage());
+    }
+}
+
+    public function remove($item) // ✅ Gunakan $item
     {
         try {
             DB::beginTransaction();
 
             $cart = $this->getOrCreateCart();
-            $cartItem = $cart->items()->findOrFail($itemId);
+            $cartItem = $cart->items()->findOrFail($item); // ✅ Gunakan $item
 
             // Log before deletion
             if (Auth::check()) {

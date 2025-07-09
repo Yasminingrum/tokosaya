@@ -79,10 +79,10 @@ Route::group([], function () {
     Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
 
     // Update cart item quantity
-    Route::put('/cart/item/{itemId}', [CartController::class, 'update'])->name('cart.update');
+    Route::put('/cart/item/{item}', [CartController::class, 'update'])->name('cart.update');
 
     // Remove item from cart
-    Route::delete('/cart/item/{itemId}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::delete('/cart/item/{item}', [CartController::class, 'remove'])->name('cart.remove');
 
     // Remove multiple items from cart
     Route::post('/cart/remove-multiple', [CartController::class, 'removeSelected'])->name('cart.remove-multiple');
