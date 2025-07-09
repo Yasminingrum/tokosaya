@@ -11,378 +11,308 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
-| Web Application Routes
+|--------------------------------------------------------------------------
+| Web Routes - Laravel 12 Compatible
+|--------------------------------------------------------------------------
 |
-| These routes handle user-facing and non-admin functionality for the application.
-| Admin routes have been moved to admin.php, except for admin-specific AJAX endpoints.
-|
+| Struktur routes yang disesuaikan dengan Laravel 12
+| Menggunakan middleware built-in dan custom middleware yang sederhana
 |
 */
 
-// Public Routes (Accessible by all users)
-Route::group([], function () {
-    // Homepage
-    Route::get('/', [HomeController::class, 'index'])->name('home');
+// ========================================================================
+// PUBLIC ROUTES (Accessible by everyone)
+// ========================================================================
 
-    // About page
-    Route::get('/about', [HomeController::class, 'about'])->name('about');
+// Homepage & Static Pages
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/about', [HomeController::class, 'about'])->name('about');
+Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
+Route::post('/contact', [HomeController::class, 'contactStore'])->name('contact.store');
+Route::get('/privacy-policy', [HomeController::class, 'privacy'])->name('privacy');
+Route::get('/terms-of-service', [HomeController::class, 'terms'])->name('terms');
+Route::get('/faq', [HomeController::class, 'faq'])->name('faq');
+Route::get('/sitemap', [HomeController::class, 'sitemap'])->name('sitemap');
 
-    // Contact page
-    Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
+// Product Catalog (Public)
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+Route::get('/products/{product}/reviews', [ReviewController::class, 'show'])->name('reviews.show');
+Route::get('/search', [HomeController::class, 'search'])->name('search');
 
-    // Handle contact form submission
-    Route::post('/contact', [HomeController::class, 'contactStore'])->name('contact.store');
+// Categories (Public)
+Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+Route::get('/categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
 
-    // Privacy policy page
-    Route::get('/privacy-policy', [HomeController::class, 'privacy'])->name('privacy');
+// Brands (Public)
+Route::get('/brands', [ProductController::class, 'brandIndex'])->name('products.brand');
+Route::get('/brands/{brand}', [ProductController::class, 'brand'])->name('brands.show');
 
-    // Terms of service page
-    Route::get('/terms-of-service', [HomeController::class, 'terms'])->name('terms');
+// Featured Products
+Route::get('/products/featured', [ProductController::class, 'featured'])->name('products.featured');
 
-    // FAQ page
-    Route::get('/faq', [HomeController::class, 'faq'])->name('faq');
-
-    // Sitemap page
-    Route::get('/sitemap', [HomeController::class, 'sitemap'])->name('sitemap');
-
-    // Search redirect
-    Route::get('/search', [HomeController::class, 'search'])->name('search');
-
-    // Products listing
-    Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-
-    // Single product
-    Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
-
-    // Product reviews
-    Route::get('/products/{product}/reviews', [ReviewController::class, 'show'])->name('reviews.show');
-
-    // Categories listing
-    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
-
-    // Category with products
-    Route::get('/categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
-
-    // Brands listing (tanpa parameter)
-    Route::get('/brands', [ProductController::class, 'brandIndex'])->name('products.brand');
-
-    // Products by specific brand (dengan parameter)
-    Route::get('/brands/{brand}', [ProductController::class, 'brand'])->name('brands.show');
-
-    // Featured products
-    Route::get('/products/featured', [ProductController::class, 'featured'])->name('products.featured');
-
-    // Cart contents
-    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-
-    // Add product to cart
-    Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-
-    // Update cart item quantity
-    Route::put('/cart/item/{item}', [CartController::class, 'update'])->name('cart.update');
-
-    // Remove item from cart
-    Route::delete('/cart/item/{item}', [CartController::class, 'remove'])->name('cart.remove');
-
-    // Remove multiple items from cart
-    Route::post('/cart/remove-multiple', [CartController::class, 'removeSelected'])->name('cart.remove-multiple');
-
-    // Save item for later (TAMBAHKAN INI)
-    Route::post('/cart/save-for-later', [CartController::class, 'saveForLater'])->name('cart.save-for-later');
-
-    // Move saved item to cart (TAMBAHKAN INI)
-    Route::post('/cart/move-to-cart', [CartController::class, 'moveToCart'])->name('cart.move-to-cart');
-
-    // Remove saved item (TAMBAHKAN INI)
-    Route::post('/cart/remove-saved', [CartController::class, 'removeSavedItem'])->name('cart.remove-saved');
-
-    // Get mini cart HTML
-    Route::get('/cart/mini', [CartController::class, 'mini'])->name('cart.mini');
-
-    // Clear entire cart
-    Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
-
-    // Payment gateway callback
-    Route::post('/payment/callback/{gateway}', [PaymentController::class, 'callback'])->name('payment.callback');
-
-    // View public shared wishlist
-    Route::get('/wishlist/public/{token}', [WishlistController::class, 'public'])->name('wishlist.public');
-});
-
-// AJAX Routes
-Route::group(['prefix' => 'api'], function () {
-    // Search suggestions
-    Route::get('/search-suggestions', [ProductController::class, 'searchSuggestions'])->name('products.search.suggestions');
-
-    // Track visitor
-    Route::post('/track-visitor', [HomeController::class, 'trackVisitor'])->name('track.visitor');
-
-    // Quick stats
-    Route::get('/quick-stats', [HomeController::class, 'quickStats'])->name('quick.stats');
-
-    // Category tree for select dropdown
-    Route::get('/categories/tree', [CategoryController::class, 'getTree'])->name('categories.tree');
-
-    // Get cart count
-    Route::get('/cart/count', [CartController::class, 'count'])->name('cart.count');
-
-    // Get cart total
-    Route::get('/cart/total', [CartController::class, 'total'])->name('cart.total');
-
-    Route::get('/cart/mini', [CartController::class, 'mini'])->name('cart.mini');
-
-    // Apply coupon to cart
-    Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
-
-    // Remove applied coupon from cart
-    Route::delete('/cart/coupon', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
-
-    // Checkout AJAX Routes
-    Route::prefix('checkout')->group(function () {
-        // Calculate shipping rates
-        Route::get('/shipping/calculate', [CheckoutController::class, 'calculateShipping'])->middleware('cart.not_empty')->name('checkout.shipping.calculate');
-
-        // Validate coupon code
-        Route::get('/coupon/validate', [CheckoutController::class, 'validateCoupon'])->middleware('cart.not_empty')->name('checkout.coupon.validate');
-
-        // Apply coupon code
-        Route::post('/coupon', [CheckoutController::class, 'applyCoupon'])->middleware('cart.not_empty')->name('checkout.coupon.apply');
-
-        // Remove applied coupon
-        Route::delete('/coupon', [CheckoutController::class, 'removeCoupon'])->middleware('cart.not_empty')->name('checkout.coupon.remove');
-    });
-
-    // Verify payment status
-    Route::get('/payment/verify', [PaymentController::class, 'verify'])->middleware('auth')->name('payment.verify');
-
-    // Order AJAX Routes
-    Route::prefix('orders')->group(function () {
-        // Add note to order
-        Route::post('/{order}/note', [OrderController::class, 'addNote'])->middleware('auth:admin')->name('admin.orders.add_note');
-
-        // Bulk update orders
-        Route::post('/bulk-update', [OrderController::class, 'bulkUpdate'])->middleware('auth:admin')->name('admin.orders.bulk_update');
-    });
-
-    // Wishlist AJAX Routes
-    Route::prefix('wishlist')->middleware(['auth', 'user.status'])->group(function () {
-        // Add product to wishlist
-        Route::post('/add', [WishlistController::class, 'add'])->name('wishlist.add');
-
-        // Remove product from wishlist
-        Route::post('/remove/{product}', [WishlistController::class, 'remove'])->name('wishlist.remove');
-
-        // Clear entire wishlist
-        Route::post('/clear', [WishlistController::class, 'clear'])->name('wishlist.clear');
-
-        // Toggle product in wishlist
-        Route::post('/toggle/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
-
-        // Move product to cart
-        Route::post('/move-to-cart/{product}', [WishlistController::class, 'moveToCart'])->name('wishlist.move_to_cart');
-
-        // Check if product is in wishlist
-        Route::get('/check/{product}', [WishlistController::class, 'check'])->name('wishlist.check');
-
-        // Get wishlist count
-        Route::get('/count', [WishlistController::class, 'count'])->name('wishlist.count');
-
-        // Get wishlist suggestions
-        Route::get('/suggestions', [WishlistController::class, 'suggestions'])->name('wishlist.suggestions');
-
-        // Share wishlist
-        Route::post('/share', [WishlistController::class, 'share'])->name('wishlist.share');
-
-        // Bulk operations on wishlist
-        Route::post('/bulk-action', [WishlistController::class, 'bulkAction'])->name('wishlist.bulk_action');
-    });
-
-    // Review AJAX Routes
-    Route::prefix('reviews')->group(function () {
-        // Mark review as helpful
-        Route::post('/{review}/helpful', [ReviewController::class, 'helpful'])->middleware(['auth', 'user.status'])->name('reviews.helpful');
-
-        // Remove helpful mark from review
-        Route::post('/{review}/unhelpful', [ReviewController::class, 'unhelpful'])->middleware(['auth', 'user.status'])->name('reviews.unhelpful');
-
-        // Bulk operations on reviews
-        Route::post('/bulk-action', [ReviewController::class, 'bulkAction'])->middleware('auth:admin')->name('admin.reviews.bulk_action');
-    });
-});
+// Cart Routes (Public - Guest can access)
+Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+Route::put('/cart/item/{item}', [CartController::class, 'update'])->name('cart.update');
+Route::delete('/cart/item/{item}', [CartController::class, 'remove'])->name('cart.remove');
+Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
 
 // Newsletter Routes
-Route::group([], function () {
-    // Newsletter subscription
-    Route::post('/newsletter/subscribe', [HomeController::class, 'newsletterSubscribe'])->name('newsletter.subscribe');
+Route::post('/newsletter/subscribe', [HomeController::class, 'newsletterSubscribe'])->name('newsletter.subscribe');
+Route::get('/newsletter/unsubscribe/{token}', [HomeController::class, 'newsletterUnsubscribe'])->name('newsletter.unsubscribe');
 
-    // Newsletter unsubscribe
-    Route::get('/newsletter/unsubscribe/{token}', [HomeController::class, 'newsletterUnsubscribe'])->name('newsletter.unsubscribe');
+// Payment Callback (Public)
+Route::post('/payment/callback/{gateway}', [PaymentController::class, 'callback'])->name('payment.callback');
+
+// Health Check
+Route::get('/health', [HomeController::class, 'health'])->name('health');
+
+// ========================================================================
+// API ROUTES (AJAX endpoints)
+// ========================================================================
+
+Route::prefix('api')->group(function () {
+    // Public API endpoints
+    Route::get('/search-suggestions', [ProductController::class, 'searchSuggestions'])->name('products.search.suggestions');
+    Route::post('/track-visitor', [HomeController::class, 'trackVisitor'])->name('track.visitor');
+    Route::post('/products/track-view', [ProductController::class, 'trackView'])->name('products.track-view');
+    Route::get('/quick-stats', [HomeController::class, 'quickStats'])->name('quick.stats');
+    Route::get('/categories/tree', [CategoryController::class, 'getTree'])->name('categories.tree');
+
+    // Cart API (Public)
+    Route::get('/cart/count', [CartController::class, 'count'])->name('cart.count');
+    Route::get('/cart/total', [CartController::class, 'total'])->name('cart.total');
+    Route::get('/cart/mini', [CartController::class, 'mini'])->name('cart.mini');
+    Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
+    Route::delete('/cart/coupon', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
 });
 
-// Guest Routes (Accessible by non-authenticated users)
+// ========================================================================
+// GUEST ROUTES (Only for non-authenticated users)
+// ========================================================================
+
 Route::middleware('guest')->group(function () {
-    // Show login form
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-
-    // Handle login
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
-
-    // Show registration form
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-
-    // Handle registration
     Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+
+    // Password Reset
+    Route::get('/password/reset', [AuthController::class, 'showForgotPassword'])->name('password.request');
+    Route::post('/password/email', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::get('/password/reset/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
+    Route::post('/password/reset', [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
-// Authenticated Routes (Accessible by authenticated users)
-Route::middleware(['auth', 'user.status'])->group(function () {
-    // Handle logout
+// ========================================================================
+// AUTHENTICATED ROUTES (All logged-in users)
+// ========================================================================
+
+Route::middleware('auth')->group(function () {
+    // Logout
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Show user dashboard
+    // Dashboard
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
 
-    // Review Routes
+    // Reviews (Authenticated users only)
     Route::prefix('reviews')->group(function () {
-        // Store a new review
-        Route::post('/{product}', [ReviewController::class, 'store'])->name('reviews.store');
-
-        // Update an existing review
+        Route::post('/store', [ReviewController::class, 'store'])->name('reviews.store');
         Route::post('/{review}/update', [ReviewController::class, 'update'])->name('reviews.update');
-
-        // Get user's reviews
         Route::get('/', [ReviewController::class, 'userReviews'])->name('reviews.user');
+        Route::post('/{review}/helpful', [ReviewController::class, 'helpful'])->name('reviews.helpful');
+        Route::post('/{review}/unhelpful', [ReviewController::class, 'unhelpful'])->name('reviews.unhelpful');
     });
 
-    // Wishlist Routes
+    // Wishlist (Authenticated users only)
     Route::prefix('wishlist')->group(function () {
-        // Display user's wishlist
         Route::get('/', [WishlistController::class, 'index'])->name('wishlist.index');
+        Route::post('/add', [WishlistController::class, 'add'])->name('wishlist.add');
+        Route::post('/remove/{product}', [WishlistController::class, 'remove'])->name('wishlist.remove');
+        Route::post('/clear', [WishlistController::class, 'clear'])->name('wishlist.clear');
+        Route::post('/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+        Route::post('/move-to-cart/{product}', [WishlistController::class, 'moveToCart'])->name('wishlist.move_to_cart');
+        Route::get('/check', [WishlistController::class, 'check'])->name('wishlist.check');
+        Route::get('/count', [WishlistController::class, 'count'])->name('wishlist.count');
+        Route::post('/share', [WishlistController::class, 'share'])->name('wishlist.share');
     });
 
-    // Order Routes
+    // Orders (Authenticated users only)
     Route::prefix('orders')->group(function () {
-        // Display customer orders
         Route::get('/', [OrderController::class, 'index'])->name('orders.index');
-
-        // Show single order
         Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');
-
-        // Create order from cart
         Route::post('/store', [OrderController::class, 'store'])->name('orders.store');
-
-        // Cancel order
         Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
-
-        // Reorder (add order items back to cart)
         Route::post('/{order}/reorder', [OrderController::class, 'reorder'])->name('orders.reorder');
-
-        // Track order
         Route::get('/{order}/track', [OrderController::class, 'track'])->name('orders.track');
-
-        // Show order review form
         Route::get('/{order}/review', [OrderController::class, 'review'])->name('orders.review');
-
-        // Store order reviews
         Route::post('/{order}/review', [OrderController::class, 'storeReview'])->name('orders.store_review');
     });
 
-    // Checkout Routes
+    // Checkout (Authenticated users only)
     Route::prefix('checkout')->group(function () {
-        // Checkout page
-        Route::get('/', [CheckoutController::class, 'index'])->middleware('cart.not_empty')->name('checkout.index');
-
-        // Handle shipping step
-        Route::post('/shipping', [CheckoutController::class, 'shipping'])->middleware('cart.not_empty')->name('checkout.shipping');
-
-        // Handle payment step
-        Route::post('/payment', [CheckoutController::class, 'payment'])->middleware('cart.not_empty')->name('checkout.payment');
-
-        // Order review page
-        Route::get('/review', [CheckoutController::class, 'review'])->middleware('cart.not_empty')->name('checkout.review');
-
-        // Process order
-        Route::post('/process', [CheckoutController::class, 'process'])->middleware('cart.not_empty')->name('checkout.process');
-
-        // Order success page
+        Route::get('/', [CheckoutController::class, 'index'])->name('checkout.index');
+        Route::post('/shipping', [CheckoutController::class, 'shipping'])->name('checkout.shipping');
+        Route::post('/payment', [CheckoutController::class, 'payment'])->name('checkout.payment');
+        Route::get('/review', [CheckoutController::class, 'review'])->name('checkout.review');
+        Route::post('/process', [CheckoutController::class, 'process'])->name('checkout.process');
         Route::get('/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
-
-        // Order failed page
         Route::get('/failed', [CheckoutController::class, 'failed'])->name('checkout.failed');
+
+        // Checkout API
+        Route::get('/shipping/calculate', [CheckoutController::class, 'calculateShipping'])->name('checkout.shipping.calculate');
+        Route::post('/coupon', [CheckoutController::class, 'applyCoupon'])->name('checkout.coupon.apply');
+        Route::delete('/coupon', [CheckoutController::class, 'removeCoupon'])->name('checkout.coupon.remove');
     });
 
-    // Payment Routes
+    // Payment (Authenticated users only)
     Route::prefix('payment')->group(function () {
-        // Process payment for an order
         Route::post('/process', [PaymentController::class, 'process'])->name('payment.process');
-
-        // Payment success page
         Route::get('/success', [PaymentController::class, 'success'])->name('payment.success');
-
-        // Payment failed page
         Route::get('/failed', [PaymentController::class, 'failed'])->name('payment.failed');
+        Route::get('/verify', [PaymentController::class, 'verify'])->name('payment.verify');
+    });
+
+    // Profile Routes (Authenticated users only)
+    Route::prefix('profile')->group(function () {
+        Route::get('/', [ProfileController::class, 'index'])->name('profile.index');
+        Route::get('/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/', [ProfileController::class, 'update'])->name('profile.update');
+        Route::post('/avatar', [ProfileController::class, 'uploadAvatar'])->name('profile.avatar.upload');
+        Route::put('/password', [ProfileController::class, 'changePassword'])->name('profile.password.update');
+        Route::get('/orders', [ProfileController::class, 'orders'])->name('profile.orders');
+        Route::get('/addresses', [ProfileController::class, 'addresses'])->name('profile.addresses');
+        Route::post('/addresses', [ProfileController::class, 'storeAddress'])->name('profile.addresses.store');
+        Route::put('/addresses/{addressId}', [ProfileController::class, 'updateAddress'])->name('profile.addresses.update');
+        Route::delete('/addresses/{addressId}', [ProfileController::class, 'deleteAddress'])->name('profile.addresses.delete');
+        Route::put('/addresses/{addressId}/default', [ProfileController::class, 'setDefaultAddress'])->name('profile.addresses.set_default');
+        Route::get('/reviews', [ProfileController::class, 'reviews'])->name('profile.reviews');
+        Route::get('/notifications', [ProfileController::class, 'notifications'])->name('profile.notifications');
+        Route::get('/loyalty', [ProfileController::class, 'loyalty'])->name('profile.loyalty');
+        Route::get('/downloads', [ProfileController::class, 'downloads'])->name('profile.downloads');
+        Route::get('/export-data', [ProfileController::class, 'exportData'])->name('profile.export_data');
+        Route::post('/delete-account', [ProfileController::class, 'deleteAccount'])->name('profile.delete_account');
     });
 });
 
-// Profile Routes (Accessible by authenticated users)
-Route::middleware(['auth', 'user.status'])->prefix('profile')->group(function () {
-    // Show profile dashboard
-    Route::get('/', [ProfileController::class, 'index'])->name('profile.index');
+// ========================================================================
+// ADMIN ROUTES (Admin and Super Admin only)
+// ========================================================================
 
-    // Show profile edit form
-    Route::get('/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+Route::middleware(['auth', 'can:admin-access'])->prefix('admin')->name('admin.')->group(function () {
+    // Admin Dashboard
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard.index');
 
-    // Update profile
-    Route::put('/', [ProfileController::class, 'update'])->name('profile.update');
+    // Dashboard API
+    Route::prefix('dashboard')->name('dashboard.')->group(function () {
+        Route::get('/stats', [AdminDashboardController::class, 'getStats'])->name('stats');
+        Route::get('/sales-chart', [AdminDashboardController::class, 'getSalesChart'])->name('sales-chart');
+        Route::get('/recent-orders', [AdminDashboardController::class, 'getRecentOrders'])->name('recent-orders');
+        Route::get('/top-products', [AdminDashboardController::class, 'getTopProducts'])->name('top-products');
+        Route::get('/low-stock', [AdminDashboardController::class, 'getLowStock'])->name('low-stock');
+        Route::get('/live-stats', [AdminDashboardController::class, 'getLiveStats'])->name('live-stats');
+        Route::get('/quick-stats', [AdminDashboardController::class, 'getQuickStats'])->name('quick-stats');
+    });
 
-    // Upload avatar
-    Route::post('/avatar', [ProfileController::class, 'uploadAvatar'])->name('profile.avatar.upload');
+    // Products Management
+    Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/', [ProductController::class, 'adminIndex'])->name('index');
+        Route::get('/create', [ProductController::class, 'create'])->name('create');
+        Route::post('/', [ProductController::class, 'store'])->name('store');
+        Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('edit');
+        Route::put('/{product}', [ProductController::class, 'update'])->name('update');
+        Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
+        Route::post('/{product}/stock', [ProductController::class, 'updateStock'])->name('stock.update');
+        Route::put('/{product}/status', [ProductController::class, 'toggleStatus'])->name('status.toggle');
+    });
 
-    // Change password
-    Route::put('/password', [ProfileController::class, 'changePassword'])->name('profile.password.update');
+    // Categories Management
+    Route::prefix('categories')->name('categories.')->group(function () {
+        Route::get('/', [CategoryController::class, 'adminIndex'])->name('index');
+        Route::get('/create', [CategoryController::class, 'create'])->name('create');
+        Route::post('/', [CategoryController::class, 'store'])->name('store');
+        Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('edit');
+        Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
+        Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
+        Route::post('/reorder', [CategoryController::class, 'reorder'])->name('reorder');
+        Route::put('/{category}/status', [CategoryController::class, 'toggleStatus'])->name('status.toggle');
+    });
 
-    // Show order history
-    Route::get('/orders', [ProfileController::class, 'orders'])->name('profile.orders');
+    // Orders Management
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [OrderController::class, 'adminIndex'])->name('index');
+        Route::get('/{order}', [OrderController::class, 'adminShow'])->name('show');
+        Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('status.update');
+        Route::get('/{order}/invoice', [OrderController::class, 'printInvoice'])->name('print_invoice');
+        Route::post('/{order}/note', [OrderController::class, 'addNote'])->name('add_note');
+        Route::post('/bulk-update', [OrderController::class, 'bulkUpdate'])->name('bulk_update');
+    });
 
-    // Show addresses
-    Route::get('/addresses', [ProfileController::class, 'addresses'])->name('profile.addresses');
+    // Payments Management
+    Route::prefix('payments')->name('payments.')->group(function () {
+        Route::get('/', [PaymentController::class, 'adminIndex'])->name('index');
+        Route::get('/{payment}', [PaymentController::class, 'adminShow'])->name('show');
+        Route::post('/{payment}/approve', [PaymentController::class, 'approve'])->name('approve');
+        Route::post('/{payment}/reject', [PaymentController::class, 'reject'])->name('reject');
+    });
 
-    // Store new address
-    Route::post('/addresses', [ProfileController::class, 'storeAddress'])->name('profile.addresses.store');
+    // Reviews Management
+    Route::prefix('reviews')->name('reviews.')->group(function () {
+        Route::get('/', [ReviewController::class, 'adminIndex'])->name('index');
+        Route::get('/{review}', [ReviewController::class, 'adminShow'])->name('show');
+        Route::post('/{review}/approve', [ReviewController::class, 'approve'])->name('approve');
+        Route::post('/{review}/reject', [ReviewController::class, 'reject'])->name('reject');
+        Route::delete('/{review}', [ReviewController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-action', [ReviewController::class, 'bulkAction'])->name('bulk_action');
+    });
 
-    // Update address
-    Route::put('/addresses/{addressId}', [ProfileController::class, 'updateAddress'])->name('profile.addresses.update');
+    // Simple Admin Views
+    Route::get('/users', function () {
+        return view('admin.users.index');
+    })->name('users.index');
 
-    // Delete address
-    Route::delete('/addresses/{addressId}', [ProfileController::class, 'deleteAddress'])->name('profile.addresses.delete');
+    Route::get('/analytics', function () {
+        return view('admin.analytics');
+    })->name('analytics');
 
-    // Set default address
-    Route::put('/addresses/{addressId}/default', [ProfileController::class, 'setDefaultAddress'])->name('profile.addresses.set_default');
+    Route::get('/settings', function () {
+        return view('admin.settings');
+    })->name('settings');
 
-    // Show reviews
-    Route::get('/reviews', [ProfileController::class, 'reviews'])->name('profile.reviews');
-
-    // Show notifications
-    Route::get('/notifications', [ProfileController::class, 'notifications'])->name('profile.notifications');
-
-    // Show loyalty/rewards
-    Route::get('/loyalty', [ProfileController::class, 'loyalty'])->name('profile.loyalty');
-
-    // Show downloads
-    Route::get('/downloads', [ProfileController::class, 'downloads'])->name('profile.downloads');
-
-    // Export user data
-    Route::get('/export-data', [ProfileController::class, 'exportData'])->name('profile.export_data');
-
-    // Delete account
-    Route::post('/delete-account', [ProfileController::class, 'deleteAccount'])->name('profile.delete_account');
+    // Admin Search
+    Route::get('/search', [AdminDashboardController::class, 'quickSearch'])->name('search');
 });
 
-// Custom 404 Route
-Route::fallback([HomeController::class, 'notFound'])->name('notfound');
+// ========================================================================
+// SUPER ADMIN ROUTES (Super Admin only)
+// ========================================================================
 
-// Health Check Route
-Route::get('/health', [HomeController::class, 'health'])->name('health');
+Route::middleware(['auth', 'can:super-admin-access'])->prefix('super-admin')->name('super-admin.')->group(function () {
+    Route::get('/', function () {
+        return view('admin.super-admin.index');
+    })->name('index');
+
+    Route::get('/users', function () {
+        return view('admin.super-admin.users');
+    })->name('users');
+
+    Route::get('/system', function () {
+        return view('admin.super-admin.system');
+    })->name('system');
+
+    Route::get('/logs', function () {
+        return view('admin.super-admin.logs');
+    })->name('logs');
+});
+
+// ========================================================================
+// FALLBACK ROUTE
+// ========================================================================
+
+Route::fallback([HomeController::class, 'notFound'])->name('notfound');

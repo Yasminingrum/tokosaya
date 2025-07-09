@@ -7,18 +7,23 @@
 @push('styles')
 <style>
     .product-card {
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
         border: 1px solid #e9ecef;
         height: 100%;
+        will-change: transform;
     }
     .product-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.12);
     }
     .product-image {
-        height: 160px;
+        height: 200px;
         object-fit: cover;
         background: #f8f9fa;
+        transition: opacity 0.3s ease;
+    }
+    .product-image.loading {
+        opacity: 0.7;
     }
     .price-original {
         text-decoration: line-through;
@@ -34,44 +39,64 @@
         top: 10px;
         right: 10px;
         background: #dc3545;
+        z-index: 2;
     }
     .rating-stars {
         color: #ffc107;
     }
-    .filter-sidebar {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1.5rem;
-    }
     .product-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
     }
     .empty-state {
         text-align: center;
-        padding: 3rem 1rem;
+        padding: 4rem 1rem;
         color: #6c757d;
     }
     .filter-tag {
         background: #e3f2fd;
         border: 1px solid #2196f3;
         color: #1976d2;
-        border-radius: 15px;
-        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
         font-size: 0.875rem;
         margin: 0.25rem;
         display: inline-flex;
         align-items: center;
+        transition: all 0.2s ease;
+    }
+    .filter-tag:hover {
+        background: #bbdefb;
     }
     .filter-tag .btn-close {
         font-size: 0.7rem;
         margin-left: 0.5rem;
+        opacity: 0.6;
     }
+    .filter-tag .btn-close:hover {
+        opacity: 1;
+    }
+
+    /* Prevent layout shifts */
+    .card-img-top {
+        aspect-ratio: 1;
+        object-fit: cover;
+    }
+
+    /* Smooth loading states */
+    .btn.loading {
+        pointer-events: none;
+        opacity: 0.7;
+    }
+
     @media (max-width: 768px) {
         .product-grid {
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 0.75rem;
+            gap: 1rem;
+        }
+        .product-image {
+            height: 150px;
         }
     }
 </style>
@@ -99,7 +124,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <form method="GET" class="row g-3">
+                    <form method="GET" class="row g-3" id="filterForm">
                         <!-- Search Input -->
                         <div class="col-md-4">
                             <label class="form-label">Cari Produk</label>
@@ -118,11 +143,11 @@
                             <label class="form-label">Kategori</label>
                             <select name="category_id" class="form-select">
                                 <option value="">Semua Kategori</option>
-                                @if(isset($categories))
+                                @if(isset($categories) && $categories->count() > 0)
                                     @foreach($categories as $category)
                                         <option value="{{ $category->id }}"
                                                 {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                                            {{ $category->name }}
+                                            {{ $category->name ?? 'Kategori Tanpa Nama' }}
                                         </option>
                                     @endforeach
                                 @endif
@@ -134,11 +159,11 @@
                             <label class="form-label">Merek</label>
                             <select name="brand_id" class="form-select">
                                 <option value="">Semua Merek</option>
-                                @if(isset($brands))
+                                @if(isset($brands) && $brands->count() > 0)
                                     @foreach($brands as $brand)
                                         <option value="{{ $brand->id }}"
                                                 {{ request('brand_id') == $brand->id ? 'selected' : '' }}>
-                                            {{ $brand->name }}
+                                            {{ $brand->name ?? 'Merek Tanpa Nama' }}
                                         </option>
                                     @endforeach
                                 @endif
@@ -199,7 +224,7 @@
                         </span>
                     @endif
 
-                    @if(request('category_id') && isset($categories))
+                    @if(request('category_id') && isset($categories) && $categories->count() > 0)
                         @php
                             $selectedCategory = $categories->firstWhere('id', request('category_id'));
                         @endphp
@@ -212,7 +237,7 @@
                         @endif
                     @endif
 
-                    @if(request('brand_id') && isset($brands))
+                    @if(request('brand_id') && isset($brands) && $brands->count() > 0)
                         @php
                             $selectedBrand = $brands->firstWhere('id', request('brand_id'));
                         @endphp
@@ -234,10 +259,14 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    @if(isset($products) && $products->total() > 0)
+                    @if(isset($products) && method_exists($products, 'total') && $products->total() > 0)
                         <p class="text-muted mb-0">
-                            Menampilkan {{ $products->firstItem() }}-{{ $products->lastItem() }}
+                            Menampilkan {{ $products->firstItem() ?? 1 }}-{{ $products->lastItem() ?? $products->count() }}
                             dari {{ number_format($products->total()) }} produk
+                        </p>
+                    @elseif(isset($products) && $products->count() > 0)
+                        <p class="text-muted mb-0">
+                            Menampilkan {{ $products->count() }} produk
                         </p>
                     @else
                         <p class="text-muted mb-0">Tidak ada produk ditemukan</p>
@@ -253,19 +282,20 @@
             @foreach($products as $product)
                 <div class="card product-card">
                     <div class="position-relative">
-                        <img src="{{ asset('images/placeholder-product.jpg') }}"
+                        <img src="{{ $product->primary_image ?? asset('images/placeholder-product.jpg') }}"
                              class="card-img-top product-image"
-                             alt="{{ $product->name }}"
-                             loading="lazy">
+                             alt="{{ $product->name ?? 'Produk' }}"
+                             loading="lazy"
+                             onerror="this.src='{{ asset('images/placeholder-product.jpg') }}'">
 
-                        @if($product->compare_price_cents && $product->compare_price_cents > $product->price_cents)
+                        @if(isset($product->compare_price_cents) && isset($product->price_cents) && $product->compare_price_cents > $product->price_cents)
                             @php
                                 $discount = round((($product->compare_price_cents - $product->price_cents) / $product->compare_price_cents) * 100);
                             @endphp
                             <span class="badge badge-discount">-{{ $discount }}%</span>
                         @endif
 
-                        @if($product->featured)
+                        @if($product->featured ?? false)
                             <span class="badge bg-warning text-dark position-absolute" style="top: 10px; left: 10px;">
                                 <i class="fas fa-star"></i> Featured
                             </span>
@@ -275,29 +305,27 @@
                     <div class="card-body d-flex flex-column">
                         <!-- Category & Brand -->
                         <div class="mb-2">
-                            @if($product->category)
+                            @if(isset($product->category) && $product->category)
                                 <small class="text-muted">
-                                    <a href="{{ route('categories.show', $product->category->slug) }}"
-                                       class="text-decoration-none">
-                                        {{ $product->category->name }}
-                                    </a>
+                                    {{ $product->category->name ?? 'Kategori' }}
                                 </small>
                             @endif
-                            @if($product->brand)
-                                <small class="text-muted"> • {{ $product->brand->name }}</small>
+                            @if(isset($product->brand) && $product->brand)
+                                <small class="text-muted"> • {{ $product->brand->name ?? 'Merek' }}</small>
                             @endif
                         </div>
 
                         <!-- Product Name -->
                         <h6 class="card-title">
-                            <a href="{{ route('products.show', $product->id) }}"
+                            {{-- PERBAIKAN: Fix routing untuk detail product --}}
+                            <a href="{{ route('products.show', ['product' => $product->id]) }}"
                                class="text-decoration-none text-dark">
-                                {{ Str::limit($product->name, 50) }}
+                                {{ Str::limit($product->name ?? 'Produk Tanpa Nama', 50) }}
                             </a>
                         </h6>
 
                         <!-- Rating -->
-                        @if($product->rating_average > 0)
+                        @if(isset($product->rating_average) && $product->rating_average > 0)
                             <div class="mb-2">
                                 <div class="rating-stars">
                                     @for($i = 1; $i <= 5; $i++)
@@ -311,17 +339,17 @@
                                     @endfor
                                 </div>
                                 <small class="text-muted">
-                                    ({{ number_format($product->rating_count) }})
+                                    ({{ number_format($product->rating_count ?? 0) }})
                                 </small>
                             </div>
                         @endif
 
                         <!-- Price -->
                         <div class="mb-2">
-                            <div class="price">
-                                Rp {{ number_format($product->price_cents / 100, 0, ',', '.') }}
+                            <div class="price fw-bold text-primary">
+                                Rp {{ number_format(($product->price_cents ?? 0) / 100, 0, ',', '.') }}
                             </div>
-                            @if($product->compare_price_cents && $product->compare_price_cents > $product->price_cents)
+                            @if(isset($product->compare_price_cents) && $product->compare_price_cents > ($product->price_cents ?? 0))
                                 <small class="price-original">
                                     Rp {{ number_format($product->compare_price_cents / 100, 0, ',', '.') }}
                                 </small>
@@ -330,7 +358,7 @@
 
                         <!-- Stock Status -->
                         <div class="mb-3">
-                            @if($product->stock_quantity > 0)
+                            @if(($product->stock_quantity ?? 0) > 0)
                                 <small class="text-success">
                                     <i class="fas fa-check-circle"></i> Stok: {{ $product->stock_quantity }}
                                 </small>
@@ -343,10 +371,11 @@
 
                         <!-- Action Buttons -->
                         <div class="mt-auto">
-                            <div class="d-grid gap-1">
-                                @if($product->stock_quantity > 0)
+                            <div class="d-grid gap-2">
+                                @if(($product->stock_quantity ?? 0) > 0)
                                     <button class="btn btn-primary btn-sm"
-                                            onclick="addToCart({{ $product->id }})">
+                                            onclick="addToCart({{ $product->id }})"
+                                            data-product-id="{{ $product->id }}">
                                         <i class="fas fa-cart-plus"></i> Tambah ke Keranjang
                                     </button>
                                 @else
@@ -355,15 +384,21 @@
                                     </button>
                                 @endif
 
-                                <div class="d-flex gap-1">
-                                    <button class="btn btn-outline-primary btn-sm flex-fill"
-                                            onclick="addToWishlist({{ $product->id }})">
-                                        <i class="far fa-heart"></i>
-                                    </button>
-                                    <a href="{{ route('products.show', $product->slug) }}"
-                                       class="btn btn-outline-info btn-sm flex-fill">
-                                        <i class="fas fa-eye"></i> Detail
-                                    </a>
+                                <div class="row g-1">
+                                    <div class="col-6">
+                                        <button class="btn btn-outline-primary btn-sm w-100"
+                                                onclick="addToWishlist({{ $product->id }})"
+                                                data-product-id="{{ $product->id }}">
+                                            <i class="far fa-heart"></i>
+                                        </button>
+                                    </div>
+                                    <div class="col-6">
+                                        {{-- PERBAIKAN: Fix routing untuk detail product --}}
+                                        <a href="{{ route('products.show', ['product' => $product->id]) }}"
+                                           class="btn btn-outline-info btn-sm w-100">
+                                            <i class="fas fa-eye"></i> Detail
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -373,7 +408,7 @@
         </div>
 
         <!-- Pagination -->
-        @if($products->hasPages())
+        @if(method_exists($products, 'hasPages') && $products->hasPages())
             <div class="row">
                 <div class="col-12 d-flex justify-content-center">
                     {{ $products->appends(request()->query())->links() }}
@@ -408,16 +443,17 @@
         window.location.href = url.toString();
     }
 
-    // Add to Cart Function
+    // UPDATED: Add to Cart Function - No more flickering
     function addToCart(productId) {
         if (!productId) return;
 
-        // Check if user is logged in
-        @guest
-        // If not logged in, redirect to login
-        window.location.href = '{{ route("login") }}';
-        return;
-        @endguest
+        const button = document.querySelector(`button[data-product-id="${productId}"]`);
+        if (button.classList.contains('loading')) return;
+
+        // Add loading state
+        button.classList.add('loading');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menambah...';
 
         fetch('{{ route("cart.add") }}', {
             method: 'POST',
@@ -441,6 +477,17 @@
             if (data.success) {
                 showToast('Produk berhasil ditambahkan ke keranjang!', 'success');
                 updateCartCount();
+
+                // Show success state briefly
+                button.innerHTML = '<i class="fas fa-check"></i> Berhasil!';
+                button.classList.add('btn-success');
+                button.classList.remove('btn-primary');
+
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-primary');
+                }, 2000);
             } else {
                 showToast(data.message || 'Gagal menambahkan produk ke keranjang', 'danger');
             }
@@ -448,28 +495,45 @@
         .catch(error => {
             console.error('Error:', error);
             showToast('Terjadi kesalahan. Silakan coba lagi.', 'danger');
+        })
+        .finally(() => {
+            button.classList.remove('loading');
+            if (button.innerHTML.includes('Menambah...')) {
+                button.innerHTML = originalText;
+            }
         });
     }
 
-    // Add to Wishlist Function
+    // UPDATED: Add to Wishlist Function with loading state
     function addToWishlist(productId) {
         if (!productId) return;
 
-        // Check if user is logged in
         @guest
-        // If not logged in, redirect to login
-        window.location.href = '{{ route("login") }}';
+        // Show login prompt for guests
+        showLoginPrompt('Silakan login terlebih dahulu untuk menambahkan produk ke wishlist.');
         return;
         @endguest
 
         @auth
-        fetch('/api/wishlist/toggle/' + productId, {
+        const button = document.querySelector(`button[data-product-id="${productId}"][onclick*="addToWishlist"]`);
+        if (button && button.classList.contains('loading')) return;
+
+        if (button) {
+            button.classList.add('loading');
+            const originalIcon = button.querySelector('i').className;
+            button.querySelector('i').className = 'fas fa-spinner fa-spin';
+        }
+
+        fetch('{{ route("wishlist.toggle") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 'Accept': 'application/json'
-            }
+            },
+            body: JSON.stringify({
+                product_id: productId
+            })
         })
         .then(response => {
             if (!response.ok) {
@@ -480,6 +544,19 @@
         .then(data => {
             if (data.success) {
                 showToast(data.message, 'success');
+
+                if (button) {
+                    const icon = button.querySelector('i');
+                    if (data.added) {
+                        icon.className = 'fas fa-heart text-danger';
+                        button.classList.add('btn-outline-danger');
+                        button.classList.remove('btn-outline-primary');
+                    } else {
+                        icon.className = 'far fa-heart';
+                        button.classList.add('btn-outline-primary');
+                        button.classList.remove('btn-outline-danger');
+                    }
+                }
             } else {
                 showToast(data.message || 'Gagal menambahkan ke wishlist', 'danger');
             }
@@ -487,13 +564,57 @@
         .catch(error => {
             console.error('Error:', error);
             showToast('Terjadi kesalahan. Silakan coba lagi.', 'danger');
+        })
+        .finally(() => {
+            if (button) {
+                button.classList.remove('loading');
+            }
         });
         @endauth
     }
 
+    // Show login prompt for guests
+    function showLoginPrompt(message) {
+        const loginModal =
+            <div class="modal fade" id="loginPromptModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Login Diperlukan</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>${message}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <a href="{{ route('login') }}" class="btn btn-primary">Login</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('loginPromptModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Add modal to DOM and show
+        document.body.insertAdjacentHTML('beforeend', loginModal);
+        const modal = new bootstrap.Modal(document.getElementById('loginPromptModal'));
+        modal.show();
+
+        // Remove modal from DOM after hiding
+        document.getElementById('loginPromptModal').addEventListener('hidden.bs.modal', () => {
+            document.getElementById('loginPromptModal').remove();
+        });
+    }
+
     // Show Toast Notification
     function showToast(message, type = 'info') {
-        const toastHtml = `
+        const toastHtml =
             <div class="toast align-items-center text-bg-${type} border-0 position-fixed" style="top: 20px; right: 20px; z-index: 9999;" role="alert">
                 <div class="d-flex">
                     <div class="toast-body">
@@ -502,7 +623,7 @@
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
             </div>
-        `;
+        ;
 
         document.body.insertAdjacentHTML('beforeend', toastHtml);
         const toastElement = document.body.lastElementChild;
@@ -515,13 +636,70 @@
         });
     }
 
-    // Auto-submit form when filters change
+    // Update cart count smoothly
+    function updateCartCount() {
+        fetch('{{ route("cart.count") }}')
+        .then(response => response.json())
+        .then(data => {
+            const cartCountElements = document.querySelectorAll('.cart-count');
+            cartCountElements.forEach(element => {
+                // Animate count change
+                const currentCount = parseInt(element.textContent) || 0;
+                const newCount = data.count || 0;
+
+                if (newCount !== currentCount) {
+                    element.style.transform = 'scale(1.2)';
+                    element.style.transition = 'transform 0.2s ease';
+
+                    setTimeout(() => {
+                        element.textContent = newCount;
+                        element.style.transform = 'scale(1)';
+                    }, 100);
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error updating cart count:', error);
+        });
+    }
+
+    // UPDATED: Auto-submit form when filters change (debounced)
     document.addEventListener('DOMContentLoaded', function() {
         const filterSelects = document.querySelectorAll('select[name="category_id"], select[name="brand_id"], select[name="sort"]');
+        let submitTimeout;
 
         filterSelects.forEach(select => {
             select.addEventListener('change', function() {
-                this.form.submit();
+                // Clear previous timeout
+                if (submitTimeout) {
+                    clearTimeout(submitTimeout);
+                }
+
+                // Add loading state to form
+                const form = this.closest('form');
+                form.style.opacity = '0.7';
+                form.style.pointerEvents = 'none';
+
+                // Submit after short delay to prevent multiple rapid submissions
+                submitTimeout = setTimeout(() => {
+                    this.form.submit();
+                }, 300);
+            });
+        });
+
+        // Initialize cart count on page load
+        updateCartCount();
+
+        // Prevent layout shift by setting image aspect ratio
+        const images = document.querySelectorAll('.product-image');
+        images.forEach(img => {
+            img.addEventListener('load', function() {
+                this.classList.remove('loading');
+            });
+
+            img.addEventListener('error', function() {
+                this.classList.remove('loading');
+                this.src = '{{ asset('images/placeholder-product.jpg') }}';
             });
         });
     });

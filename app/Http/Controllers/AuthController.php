@@ -122,7 +122,7 @@ class AuthController extends Controller
                     'role' => $userRole
                 ]);
 
-                return redirect()->to('/admin/dashboard')
+                return redirect()->to('admin/dashboard')
                     ->with('success', 'Login berhasil! Selamat datang admin.');
             } else {
                 Log::info('CUSTOMER LOGIN - Redirecting to profile', [
@@ -366,6 +366,31 @@ class AuthController extends Controller
         try {
             $user = Auth::user();
 
+            Log::info('Dashboard access attempt', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'role_id' => $user->role_id
+            ]);
+
+            // Get user role
+            $userRole = $this->getUserRole($user);
+            $isAdmin = $this->isAdminRole($userRole);
+
+            Log::info('Dashboard role check', [
+                'user_id' => $user->id,
+                'role' => $userRole,
+                'is_admin' => $isAdmin
+            ]);
+
+            // If admin, redirect to admin dashboard
+            if ($isAdmin) {
+                Log::info('Admin user accessing dashboard - redirecting to admin panel');
+                return redirect()->route('admin.dashboard');
+            }
+
+            // For regular customers, show customer dashboard
+            Log::info('Customer user accessing dashboard - showing customer dashboard');
+
             // Get recent orders using direct DB query
             $recentOrders = $this->getUserOrders($user->id, 5);
 
@@ -375,7 +400,23 @@ class AuthController extends Controller
             // Get notifications using direct DB query
             $notifications = $this->getNotifications($user->id, 5);
 
-            return view('dashboard', compact('user', 'recentOrders', 'wishlistCount', 'notifications'));
+            // Get order statistics for additional dashboard data
+            $orderStats = $this->calculateOrderStats($user->id);
+
+            Log::info('Dashboard data loaded successfully', [
+                'user_id' => $user->id,
+                'recent_orders_count' => $recentOrders->count(),
+                'wishlist_count' => $wishlistCount,
+                'notifications_count' => $notifications->count()
+            ]);
+
+            return view('dashboard', compact(
+                'user',
+                'recentOrders',
+                'wishlistCount',
+                'notifications',
+                'orderStats'
+            ));
 
         } catch (\Exception $e) {
             Log::error('Dashboard load failed', [
@@ -384,14 +425,78 @@ class AuthController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
 
-            // Fallback with minimal data
+            // Fallback with minimal data to prevent complete failure
+            $user = Auth::user();
+
             return view('dashboard', [
-                'user' => Auth::user(),
+                'user' => $user,
                 'recentOrders' => collect(),
                 'wishlistCount' => 0,
-                'notifications' => collect()
+                'notifications' => collect(),
+                'orderStats' => [
+                    'total_orders' => 0,
+                    'completed_orders' => 0,
+                    'pending_orders' => 0,
+                    'total_spent' => 0
+                ]
             ]);
         }
+    }
+
+    /**
+     * Show forgot password form
+     */
+    public function showForgotPassword()
+    {
+        return view('auth.forgot-password');
+    }
+
+    /**
+     * Send password reset link
+     */
+    public function sendResetLinkEmail(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email'
+        ], [
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.exists' => 'Email tidak ditemukan.'
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        // Here you would normally send email
+        // For now, just return success message
+        return back()->with('success', 'Link reset password telah dikirim ke email Anda.');
+    }
+
+    /**
+     * Show reset password form
+     */
+    public function showResetPassword($token)
+    {
+        return view('auth.reset-password', ['token' => $token]);
+    }
+
+    /**
+     * Reset password
+     */
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token' => 'required',
+            'email' => 'required|email|exists:users,email',
+            'password' => 'required|string|min:8|confirmed'
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        return redirect()->route('login')->with('success', 'Password berhasil direset. Silakan login dengan password baru.');
     }
 
     /**

@@ -121,7 +121,7 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class)->where('is_active', true);
     }
 
-    public function attributes()
+    public function attributeValues()
     {
         return $this->hasMany(ProductAttributeValue::class);
     }

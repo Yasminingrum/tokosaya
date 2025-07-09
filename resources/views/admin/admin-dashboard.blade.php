@@ -758,7 +758,7 @@ function initializeOrderStatusChart() {
 function updateChart(period) {
     showLoading();
 
-    fetch(`/admin/dashboard/chart-data?period=${period}`)
+    fetch(`/dashboard/chart-data?period=${period}`)
         .then(response => response.json())
         .then(data => {
             // Update revenue chart
@@ -784,7 +784,7 @@ function refreshDashboard() {
 function refreshDashboardData() {
     showLoading();
 
-    fetch('/admin/dashboard/refresh')
+    fetch('/dashboard/refresh')
         .then(response => response.json())
         .then(data => {
             if (data.success) {

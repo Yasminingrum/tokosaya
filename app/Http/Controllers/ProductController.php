@@ -104,6 +104,24 @@ class ProductController extends Controller
             return view('products.index', compact('products', 'categories', 'brands'));
         }
     }
+
+    /**
+     * Track product view for analytics
+     */
+    public function trackView(Request $request)
+    {
+        $productId = $request->input('product_id');
+
+        if ($productId) {
+            $product = Product::find($productId);
+            if ($product) {
+                $product->incrementViewCount();
+            }
+        }
+
+        return response()->json(['success' => true]);
+    }
+
     /**
      * Handle ketika tidak ada produk atau terjadi error
      */

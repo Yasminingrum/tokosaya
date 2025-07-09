@@ -95,7 +95,7 @@ class AdminDashboardController extends Controller
         // Top selling products this month
         $topProducts = $this->getTopSellingProducts();
 
-        return view('admin.dashboard.index', array_merge($data, [
+        return view('dashboard.index', array_merge($data, [
             'recent_orders' => $recentOrders,
             'low_stock_products' => $lowStockProducts,
             'top_products' => $topProducts
