@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
@@ -15,13 +14,11 @@ use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 
 /*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
+| Web Application Routes
 |
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
+| These routes handle user-facing and non-admin functionality for the application.
+| Admin routes have been moved to admin.php, except for admin-specific AJAX endpoints.
+|
 |
 */
 
@@ -87,6 +84,21 @@ Route::group([], function () {
     // Remove item from cart
     Route::delete('/cart/item/{itemId}', [CartController::class, 'remove'])->name('cart.remove');
 
+    // Remove multiple items from cart
+    Route::post('/cart/remove-multiple', [CartController::class, 'removeSelected'])->name('cart.remove-multiple');
+
+    // Save item for later (TAMBAHKAN INI)
+    Route::post('/cart/save-for-later', [CartController::class, 'saveForLater'])->name('cart.save-for-later');
+
+    // Move saved item to cart (TAMBAHKAN INI)
+    Route::post('/cart/move-to-cart', [CartController::class, 'moveToCart'])->name('cart.move-to-cart');
+
+    // Remove saved item (TAMBAHKAN INI)
+    Route::post('/cart/remove-saved', [CartController::class, 'removeSavedItem'])->name('cart.remove-saved');
+
+    // Get mini cart HTML
+    Route::get('/cart/mini', [CartController::class, 'mini'])->name('cart.mini');
+
     // Clear entire cart
     Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
 
@@ -116,6 +128,8 @@ Route::group(['prefix' => 'api'], function () {
 
     // Get cart total
     Route::get('/cart/total', [CartController::class, 'total'])->name('cart.total');
+
+    Route::get('/cart/mini', [CartController::class, 'mini'])->name('cart.mini');
 
     // Apply coupon to cart
     Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
@@ -362,117 +376,6 @@ Route::middleware(['auth', 'user.status'])->prefix('profile')->group(function ()
 
     // Delete account
     Route::post('/delete-account', [ProfileController::class, 'deleteAccount'])->name('profile.delete_account');
-});
-
-// Admin Routes (Accessible by admin, super_admin, staff roles)
-Route::middleware(['auth', 'role:admin,super_admin,staff'])->prefix('admin')->group(function () {
-    // Admin dashboard
-    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-
-    // Analytics data
-    Route::get('/analytics', [AdminDashboardController::class, 'analytics'])->name('admin.analytics');
-
-    // Reports data
-    Route::get('/reports', [AdminDashboardController::class, 'reports'])->name('admin.reports');
-
-    // Sales chart data
-    Route::get('/sales-chart', [AdminDashboardController::class, 'salesChart'])->name('admin.sales_chart');
-
-    // Overview data
-    Route::get('/overview', [AdminDashboardController::class, 'overview'])->name('admin.overview');
-
-    // Export data
-    Route::post('/export', [AdminDashboardController::class, 'export'])->name('admin.export');
-
-    // Admin products listing
-    Route::get('/products', [ProductController::class, 'adminIndex'])->name('admin.products.index');
-
-    // Create product form
-    Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');
-
-    // Store new product
-    Route::post('/products', [ProductController::class, 'store'])->name('admin.products.store');
-
-    // Edit product form
-    Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
-
-    // Update product
-    Route::put('/products/{product}', [ProductController::class, 'update'])->name('admin.products.update');
-
-    // Delete product
-    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('admin.products.destroy');
-
-    // Update product stock
-    Route::post('/products/{product}/stock', [ProductController::class, 'updateStock'])->name('admin.products.stock.update');
-
-    // Toggle product status
-    Route::put('/products/{product}/status', [ProductController::class, 'toggleStatus'])->name('admin.products.status.toggle');
-});
-
-// Admin Routes (Accessible by admin with auth:admin)
-Route::middleware('auth:admin')->prefix('admin')->group(function () {
-    // Admin categories listing
-    Route::get('/categories', [CategoryController::class, 'adminIndex'])->name('admin.categories.index');
-
-    // Create category form
-    Route::get('/categories/create', [CategoryController::class, 'create'])->name('admin.categories.create');
-
-    // Store new category
-    Route::post('/categories', [CategoryController::class, 'store'])->name('admin.categories.store');
-
-    // Edit category form
-    Route::get('/categories/{category}/edit', [CategoryController::class, 'edit'])->name('admin.categories.edit');
-
-    // Update category
-    Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('admin.categories.update');
-
-    // Delete category
-    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('admin.categories.destroy');
-
-    // Reorder categories
-    Route::post('/categories/reorder', [CategoryController::class, 'reorder'])->name('admin.categories.reorder');
-
-    // Toggle category status
-    Route::put('/categories/{category}/status', [CategoryController::class, 'toggleStatus'])->name('admin.categories.status.toggle');
-
-    // Admin payments listing
-    Route::get('/payments', [PaymentController::class, 'adminIndex'])->name('admin.payments.index');
-
-    // Show payment details
-    Route::get('/payments/{payment}', [PaymentController::class, 'adminShow'])->name('admin.payments.show');
-
-    // Approve manual payment
-    Route::post('/payments/{payment}/approve', [PaymentController::class, 'approve'])->name('admin.payments.approve');
-
-    // Reject manual payment
-    Route::post('/payments/{payment}/reject', [PaymentController::class, 'reject'])->name('admin.payments.reject');
-
-    // Admin orders listing
-    Route::get('/orders', [OrderController::class, 'adminIndex'])->name('admin.orders.index');
-
-    // Show single order
-    Route::get('/orders/{order}', [OrderController::class, 'adminShow'])->name('admin.orders.show');
-
-    // Update order status
-    Route::post('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('admin.orders.update_status');
-
-    // Print invoice
-    Route::get('/orders/{order}/invoice', [OrderController::class, 'printInvoice'])->name('admin.orders.print_invoice');
-
-    // Admin reviews listing
-    Route::get('/reviews', [ReviewController::class, 'adminIndex'])->name('admin.reviews.index');
-
-    // Show single review
-    Route::get('/reviews/{review}', [ReviewController::class, 'adminShow'])->name('admin.reviews.show');
-
-    // Approve review
-    Route::post('/reviews/{review}/approve', [ReviewController::class, 'approve'])->name('admin.reviews.approve');
-
-    // Reject review
-    Route::post('/reviews/{review}/reject', [ReviewController::class, 'reject'])->name('admin.reviews.reject');
-
-    // Delete review
-    Route::post('/reviews/{review}/destroy', [ReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 });
 
 // Custom 404 Route

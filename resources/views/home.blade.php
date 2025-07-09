@@ -645,28 +645,7 @@
                 <p class="category-count">{{ $category->product_count ?? 0 }} produk</p>
             </a>
             @empty
-            <!-- Default categories if no database categories -->
-            <a href="{{ route('categories.index') }}" class="category-card">
-                <div class="category-icon">
-                    <i class="fas fa-laptop"></i>
-                </div>
-                <h3 class="category-name">Elektronik</h3>
-                <p class="category-count">0 produk</p>
-            </a>
-            <a href="{{ route('categories.index') }}" class="category-card">
-                <div class="category-icon">
-                    <i class="fas fa-tshirt"></i>
-                </div>
-                <h3 class="category-name">Fashion</h3>
-                <p class="category-count">0 produk</p>
-            </a>
-            <a href="{{ route('categories.index') }}" class="category-card">
-                <div class="category-icon">
-                    <i class="fas fa-home"></i>
-                </div>
-                <h3 class="category-name">Rumah Tangga</h3>
-                <p class="category-count">0 produk</p>
-            </a>
+            <p>Tidak ada kategori yang tersedia</p>
             @endforelse
         </div>
     </div>
@@ -946,15 +925,23 @@ function addToCart(productId, quantity = 1) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json' // Tambahkan ini
         },
         body: JSON.stringify({
             product_id: productId,
             quantity: quantity
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status); // Debug log
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Response data:', data); // Debug log
         if (data.success) {
             // Update cart count
             updateCartCount(data.cart_count || cartCount + 1);
@@ -971,7 +958,7 @@ function addToCart(productId, quantity = 1) {
     })
     .catch(error => {
         console.error('Error:', error);
-        showNotification('Gagal menambahkan produk ke keranjang', 'error');
+        showNotification(error.message || 'Gagal menambahkan produk ke keranjang', 'error');
 
         // Reset button
         button.innerHTML = originalText;
@@ -1064,14 +1051,27 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadCartCount() {
-    fetch('{{ route("cart.count") }}')
-        .then(response => response.json())
-        .then(data => {
-            updateCartCount(data.count || 0);
-        })
-        .catch(error => {
-            console.error('Error loading cart count:', error);
-        });
+    fetch('/cart/count', {
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Cart count response:', data);
+        updateCartCount(data.count || 0);
+    })
+    .catch(error => {
+        console.error('Error loading cart count:', error);
+        // Fallback: set count to 0
+        updateCartCount(0);
+    });
 }
 
 // Smooth scrolling animation for hero section

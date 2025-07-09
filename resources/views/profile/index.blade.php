@@ -27,7 +27,7 @@
                                         <i class="fas fa-camera"></i>
                                     </div>
                                 </div>
-                                <form id="avatarUploadForm" action="{{ route('profile.upload-avatar') }}" method="POST" enctype="multipart/form-data" class="d-none">
+                                <form id="avatarUploadForm" action="{{ route('profile.avatar.upload') }}" method="POST" enctype="multipart/form-data" class="d-none">
                                     @csrf
                                     <input type="file" id="avatarUpload" name="avatar" accept="image/*" @change="uploadAvatar">
                                 </form>
@@ -38,8 +38,8 @@
                                 <div class="row text-center">
                                     <div class="col-4">
                                         <div class="stat-item">
-                                            <h6 class="stat-number">{{ 'Rp ' . number_format(($stats['total_spent'] ?? 0) / 100, 0, ',', '.') }}</h6>
-                                            <small class="text-muted">Spent</small>
+                                            <h6 class="stat-number">{{ $stats['total_orders'] ?? 0 }}</h6>
+                                            <small class="text-muted">Orders</small>
                                         </div>
                                     </div>
                                     <div class="col-4">
@@ -51,7 +51,7 @@
                                     <div class="col-4">
                                         <div class="stat-item">
                                             <h6 class="stat-number">{{ $stats['wishlist_count'] ?? 0 }}</h6>
-                                            <small class="text-muted">Points</small>
+                                            <small class="text-muted">Wishlist</small>
                                         </div>
                                     </div>
                                 </div>
@@ -80,8 +80,8 @@
                                     <span class="badge bg-warning">{{ $stats['total_orders'] }}</span>
                                 @endif
                             </a>
-                            <a href="{{ route('profile.addresses.index') }}"
-                               class="nav-item {{ request()->routeIs('profile.addresses.index') ? 'active' : '' }}">
+                            <a href="{{ route('profile.addresses') }}"
+                               class="nav-item {{ request()->routeIs('profile.addresses') ? 'active' : '' }}">
                                 <i class="fas fa-map-marker-alt"></i>
                                 <span>Addresses</span>
                             </a>
@@ -105,11 +105,6 @@
                                 @if(($stats['unread_notifications'] ?? 0) > 0)
                                     <span class="badge bg-primary">{{ $stats['unread_notifications'] ?? 0 }}</span>
                                 @endif
-                            </a>
-                            <a href="{{ route('profile.security') }}"
-                               class="nav-item {{ request()->routeIs('profile.security') ? 'active' : '' }}">
-                                <i class="fas fa-shield-alt"></i>
-                                <span>Security</span>
                             </a>
                             <div class="nav-divider"></div>
                             <a href="#" onclick="confirmLogout()" class="nav-item text-danger">
@@ -288,7 +283,7 @@
                                         <i class="fas fa-chevron-right"></i>
                                     </a>
 
-                                    <a href="{{ route('profile.addresses.index') }}" class="action-item">
+                                    <a href="{{ route('profile.addresses') }}" class="action-item">
                                         <div class="action-icon bg-success">
                                             <i class="fas fa-plus"></i>
                                         </div>
@@ -299,24 +294,13 @@
                                         <i class="fas fa-chevron-right"></i>
                                     </a>
 
-                                    <a href="{{ route('profile.security') }}" class="action-item">
+                                    <a href="{{ route('profile.edit') }}" class="action-item">
                                         <div class="action-icon bg-warning">
                                             <i class="fas fa-key"></i>
                                         </div>
                                         <div class="action-content">
                                             <h6>Change Password</h6>
                                             <small class="text-muted">Update security settings</small>
-                                        </div>
-                                        <i class="fas fa-chevron-right"></i>
-                                    </a>
-
-                                    <a href="{{ route('support.tickets') }}" class="action-item">
-                                        <div class="action-icon bg-info">
-                                            <i class="fas fa-headset"></i>
-                                        </div>
-                                        <div class="action-content">
-                                            <h6>Get Support</h6>
-                                            <small class="text-muted">Contact customer service</small>
                                         </div>
                                         <i class="fas fa-chevron-right"></i>
                                     </a>
@@ -367,7 +351,7 @@
                                         </ul>
                                     </div>
 
-                                    <a href="{{ route('loyalty.program') }}" class="btn btn-outline-warning btn-sm w-100">
+                                    <a href="#" class="btn btn-outline-warning btn-sm w-100">
                                         Learn More
                                     </a>
                                 </div>
@@ -1135,3 +1119,4 @@ document.addEventListener('alpine:init', () => {
 });
 </script>
 @endpush
+

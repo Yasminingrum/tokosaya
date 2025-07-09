@@ -9,6 +9,9 @@ class CartItem extends Model
 {
     use HasFactory;
 
+    // Disable automatic timestamps since we use custom timestamp columns
+    public $timestamps = false;
+
     protected $fillable = [
         'cart_id',
         'product_id',
@@ -26,7 +29,11 @@ class CartItem extends Model
         'updated_at' => 'datetime',
     ];
 
-    // Relationships
+    // Define custom timestamp column names
+    const CREATED_AT = 'added_at';
+    const UPDATED_AT = 'updated_at';
+
+    // Rest of your model methods remain the same...
     public function cart()
     {
         return $this->belongsTo(ShoppingCart::class, 'cart_id');
@@ -203,6 +210,11 @@ class CartItem extends Model
 
         static::creating(function ($cartItem) {
             $cartItem->added_at = now();
+            $cartItem->updated_at = now();
+        });
+
+        static::updating(function ($cartItem) {
+            $cartItem->updated_at = now();
         });
 
         static::saved(function ($cartItem) {

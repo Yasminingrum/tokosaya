@@ -33,7 +33,7 @@
             @endif
 
             <!-- Enhanced Search Form -->
-            <form action="{{ route('search.index') }}" method="GET" class="max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="400">
+            <form action="{{ route('search') }}" method="GET" class="max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="400">
                 <div class="relative">
                     <input type="text"
                            name="q"
@@ -74,7 +74,7 @@
 <section class="bg-white py-6 sticky top-0 z-40 shadow-sm">
     <div class="container mx-auto px-4">
         <div class="max-w-7xl mx-auto">
-            <form action="{{ route('search.index') }}" method="GET" id="filter-form">
+            <form action="{{ route('search') }}" method="GET" id="filter-form">
                 <input type="hidden" name="q" value="{{ $query }}">
 
                 <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
@@ -173,7 +173,7 @@
 
                         <!-- Clear Filters -->
                         @if(request()->hasAny(['category', 'brand', 'price_range', 'rating', 'availability']))
-                        <a href="{{ route('search.index', ['q' => $query]) }}"
+                        <a href="{{ route('search', ['q' => $query]) }}"
                            class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">
                             <i class="fas fa-times mr-1"></i>Reset Filter
                         </a>
@@ -198,7 +198,7 @@
                     <h2 class="text-2xl font-bold text-gray-900 mb-6">Pencarian Populer</h2>
                     <div class="flex flex-wrap gap-3">
                         @foreach($trendingSearches as $trending)
-                        <a href="{{ route('search.index', ['q' => $trending->query]) }}"
+                        <a href="{{ route('search', ['q' => $trending->query]) }}"
                            class="bg-gray-100 hover:bg-blue-100 px-4 py-2 rounded-full text-sm transition-colors">
                             {{ $trending->query }}
                             <span class="text-gray-500 ml-1">({{ number_format($trending->count) }})</span>
@@ -214,7 +214,7 @@
                     <h2 class="text-2xl font-bold text-gray-900 mb-6">Kategori Populer</h2>
                     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                         @foreach($popularCategories as $category)
-                        <a href="{{ route('search.index', ['q' => $category->name]) }}"
+                        <a href="{{ route('search', ['q' => $category->name]) }}"
                            class="bg-white rounded-lg p-6 text-center hover:shadow-lg transition-all duration-300 group">
                             @if($category->icon)
                             <div class="text-3xl text-blue-600 mb-3 group-hover:scale-110 transition-transform">
@@ -334,7 +334,7 @@
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">Mungkin Anda juga mencari:</h3>
                     <div class="flex flex-wrap gap-2">
                         @foreach($searchSuggestions as $suggestion)
-                        <a href="{{ route('search.index', ['q' => $suggestion]) }}"
+                        <a href="{{ route('search', ['q' => $suggestion]) }}"
                            class="bg-white hover:bg-blue-50 px-4 py-2 rounded-lg text-sm border border-gray-200 transition-colors">
                             {{ $suggestion }}
                         </a>
@@ -374,7 +374,7 @@
                         <h4 class="font-semibold text-gray-900 mb-4">Mungkin maksud Anda:</h4>
                         <div class="flex flex-wrap gap-2 justify-center">
                             @foreach($alternativeSuggestions as $suggestion)
-                            <a href="{{ route('search.index', ['q' => $suggestion]) }}"
+                            <a href="{{ route('search', ['q' => $suggestion]) }}"
                                class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg text-sm transition-colors">
                                 {{ $suggestion }}
                             </a>
@@ -399,7 +399,7 @@
                     @if($popularCategories->count() > 0)
                     <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
                         @foreach($popularCategories->take(4) as $category)
-                        <a href="{{ route('search.index', ['q' => $category->name]) }}"
+                        <a href="{{ route('search', ['q' => $category->name]) }}"
                            class="bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-4 text-center transition-colors">
                             @if($category->icon)
                             <div class="text-2xl text-blue-600 mb-2">
@@ -556,7 +556,7 @@ function handleSearchInput(e) {
 }
 
 function fetchSearchSuggestions(query) {
-    fetch(`{{ route('search.suggestions') }}?q=${encodeURIComponent(query)}`, {
+    fetch(`{{ route('products.search.suggestions') }}?q=${encodeURIComponent(query)}`, {
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
         }

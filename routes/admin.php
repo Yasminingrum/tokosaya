@@ -2,18 +2,24 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\OrderController;
 
 /*
 |--------------------------------------------------------------------------
-| TokoSaya Admin Routes (Based on Existing Controllers)
+| TokoSaya Admin Routes
 |--------------------------------------------------------------------------
 |
-| These routes use only the admin controllers that actually exist in the
-| project. Currently, only AdminDashboardController is documented as existing.
-| Additional admin routes should be added as you create more admin controllers.
+| These routes handle admin functionality for the application, based on existing
+| controllers. Routes for ReviewController, ProductController, CategoryController,
+| PaymentController, and OrderController have been added to manage respective resources.
 |
 | Prefix: /admin
-| Middleware: web, auth, admin
+| Middleware: web, auth, AdminMiddleware
+| Name: admin.*
 |
 */
 
@@ -26,7 +32,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->prefix
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard.index');
 
-    // Dashboard data endpoints (add these methods to AdminDashboardController as needed)
+    // Dashboard data endpoints
     Route::prefix('dashboard')->name('dashboard.')->group(function () {
         Route::get('/stats', [AdminDashboardController::class, 'getStats'])->name('stats');
         Route::get('/sales-chart', [AdminDashboardController::class, 'getSalesChart'])->name('sales-chart');
@@ -36,65 +42,76 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->prefix
     });
 
     // ========================================================================
-    // PLACEHOLDER ROUTES FOR FUTURE ADMIN CONTROLLERS
+    // PRODUCTS MANAGEMENT
     // ========================================================================
 
-    /*
-    | Uncomment and modify these routes as you create the corresponding controllers:
-    |
-    | // Products Management
-    | Route::resource('products', AdminProductController::class);
-    |
-    | // Categories Management
-    | Route::resource('categories', AdminCategoryController::class);
-    |
-    | // Brands Management
-    | Route::resource('brands', AdminBrandController::class);
-    |
-    | // Orders Management
-    | Route::resource('orders', AdminOrderController::class);
-    |
-    | // Users Management
-    | Route::resource('users', AdminUserController::class);
-    |
-    | // Reviews Management
-    | Route::resource('reviews', AdminReviewController::class);
-    |
-    | // Coupons Management
-    | Route::resource('coupons', AdminCouponController::class);
-    |
-    | // Settings Management
-    | Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings.index');
-    | Route::put('/settings', [AdminSettingController::class, 'update'])->name('settings.update');
-    |
-    */
+    Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/', [ProductController::class, 'adminIndex'])->name('index');
+        Route::get('/create', [ProductController::class, 'create'])->name('create');
+        Route::post('/', [ProductController::class, 'store'])->name('store');
+        Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('edit');
+        Route::put('/{product}', [ProductController::class, 'update'])->name('update');
+        Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
+        Route::post('/{product}/stock', [ProductController::class, 'updateStock'])->name('stock.update');
+        Route::put('/{product}/status', [ProductController::class, 'toggleStatus'])->name('status.toggle');
+    });
+
+    // ========================================================================
+    // CATEGORIES MANAGEMENT
+    // ========================================================================
+
+    Route::prefix('categories')->name('categories.')->group(function () {
+        Route::get('/', [CategoryController::class, 'adminIndex'])->name('index');
+        Route::get('/create', [CategoryController::class, 'create'])->name('create');
+        Route::post('/', [CategoryController::class, 'store'])->name('store');
+        Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('edit');
+        Route::put('/{category}', [CategoryController::class, 'update'])->name('update');
+        Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('destroy');
+        Route::post('/reorder', [CategoryController::class, 'reorder'])->name('reorder');
+        Route::put('/{category}/status', [CategoryController::class, 'toggleStatus'])->name('status.toggle');
+    });
+
+    // ========================================================================
+    // PAYMENTS MANAGEMENT
+    // ========================================================================
+
+    Route::prefix('payments')->name('payments.')->group(function () {
+        Route::get('/', [PaymentController::class, 'adminIndex'])->name('index');
+        Route::get('/{payment}', [PaymentController::class, 'adminShow'])->name('show');
+        Route::post('/{payment}/approve', [PaymentController::class, 'approve'])->name('approve');
+        Route::post('/{payment}/reject', [PaymentController::class, 'reject'])->name('reject');
+    });
+
+    // ========================================================================
+    // ORDERS MANAGEMENT
+    // ========================================================================
+
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [OrderController::class, 'adminIndex'])->name('index');
+        Route::get('/{order}', [OrderController::class, 'adminShow'])->name('show');
+        Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('status.update');
+        Route::get('/{order}/invoice', [OrderController::class, 'printInvoice'])->name('orders.print_invoice');
+    });
+
+    // ========================================================================
+    // REVIEWS MANAGEMENT
+    // ========================================================================
+
+    Route::prefix('reviews')->name('reviews.')->group(function () {
+        Route::get('/', [ReviewController::class, 'adminIndex'])->name('index');
+        Route::get('/{review}', [ReviewController::class, 'adminShow'])->name('show');
+        Route::post('/{review}/approve', [ReviewController::class, 'approve'])->name('approve');
+        Route::post('/{review}/reject', [ReviewController::class, 'reject'])->name('reject');
+        Route::post('/{review}/destroy', [ReviewController::class, 'destroy'])->name('destroy');
+    });
 
     // ========================================================================
     // SIMPLE ADMIN ROUTES (Using Views Only)
     // ========================================================================
 
-    // You can create these simple routes that just return views
-    // until you create the proper controllers
-
-    Route::get('/products', function () {
-        return view('admin.products.index');
-    })->name('products.index');
-
-    Route::get('/orders', function () {
-        return view('admin.orders.index');
-    })->name('orders.index');
-
     Route::get('/users', function () {
         return view('admin.users.index');
     })->name('users.index');
-
-    Route::get('/categories', function () {
-        return view('admin.categories.index');
-    })->name('categories.index');
-
-    Route::get('/reviews', function () {
-        return view('admin.reviews.index');
-    })->name('reviews.index');
 
     Route::get('/analytics', function () {
         return view('admin.analytics');
@@ -109,11 +126,8 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->prefix
     // ========================================================================
 
     Route::prefix('ajax')->name('ajax.')->group(function () {
-        // Dashboard live data (add these methods to AdminDashboardController)
         Route::get('/dashboard/live-stats', [AdminDashboardController::class, 'getLiveStats'])->name('dashboard.live-stats');
         Route::get('/dashboard/quick-stats', [AdminDashboardController::class, 'getQuickStats'])->name('dashboard.quick-stats');
-
-        // Quick search (if method exists)
         Route::get('/search', [AdminDashboardController::class, 'quickSearch'])->name('search');
     });
 
@@ -124,19 +138,15 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->prefix
 | Admin Route Information
 |--------------------------------------------------------------------------
 |
-| Currently using only AdminDashboardController which exists in your project.
+| Currently includes routes for AdminDashboardController, ReviewController,
+| ProductController, CategoryController, PaymentController, and OrderController.
 |
 | To expand admin functionality, create additional controllers such as:
-| - AdminProductController
-| - AdminOrderController
 | - AdminUserController
-| - AdminCategoryController
-| - AdminReviewController
+| - AdminBrandController
+| - AdminCouponController
 | - AdminSettingController
 |
-| Then uncomment and modify the placeholder routes above.
-|
-| Example of creating a new admin controller:
-| php artisan make:controller Admin/AdminProductController --resource
+| Then add corresponding routes under the appropriate sections above.
 |
 */

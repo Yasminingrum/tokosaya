@@ -677,11 +677,12 @@
 <script>
 function shoppingCart() {
     return {
+        // Properties
         cartItems: [],
         savedItems: [],
         selectedItems: [],
         selectAll: false,
-        loading: false,
+        loading: true,
         updating: null,
 
         // Pricing
@@ -690,362 +691,96 @@ function shoppingCart() {
         tax: 0,
         discount: 0,
         total: 0,
-        freeShippingThreshold: 50000000, // 500k in cents
+        freeShippingThreshold: 50000000,
 
         // Coupon
         couponCode: '',
         appliedCoupon: null,
         applyingCoupon: false,
 
-        async init() {
-            await this.loadCart();
-            this.calculateTotals();
+        // Initialization method (bukan async di sini)
+        init() {
+            console.log('Initializing shopping cart...');
+            this.loadCart(); // Panggil tanpa await
         },
 
-        async loadCart() {
+        // Load cart method (async terpisah)
+        loadCart() {
             this.loading = true;
 
-            try {
-                const response = await fetch('{{ route("cart.items") }}', {
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-
-                const data = await response.json();
+            fetch('{{ route("cart.index") }}', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                console.log('Cart response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Cart data received:', data);
 
                 if (data.success) {
                     this.cartItems = data.items || [];
                     this.savedItems = data.saved_items || [];
                     this.appliedCoupon = data.applied_coupon || null;
+
+                    console.log('Cart items loaded:', this.cartItems.length);
                     this.calculateTotals();
+                } else {
+                    throw new Error(data.message || 'Failed to load cart');
                 }
-            } catch (error) {
+            })
+            .catch(error => {
                 console.error('Load cart error:', error);
-                this.showNotification('Failed to load cart', 'error');
-            } finally {
+                this.showNotification('Failed to load cart: ' + error.message, 'error');
+            })
+            .finally(() => {
                 this.loading = false;
-            }
+                console.log('Loading finished, cartItems count:', this.cartItems.length);
+            });
         },
 
-        async updateQuantity(itemId, newQuantity) {
+        // Method lainnya...
+        updateQuantity(itemId, newQuantity) {
             if (newQuantity < 1) return;
 
             this.updating = itemId;
 
-            try {
-                const response = await fetch('{{ route("cart.update") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        item_id: itemId,
-                        quantity: parseInt(newQuantity)
-                    })
-                });
-
-                const data = await response.json();
-
+            fetch(`{{ route("cart.update", ["itemId" => ":itemId"]) }}`.replace(':itemId', itemId), {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    quantity: parseInt(newQuantity)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
                 if (data.success) {
-                    // Update local state
                     const itemIndex = this.cartItems.findIndex(item => item.id === itemId);
                     if (itemIndex !== -1) {
                         this.cartItems[itemIndex].quantity = parseInt(newQuantity);
                         this.cartItems[itemIndex].total_price_cents = this.cartItems[itemIndex].unit_price_cents * parseInt(newQuantity);
                     }
-
                     this.calculateTotals();
-                    this.updateMiniCart();
                 } else {
                     throw new Error(data.message || 'Failed to update quantity');
                 }
-            } catch (error) {
+            })
+            .catch(error => {
                 this.showNotification(error.message, 'error');
-            } finally {
+            })
+            .finally(() => {
                 this.updating = null;
-            }
-        },
-
-        async removeItem(itemId) {
-            if (!confirm('Are you sure you want to remove this item?')) return;
-
-            this.updating = itemId;
-
-            try {
-                const response = await fetch('{{ route("cart.remove") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        item_id: itemId
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    this.cartItems = this.cartItems.filter(item => item.id !== itemId);
-                    this.selectedItems = this.selectedItems.filter(id => id !== itemId);
-                    this.calculateTotals();
-                    this.updateMiniCart();
-                    this.showNotification('Item removed from cart', 'success');
-                } else {
-                    throw new Error(data.message || 'Failed to remove item');
-                }
-            } catch (error) {
-                this.showNotification(error.message, 'error');
-            } finally {
-                this.updating = null;
-            }
-        },
-
-        async removeSelected() {
-            if (this.selectedItems.length === 0) return;
-
-            const message = `Remove ${this.selectedItems.length} selected item${this.selectedItems.length > 1 ? 's' : ''}?`;
-
-            if (!confirm(message)) return;
-
-            this.loading = true;
-
-            try {
-                const response = await fetch('{{ route("cart.remove-multiple") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        item_ids: this.selectedItems
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    this.cartItems = this.cartItems.filter(item => !this.selectedItems.includes(item.id));
-                    this.selectedItems = [];
-                    this.selectAll = false;
-                    this.calculateTotals();
-                    this.updateMiniCart();
-                    this.showNotification(`${data.removed_count} items removed from cart`, 'success');
-                } else {
-                    throw new Error(data.message || 'Failed to remove items');
-                }
-            } catch (error) {
-                this.showNotification(error.message, 'error');
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        async saveForLater(itemId) {
-            this.updating = itemId;
-
-            try {
-                const response = await fetch('{{ route("cart.save-for-later") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        item_id: itemId
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    const item = this.cartItems.find(item => item.id === itemId);
-                    if (item) {
-                        this.savedItems.push(item);
-                        this.cartItems = this.cartItems.filter(item => item.id !== itemId);
-                        this.selectedItems = this.selectedItems.filter(id => id !== itemId);
-                        this.calculateTotals();
-                        this.updateMiniCart();
-                        this.showNotification('Item saved for later', 'success');
-                    }
-                } else {
-                    throw new Error(data.message || 'Failed to save item');
-                }
-            } catch (error) {
-                this.showNotification(error.message, 'error');
-            } finally {
-                this.updating = null;
-            }
-        },
-
-        async moveToCart(itemId) {
-            try {
-                const response = await fetch('{{ route("cart.move-to-cart") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        item_id: itemId
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    const item = this.savedItems.find(item => item.id === itemId);
-                    if (item) {
-                        this.cartItems.push(item);
-                        this.savedItems = this.savedItems.filter(item => item.id !== itemId);
-                        this.calculateTotals();
-                        this.updateMiniCart();
-                        this.showNotification('Item moved to cart', 'success');
-                    }
-                } else {
-                    throw new Error(data.message || 'Failed to move item to cart');
-                }
-            } catch (error) {
-                this.showNotification(error.message, 'error');
-            }
-        },
-
-        async removeSavedItem(itemId) {
-            if (!confirm('Remove this item from saved items?')) return;
-
-            try {
-                const response = await fetch('{{ route("cart.remove-saved") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        item_id: itemId
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    this.savedItems = this.savedItems.filter(item => item.id !== itemId);
-                    this.showNotification('Item removed from saved items', 'success');
-                } else {
-                    throw new Error(data.message || 'Failed to remove saved item');
-                }
-            } catch (error) {
-                this.showNotification(error.message, 'error');
-            }
-        },
-
-        toggleSelectAll() {
-            if (this.selectAll) {
-                this.selectedItems = this.cartItems.map(item => item.id);
-            } else {
-                this.selectedItems = [];
-            }
-        },
-
-        async applyCoupon() {
-            if (!this.couponCode.trim()) return;
-
-            this.applyingCoupon = true;
-
-            try {
-                const response = await fetch('{{ route("cart.apply-coupon") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        code: this.couponCode.trim()
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    this.appliedCoupon = data.coupon;
-                    this.couponCode = '';
-                    this.calculateTotals();
-                    this.showNotification('Coupon applied successfully!', 'success');
-                } else {
-                    throw new Error(data.message || 'Invalid coupon code');
-                }
-            } catch (error) {
-                this.showNotification(error.message, 'error');
-            } finally {
-                this.applyingCoupon = false;
-            }
-        },
-
-        async removeCoupon() {
-            try {
-                const response = await fetch('{{ route("cart.remove-coupon") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    }
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    this.appliedCoupon = null;
-                    this.calculateTotals();
-                    this.showNotification('Coupon removed', 'info');
-                } else {
-                    throw new Error(data.message || 'Failed to remove coupon');
-                }
-            } catch (error) {
-                this.showNotification(error.message, 'error');
-            }
-        },
-
-        calculateTotals() {
-            // Calculate subtotal
-            this.subtotal = this.cartItems.reduce((sum, item) => sum + item.total_price_cents, 0);
-
-            // Calculate shipping
-            this.shippingCost = this.subtotal >= this.freeShippingThreshold ? 0 : 1500000; // 15k shipping
-
-            // Calculate tax (11% PPN)
-            this.tax = Math.round(this.subtotal * 0.11);
-
-            // Calculate discount from coupon
-            this.discount = 0;
-            if (this.appliedCoupon) {
-                if (this.appliedCoupon.type === 'fixed') {
-                    this.discount = this.appliedCoupon.value_cents;
-                } else if (this.appliedCoupon.type === 'percentage') {
-                    this.discount = Math.round(this.subtotal * (this.appliedCoupon.value_cents / 10000));
-                }
-
-                // Apply maximum discount limit if set
-                if (this.appliedCoupon.maximum_discount_cents) {
-                    this.discount = Math.min(this.discount, this.appliedCoupon.maximum_discount_cents);
-                }
-            }
-
-            // Calculate total
-            this.total = Math.max(0, this.subtotal + this.shippingCost + this.tax - this.discount);
-        },
-
-        getTotalQuantity() {
-            return this.cartItems.reduce((sum, item) => sum + item.quantity, 0);
+            });
         },
 
         formatPrice(cents) {
@@ -1056,49 +791,30 @@ function shoppingCart() {
             }).format(cents / 100);
         },
 
-        async proceedToCheckout() {
-            if (this.cartItems.length === 0) return;
+        calculateTotals() {
+            this.subtotal = this.cartItems.reduce((sum, item) => sum + item.total_price_cents, 0);
+            this.shippingCost = this.subtotal >= this.freeShippingThreshold ? 0 : 1500000;
+            this.tax = Math.round(this.subtotal * 0.11);
 
-            // Store cart summary for checkout
-            sessionStorage.setItem('checkoutSummary', JSON.stringify({
-                subtotal: this.subtotal,
-                shipping: this.shippingCost,
-                tax: this.tax,
-                discount: this.discount,
-                total: this.total,
-                appliedCoupon: this.appliedCoupon
-            }));
+            this.discount = 0;
+            if (this.appliedCoupon) {
+                if (this.appliedCoupon.type === 'fixed') {
+                    this.discount = this.appliedCoupon.value_cents;
+                } else if (this.appliedCoupon.type === 'percentage') {
+                    this.discount = Math.round(this.subtotal * (this.appliedCoupon.value_cents / 10000));
+                }
+            }
 
-            window.location.href = '{{ route("checkout.index") }}';
+            this.total = Math.max(0, this.subtotal + this.shippingCost + this.tax - this.discount);
         },
 
-        async updateMiniCart() {
-            try {
-                const response = await fetch('{{ route("cart.mini") }}', {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                });
-
-                const data = await response.json();
-
-                const miniCartContainer = document.getElementById('mini-cart-container');
-                if (miniCartContainer && data.html) {
-                    miniCartContainer.innerHTML = data.html;
-                }
-
-                // Update cart count in header
-                const cartCountElements = document.querySelectorAll('.cart-count');
-                cartCountElements.forEach(element => {
-                    element.textContent = data.count || 0;
-                });
-            } catch (error) {
-                console.error('Mini cart update error:', error);
-            }
+        getTotalQuantity() {
+            return this.cartItems.reduce((sum, item) => sum + item.quantity, 0);
         },
 
         showNotification(message, type = 'info') {
+            console.log(`Notification [${type}]: ${message}`);
+
             const notification = document.createElement('div');
             notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
             notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
@@ -1150,7 +866,7 @@ window.addEventListener('beforeunload', function(e) {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     // Track cart page view
-    fetch('{{ route("analytics.track") }}', {
+    fetch('{{ route("track.visitor") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

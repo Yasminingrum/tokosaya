@@ -216,7 +216,7 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <!-- Search Bar -->
                     <div class="mx-auto d-none d-lg-block" style="width: 400px;">
-                        <form action="{{ route('search.index') }}" method="GET">
+                        <form action="{{ route('search') }}" method="GET">
                             <div class="input-group">
                                 <input type="text"
                                        name="q"
@@ -374,7 +374,7 @@
 
                     <!-- Mobile Search -->
                     <div class="d-lg-none mt-3">
-                        <form action="{{ route('search.index') }}" method="GET">
+                        <form action="{{ route('search') }}" method="GET">
                             <div class="input-group">
                                 <input type="text"
                                        name="q"

@@ -66,17 +66,63 @@ class CartController extends Controller
     {
         try {
             $cart = $this->getOrCreateCart();
+            Log::info('Cart found:', ['cart_id' => $cart->id, 'item_count' => $cart->item_count]);
+
             $cartItems = $cart->items()->with(['product.images', 'variant'])->get();
+            Log::info('Cart items retrieved:', ['count' => $cartItems->count()]);
 
             $summary = $this->calculateCartSummary($cartItems);
-
-            // Get recently viewed products
             $recentlyViewed = $this->getRecentlyViewedProducts();
+
+            // If AJAX request, return JSON
+            if (request()->expectsJson()) {
+                $itemsData = $cartItems->map(function($item) {
+                    return [
+                        'id' => $item->id,
+                        'product_id' => $item->product_id,
+                        'variant_id' => $item->variant_id,
+                        'quantity' => $item->quantity,
+                        'unit_price_cents' => $item->unit_price_cents,
+                        'total_price_cents' => $item->total_price_cents,
+                        'product' => [
+                            'id' => $item->product->id,
+                            'name' => $item->product->name,
+                            'slug' => $item->product->slug,
+                            'image' => $item->product->images->first()->image_url ?? asset('images/placeholder.jpg'),
+                            'stock_quantity' => $item->product->stock_quantity
+                        ],
+                        'variant' => $item->variant ? [
+                            'id' => $item->variant->id,
+                            'name' => $item->variant->display_name
+                        ] : null
+                    ];
+                });
+
+                Log::info('Returning cart data via JSON:', ['items_count' => $itemsData->count()]);
+
+                return response()->json([
+                    'success' => true,
+                    'items' => $itemsData,
+                    'saved_items' => [],
+                    'applied_coupon' => null
+                ]);
+            }
 
             return view('cart.index', compact('cartItems', 'summary', 'recentlyViewed'));
 
         } catch (\Exception $e) {
             Log::error('Error loading cart: ' . $e->getMessage());
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan saat memuat keranjang.',
+                    'items' => [],
+                    'saved_items' => [],
+                    'applied_coupon' => null
+                ]);
+            }
+
             return view('cart.index', [
                 'cartItems' => collect(),
                 'summary' => $this->getEmptyCartSummary(),
@@ -384,10 +430,19 @@ class CartController extends Controller
     {
         try {
             $cart = $this->getOrCreateCart();
-            return response()->json(['count' => $cart->item_count]);
+
+            return response()->json([
+                'success' => true,
+                'count' => $cart->item_count ?? 0
+            ]);
         } catch (\Exception $e) {
             Log::error('Error getting cart count: ' . $e->getMessage());
-            return response()->json(['count' => 0]);
+
+            return response()->json([
+                'success' => false,
+                'count' => 0,
+                'message' => 'Failed to get cart count'
+            ], 500);
         }
     }
 
@@ -493,12 +548,44 @@ class CartController extends Controller
         ]);
     }
 
+/**
+ * Get mini cart HTML (AJAX)
+ */
+public function mini()
+{
+    try {
+        $cart = $this->getOrCreateCart();
+        $cartItems = $cart->items()->with(['product.images', 'variant'])->limit(5)->get();
+
+        $summary = $this->calculateCartSummary($cartItems);
+
+        $html = view('partials.mini-cart', compact('cartItems', 'summary'))->render();
+
+        return response()->json([
+            'success' => true,
+            'html' => $html,
+            'count' => $cart->item_count,
+            'total' => $cart->total_cents
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error getting mini cart: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'html' => '',
+            'count' => 0,
+            'total' => 0
+        ]);
+    }
+}
+
     /**
      * Get or create shopping cart
      */
     private function getOrCreateCart()
     {
         if (Auth::check()) {
+            Log::info('Getting cart for authenticated user:', ['user_id' => Auth::id()]);
+
             $cart = ShoppingCart::where('user_id', Auth::id())->first();
 
             if (!$cart) {
@@ -507,9 +594,12 @@ class CartController extends Controller
                     'item_count' => 0,
                     'total_cents' => 0
                 ]);
+                Log::info('Created new cart for user:', ['cart_id' => $cart->id]);
             }
         } else {
             $sessionId = session()->getId();
+            Log::info('Getting cart for guest session:', ['session_id' => $sessionId]);
+
             $cart = ShoppingCart::where('session_id', $sessionId)->first();
 
             if (!$cart) {
@@ -519,8 +609,15 @@ class CartController extends Controller
                     'total_cents' => 0,
                     'expires_at' => now()->addDays(7)
                 ]);
+                Log::info('Created new cart for session:', ['cart_id' => $cart->id]);
             }
         }
+
+        Log::info('Cart retrieved:', [
+            'cart_id' => $cart->id,
+            'item_count' => $cart->item_count,
+            'total_cents' => $cart->total_cents
+        ]);
 
         return $cart;
     }
