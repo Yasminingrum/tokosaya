@@ -413,7 +413,7 @@ if (!function_exists('format_order_status')) {
             'processing' => [
                 'label' => 'Diproses',
                 'class' => 'badge-primary',
-                'color' => '#007bff'
+                'color' => '#f5ebe0'
             ],
             'shipped' => [
                 'label' => 'Dikirim',

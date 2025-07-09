@@ -221,15 +221,15 @@
                                 @foreach($recentOrders as $order)
                                 <tr>
                                     <td>
-                                        <a href="{{ route('admin.orders.show', $order) }}" class="text-decoration-none">
-                                            #{{ $order->order_number }}
+                                        <a href="{{ isset($order['id']) ? route('admin.orders.show', $order['id']) : '#' }}" class="text-decoration-none">
+                                            #{{ $order['order_number'] ?? 'ORD-' . $order['id'] }}
                                         </a>
                                     </td>
-                                    <td>{{ $order->user->first_name }} {{ $order->user->last_name }}</td>
-                                    <td>{{ \App\Helpers\PriceHelper::format($order->total_cents) }}</td>
+                                    <td>{{ $order['first_name'] ?? 'Guest' }} {{ $order['last_name'] ?? '' }}</td>
+                                    <td>{{ \App\Helpers\PriceHelper::format($order['total_cents'] ?? 0) }}</td>
                                     <td>
-                                        <span class="badge bg-{{ $order->status_color }}">
-                                            {{ ucfirst($order->status) }}
+                                        <span class="badge bg-{{ $order['status_color'] ?? 'secondary' }}">
+                                            {{ ucfirst($order['status'] ?? 'pending') }}
                                         </span>
                                     </td>
                                 </tr>
@@ -270,7 +270,7 @@
                                                  class="rounded me-2"
                                                  style="width: 40px; height: 40px; object-fit: cover;">
                                             <div>
-                                                <a href="{{ route('admin.products.show', $product) }}"
+                                                <a href="{{ route('admin.products.edit', $product) }}"
                                                    class="text-decoration-none">
                                                     {{ Str::limit($product->name, 30) }}
                                                 </a>

@@ -378,7 +378,7 @@
                 </p>
             </div>
             <div class="col-auto">
-                {{ $users->links('pagination::bootstrap-4') }}
+                {{ $users->links('vendor.pagination.default') }}
             </div>
         </div>
     </div>

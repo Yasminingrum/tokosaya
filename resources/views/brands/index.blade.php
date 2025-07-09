@@ -287,7 +287,7 @@
 
             <!-- Pagination -->
             <div class="mt-12 flex justify-center">
-                {{ $brands->appends(request()->query())->links('pagination::bootstrap-4') }}
+                {{ $brands->appends(request()->query())->links('vendor.pagination.default') }}
             </div>
 
             @else

@@ -1419,3 +1419,37 @@ a:focus {
         box-shadow: none !important;
     }
 }
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.pagination-btn {
+    background-color: var(--teal);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+.pagination-btn:hover {
+    background-color: var(--teal-dark);
+    transform: translateY(-2px);
+}
+
+.pagination-btn.active {
+    background-color: var(--primary);
+    color: var(--text-dark);
+    cursor: default;
+}
+
+.pagination-btn.disabled {
+    background-color: var(--cream-dark);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}

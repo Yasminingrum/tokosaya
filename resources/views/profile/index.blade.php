@@ -1062,7 +1062,7 @@ function initAvatarUpload() {
             formData.append('avatar', file);
             formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
 
-            fetch('{{ route("profile.upload-avatar") }}', {
+            fetch('{{ route("profile.avatar.upload") }}', {
                 method: 'POST',
                 body: formData
             })

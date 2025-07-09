@@ -204,7 +204,8 @@ Route::middleware('auth')->group(function () {
 // ADMIN ROUTES (Admin and Super Admin only)
 // ========================================================================
 
-Route::middleware(['auth', 'can:admin-access'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+
     // Admin Dashboard
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard.index');
@@ -293,8 +294,7 @@ Route::middleware(['auth', 'can:admin-access'])->prefix('admin')->name('admin.')
 // SUPER ADMIN ROUTES (Super Admin only)
 // ========================================================================
 
-Route::middleware(['auth', 'can:super-admin-access'])->prefix('super-admin')->name('super-admin.')->group(function () {
-    Route::get('/', function () {
+Route::middleware(['auth', 'role:super_admin'])->prefix('super-admin')->name('super-admin.')->group(function () {    Route::get('/', function () {
         return view('admin.super-admin.index');
     })->name('index');
 

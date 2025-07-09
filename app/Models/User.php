@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -164,14 +166,48 @@ class User extends Authenticatable
     }
 
     /**
-     * Helper method: Check if user has specific role
-     */
+ * Helper method: Check if user has specific role - FIXED VERSION
+ */
     public function hasRole($roleName)
     {
-        if (is_array($roleName)) {
-            return $this->role && in_array($this->role->name, $roleName);
+        try {
+            // Load role relationship if not loaded
+            if (!$this->relationLoaded('role')) {
+                $this->load('role');
+            }
+
+            if (!$this->role) {
+                return false;
+            }
+
+            if (is_array($roleName)) {
+                return in_array($this->role->name, $roleName);
+            }
+
+            return $this->role->name === $roleName;
+
+        } catch (\Exception $e) {
+            Log::error('hasRole method failed', [
+                'user_id' => $this->id,
+                'role_name' => $roleName,
+                'error' => $e->getMessage()
+            ]);
+
+            // Fallback: direct database check
+            try {
+                $role = DB::table('roles')->where('id', $this->role_id)->first();
+                if ($role) {
+                    if (is_array($roleName)) {
+                        return in_array($role->name, $roleName);
+                    }
+                    return $role->name === $roleName;
+                }
+            } catch (\Exception $fallbackError) {
+                Log::error('hasRole fallback failed', ['error' => $fallbackError->getMessage()]);
+            }
+
+            return false;
         }
-        return $this->role && $this->role->name === $roleName;
     }
 
     /**

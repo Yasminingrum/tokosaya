@@ -325,7 +325,7 @@
 
                 <!-- Pagination -->
                 <div class="mt-12 flex justify-center" data-aos="fade-up">
-                    {{ $products->appends(request()->query())->links('pagination::bootstrap-4') }}
+                    {{ $products->appends(request()->query())->links('vendor.pagination.default') }}
                 </div>
 
                 <!-- Search Suggestions -->
