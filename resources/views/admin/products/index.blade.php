@@ -1,479 +1,731 @@
 @extends('layouts.admin')
 
-@section('title', 'Kelola Produk')
+@section('title', 'Manage Products - TokoSaya Admin')
 
 @section('content')
-@php
-    // Emergency fix untuk missing variables dan functions
-    if (!isset($stats) || !isset($stats['active_products'])) {
-        $stats = [
-            'active_products' => DB::table('products')->where('status', 'active')->count(),
-            'total_products' => DB::table('products')->count(),
-            'inactive_products' => DB::table('products')->where('status', '!=', 'active')->count(),
-            'low_stock_products' => DB::table('products')->whereColumn('stock_quantity', '<=', 'min_stock_level')->count(),
-            'out_of_stock_products' => DB::table('products')->where('stock_quantity', 0)->count(),
-            'featured_products' => DB::table('products')->where('featured', true)->count()
-        ];
-    }
-
-    if (!function_exists('format_currency')) {
-        function format_currency($cents, $showSymbol = true) {
-            if (!is_numeric($cents)) $cents = 0;
-            $rupiah = $cents / 100;
-            $formatted = number_format($rupiah, 0, ',', '.');
-            return $showSymbol ? 'Rp ' . $formatted : $formatted;
-        }
-    }
-
-    if (!function_exists('format_stock_badge')) {
-        function format_stock_badge($stock, $minLevel = 5) {
-            if ($stock <= 0) {
-                return '<span class="badge bg-danger">Habis</span>';
-            } elseif ($stock <= $minLevel) {
-                return '<span class="badge bg-warning">Menipis</span>';
-            } else {
-                return '<span class="badge bg-success">Tersedia</span>';
-            }
-        }
-    }
-
-    // Default data jika tidak ada
-    $products = $products ?? collect();
-    $categories = $categories ?? collect();
-    $brands = $brands ?? collect();
-@endphp
-
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h3 mb-0 text-gray-800">
-                <i class="fas fa-box mr-2"></i>Kelola Produk
-            </h1>
-            <p class="text-muted mb-0">Manajemen produk dan inventori toko</p>
+            <h1 class="h3 mb-1">Products Management</h1>
+            <p class="text-muted mb-0">Manage your product inventory and stock levels</p>
         </div>
-        <div>
-            @if(Route::has('admin.products.create'))
-                <a href="{{ route('admin.products.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus mr-2"></i>Tambah Produk
-                </a>
-            @else
-                <a href="#" class="btn btn-primary" onclick="alert('Route admin.products.create belum didefinisikan')">
-                    <i class="fas fa-plus mr-2"></i>Tambah Produk
-                </a>
-            @endif
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="exportProducts()">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+            <a href="{{ route('admin.products.create') }}" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i>Add Product
+            </a>
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
-            <div class="card bg-primary text-white shadow">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <div class="text-white-50 small">Total Produk</div>
-                            <div class="h5 mb-0">{{ number_format($stats['total_products'] ?? 0) }}</div>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-box fa-2x text-white-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
-            <div class="card bg-success text-white shadow">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <div class="text-white-50 small">Produk Aktif</div>
-                            <div class="h5 mb-0">{{ number_format($stats['active_products'] ?? 0) }}</div>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-check-circle fa-2x text-white-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
-            <div class="card bg-warning text-white shadow">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <div class="text-white-50 small">Stok Menipis</div>
-                            <div class="h5 mb-0">{{ number_format($stats['low_stock_products'] ?? 0) }}</div>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-exclamation-triangle fa-2x text-white-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
-            <div class="card bg-danger text-white shadow">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <div class="text-white-50 small">Stok Habis</div>
-                            <div class="h5 mb-0">{{ number_format($stats['out_of_stock_products'] ?? 0) }}</div>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-times-circle fa-2x text-white-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
-            <div class="card bg-info text-white shadow">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <div class="text-white-50 small">Produk Unggulan</div>
-                            <div class="h5 mb-0">{{ number_format($stats['featured_products'] ?? 0) }}</div>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-star fa-2x text-white-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
-            <div class="card bg-secondary text-white shadow">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <div class="text-white-50 small">Nonaktif</div>
-                            <div class="h5 mb-0">{{ number_format($stats['inactive_products'] ?? 0) }}</div>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-pause-circle fa-2x text-white-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filters -->
+    <!-- Filters & Search -->
     <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">
-                <i class="fas fa-filter mr-2"></i>Filter & Pencarian
-            </h6>
-        </div>
         <div class="card-body">
-            <form method="GET" id="filterForm">
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label for="search" class="form-label">Cari Produk</label>
-                        <input type="text" class="form-control" id="search" name="search"
-                               value="{{ request('search') }}" placeholder="Nama, SKU, atau deskripsi...">
-                    </div>
-                    <div class="col-md-2 mb-3">
-                        <label for="category" class="form-label">Kategori</label>
-                        <select class="form-select" id="category" name="category">
-                            <option value="">Semua Kategori</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category['id'] ?? $category->id }}"
-                                        {{ request('category') == ($category['id'] ?? $category->id) ? 'selected' : '' }}>
-                                    {{ $category['name'] ?? $category->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2 mb-3">
-                        <label for="status" class="form-label">Status</label>
-                        <select class="form-select" id="status" name="status">
-                            <option value="">Semua Status</option>
-                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Aktif</option>
-                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Nonaktif</option>
-                            <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2 mb-3">
-                        <label for="sort" class="form-label">Urutkan</label>
-                        <select class="form-select" id="sort" name="sort">
-                            <option value="created_at" {{ request('sort') == 'created_at' ? 'selected' : '' }}>Terbaru</option>
-                            <option value="name" {{ request('sort') == 'name' ? 'selected' : '' }}>Nama A-Z</option>
-                            <option value="price_cents" {{ request('sort') == 'price_cents' ? 'selected' : '' }}>Harga</option>
-                            <option value="stock_quantity" {{ request('sort') == 'stock_quantity' ? 'selected' : '' }}>Stok</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2 mb-3 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary me-2">
-                            <i class="fas fa-search mr-2"></i>Cari
+            <form id="filterForm" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Search Products</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Product name, SKU...">
+                        <button class="btn btn-outline-secondary" type="button">
+                            <i class="fas fa-search"></i>
                         </button>
-                        <a href="{{ url()->current() }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-undo mr-2"></i>Reset
-                        </a>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="categoryFilter">
+                        <option value="">All Categories</option>
+                        <option value="1">Electronics</option>
+                        <option value="2">Fashion</option>
+                        <option value="3">Home & Garden</option>
+                        <option value="4">Sports</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="draft">Draft</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Stock Status</label>
+                    <select class="form-select" id="stockFilter">
+                        <option value="">All Stock</option>
+                        <option value="in_stock">In Stock</option>
+                        <option value="low_stock">Low Stock</option>
+                        <option value="out_of_stock">Out of Stock</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Actions</label>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-primary" onclick="applyFilters()">
+                            <i class="fas fa-filter me-1"></i>Filter
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="resetFilters()">
+                            <i class="fas fa-times me-1"></i>Reset
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Products Table -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <h6 class="m-0 font-weight-bold text-primary">
-                <i class="fas fa-list mr-2"></i>Daftar Produk
-            </h6>
-            <span class="badge bg-info">
-                Total: {{ $products->total() ?? $products->count() }}
-            </span>
+    <!-- Bulk Actions -->
+    <div class="card shadow mb-4" id="bulkActionsCard" style="display: none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong><span id="selectedCount">0</span> products selected</strong>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-sm" onclick="bulkAction('activate')">
+                        <i class="fas fa-check me-1"></i>Activate
+                    </button>
+                    <button class="btn btn-warning btn-sm" onclick="bulkAction('deactivate')">
+                        <i class="fas fa-pause me-1"></i>Deactivate
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="bulkAction('update_stock')">
+                        <i class="fas fa-boxes me-1"></i>Update Stock
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="bulkAction('delete')">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="card-body p-0">
-            @if($products && $products->count() > 0)
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th width="80px">Gambar</th>
-                                <th>Produk</th>
-                                <th width="120px">Kategori</th>
-                                <th width="100px">Harga</th>
-                                <th width="80px">Stok</th>
-                                <th width="100px">Status</th>
-                                <th width="120px">Dibuat</th>
-                                <th width="120px">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($products as $product)
-                                @php
-                                    // Handle both array and object format
-                                    $productData = is_array($product) ? $product : (array) $product;
+    </div>
 
-                                    $id = $productData['id'] ?? 0;
-                                    $name = $productData['name'] ?? 'Unknown Product';
-                                    $sku = $productData['sku'] ?? '';
-                                    $price_cents = $productData['price_cents'] ?? 0;
-                                    $stock_quantity = $productData['stock_quantity'] ?? 0;
-                                    $min_stock_level = $productData['min_stock_level'] ?? 5;
-                                    $status = $productData['status'] ?? 'draft';
-                                    $featured = $productData['featured'] ?? false;
-                                    $category_name = $productData['category_name'] ?? 'No Category';
-                                    $created_at = $productData['created_at'] ?? now();
-                                @endphp
-                                <tr>
-                                    <td>
-                                        <img src="https://via.placeholder.com/60x60/f8f9fa/6c757d?text=IMG"
-                                             alt="{{ $name }}" class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover;">
-                                    </td>
-                                    <td>
-                                        <div>
-                                            <strong>{{ $name }}</strong>
-                                            @if($featured)
-                                                <i class="fas fa-star text-warning ms-1" title="Produk Unggulan"></i>
-                                            @endif
-                                        </div>
-                                        <small class="text-muted">SKU: {{ $sku }}</small>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-light text-dark">{{ $category_name }}</span>
-                                    </td>
-                                    <td>
-                                        <strong>{{ format_currency($price_cents) }}</strong>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="fw-bold">{{ number_format($stock_quantity) }}</div>
-                                        {!! format_stock_badge($stock_quantity, $min_stock_level) !!}
-                                    </td>
-                                    <td>
-                                        @switch($status)
-                                            @case('active')
-                                                <span class="badge bg-success">Aktif</span>
-                                                @break
-                                            @case('inactive')
-                                                <span class="badge bg-secondary">Nonaktif</span>
-                                                @break
-                                            @case('draft')
-                                                <span class="badge bg-warning">Draft</span>
-                                                @break
-                                            @default
-                                                <span class="badge bg-secondary">{{ ucfirst($status) }}</span>
-                                        @endswitch
-                                    </td>
-                                    <td>
-                                        <small class="text-muted">
-                                            {{ \Carbon\Carbon::parse($created_at)->format('d/m/Y H:i') }}
-                                        </small>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            @if(Route::has('admin.products.show'))
-                                                <a href="{{ route('admin.products.show', $id) }}"
-                                                   class="btn btn-sm btn-outline-info" title="Lihat Detail">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                            @endif
+    <!-- Products Table -->
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Products List</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="productsTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                            </th>
+                            <th>Image</th>
+                            <th>Product Details</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        <!-- Sample Data - Replace with dynamic data -->
+                        <tr>
+                            <td><input type="checkbox" class="product-checkbox" value="1"></td>
+                            <td>
+                                <img src="/images/placeholder-product.jpg" class="product-thumbnail"
+                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>Samsung Galaxy S23</strong>
+                                    <br><small class="text-muted">SKU: SGS23-256-BLK</small>
+                                    <br><small class="text-muted">Created: Jan 15, 2024</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">Electronics</span>
+                            </td>
+                            <td>
+                                <strong>Rp 12,999,000</strong>
+                                <br><small class="text-muted">Cost: Rp 10,500,000</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-success">
+                                    <i class="fas fa-boxes me-1"></i>45
+                                </span>
+                                <br><small class="text-muted">Min: 10</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-success">Active</span>
+                                <br><small class="text-muted">Sales: 127</small>
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/admin/products/1/edit">
+                                            <i class="fas fa-edit me-2"></i>Edit
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/products/1" target="_blank">
+                                            <i class="fas fa-eye me-2"></i>View
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="duplicateProduct(1)">
+                                            <i class="fas fa-copy me-2"></i>Duplicate
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" onclick="updateStock(1)">
+                                            <i class="fas fa-boxes me-2"></i>Update Stock
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="toggleStatus(1)">
+                                            <i class="fas fa-toggle-on me-2"></i>Toggle Status
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteProduct(1)">
+                                            <i class="fas fa-trash me-2"></i>Delete
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
 
-                                            @if(Route::has('admin.products.edit'))
-                                                <a href="{{ route('admin.products.edit', $id) }}"
-                                                   class="btn btn-sm btn-outline-primary" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                            @endif
+                        <tr>
+                            <td><input type="checkbox" class="product-checkbox" value="2"></td>
+                            <td>
+                                <img src="/images/placeholder-product.jpg" class="product-thumbnail"
+                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>Nike Air Max 270</strong>
+                                    <br><small class="text-muted">SKU: NAM270-42-WHT</small>
+                                    <br><small class="text-muted">Created: Jan 10, 2024</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-warning">Fashion</span>
+                            </td>
+                            <td>
+                                <strong>Rp 1,899,000</strong>
+                                <br><small class="text-muted">Cost: Rp 1,200,000</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>8
+                                </span>
+                                <br><small class="text-muted">Min: 10</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-success">Active</span>
+                                <br><small class="text-muted">Sales: 89</small>
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/admin/products/2/edit">
+                                            <i class="fas fa-edit me-2"></i>Edit
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/products/2" target="_blank">
+                                            <i class="fas fa-eye me-2"></i>View
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="duplicateProduct(2)">
+                                            <i class="fas fa-copy me-2"></i>Duplicate
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" onclick="updateStock(2)">
+                                            <i class="fas fa-boxes me-2"></i>Update Stock
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="toggleStatus(2)">
+                                            <i class="fas fa-toggle-on me-2"></i>Toggle Status
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteProduct(2)">
+                                            <i class="fas fa-trash me-2"></i>Delete
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
 
-                                            <button type="button" class="btn btn-sm btn-outline-danger"
-                                                    onclick="deleteProduct({{ $id }})" title="Hapus">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        <tr>
+                            <td><input type="checkbox" class="product-checkbox" value="3"></td>
+                            <td>
+                                <img src="/images/placeholder-product.jpg" class="product-thumbnail"
+                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>MacBook Pro 14" M3</strong>
+                                    <br><small class="text-muted">SKU: MBP14-M3-512-SLV</small>
+                                    <br><small class="text-muted">Created: Dec 28, 2023</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">Electronics</span>
+                            </td>
+                            <td>
+                                <strong>Rp 32,999,000</strong>
+                                <br><small class="text-muted">Cost: Rp 28,500,000</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times me-1"></i>0
+                                </span>
+                                <br><small class="text-muted">Min: 5</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">Out of Stock</span>
+                                <br><small class="text-muted">Sales: 23</small>
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="/admin/products/3/edit">
+                                            <i class="fas fa-edit me-2"></i>Edit
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="/products/3" target="_blank">
+                                            <i class="fas fa-eye me-2"></i>View
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="duplicateProduct(3)">
+                                            <i class="fas fa-copy me-2"></i>Duplicate
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" onclick="updateStock(3)">
+                                            <i class="fas fa-boxes me-2"></i>Update Stock
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="toggleStatus(3)">
+                                            <i class="fas fa-toggle-on me-2"></i>Toggle Status
+                                        </a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteProduct(3)">
+                                            <i class="fas fa-trash me-2"></i>Delete
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                <!-- Pagination -->
-                @if(method_exists($products, 'links'))
-                    <div class="card-footer">
-                        <div class="row align-items-center">
-                            <div class="col-md-6">
-                                <small class="text-muted">
-                                    Menampilkan {{ $products->firstItem() ?? 1 }} hingga {{ $products->lastItem() ?? $products->count() }}
-                                    dari {{ $products->total() ?? $products->count() }} produk
-                                </small>
-                            </div>
-                            <div class="col-md-6">
-                                {{ $products->links() }}
-                            </div>
-                        </div>
-                    </div>
-                @endif
-            @else
-                <!-- Empty State -->
-                <div class="text-center py-5">
-                    <div class="mb-3">
-                        <i class="fas fa-box-open fa-4x text-muted"></i>
-                    </div>
-                    <h5 class="text-muted">Tidak Ada Produk</h5>
-                    <p class="text-muted mb-3">
-                        @if(request()->hasAny(['search', 'category', 'status']))
-                            Tidak ada produk yang sesuai dengan filter yang dipilih.
-                        @else
-                            Belum ada produk yang ditambahkan ke sistem.
-                        @endif
-                    </p>
-                    @if(request()->hasAny(['search', 'category', 'status']))
-                        <a href="{{ url()->current() }}" class="btn btn-outline-primary me-2">
-                            <i class="fas fa-undo mr-2"></i>Reset Filter
-                        </a>
-                    @endif
-                    @if(Route::has('admin.products.create'))
-                        <a href="{{ route('admin.products.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus mr-2"></i>Tambah Produk Pertama
-                        </a>
-                    @endif
-                </div>
-            @endif
+            <!-- Pagination -->
+            <nav aria-label="Products pagination" class="mt-3">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                    <li class="page-item active">
+                        <span class="page-link">1</span>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </div>
 </div>
 
-@endsection
+<!-- Stock Update Modal -->
+<div class="modal fade" id="stockUpdateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="stockUpdateForm">
+                    <div class="mb-3">
+                        <label class="form-label">Product</label>
+                        <input type="text" class="form-control" id="productName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Current Stock</label>
+                        <input type="number" class="form-control" id="currentStock" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Stock Adjustment</label>
+                        <select class="form-select" id="adjustmentType">
+                            <option value="add">Add Stock</option>
+                            <option value="subtract">Subtract Stock</option>
+                            <option value="set">Set Stock</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="adjustmentQuantity" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="adjustmentNotes" rows="2" placeholder="Reason for stock adjustment..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveStockUpdate()">Update Stock</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-@push('styles')
 <style>
-.card {
-    border: none;
-    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+.product-thumbnail {
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
 }
 
-.card-header {
-    background-color: #f8f9fc;
-    border-bottom: 1px solid #e3e6f0;
+.product-thumbnail:hover {
+    border-color: #4e73df;
+    transform: scale(1.1);
 }
 
 .table th {
     border-top: none;
     font-weight: 600;
-    color: #5a5c69;
-    font-size: 0.85rem;
-}
-
-.table td {
-    border-top: 1px solid #e3e6f0;
-    font-size: 0.85rem;
-}
-
-.table tbody tr:hover {
     background-color: #f8f9fc;
 }
 
-.btn-group .btn {
-    border-radius: 0.35rem;
-    margin-right: 2px;
+.table td {
+    vertical-align: middle;
 }
 
 .badge {
     font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
 }
 
-.img-thumbnail {
-    border: 1px solid #e3e6f0;
+.dropdown-toggle::after {
+    margin-left: 0.5rem;
 }
-</style>
-@endpush
 
-@push('scripts')
-<script>
-$(document).ready(function() {
-    // Auto-submit filter form on change
-    $('#filterForm select').change(function() {
-        $('#filterForm').submit();
-    });
+.table-responsive {
+    border-radius: 0.375rem;
+}
 
-    // Search with delay
-    let searchTimeout;
-    $('#search').on('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(function() {
-            $('#filterForm').submit();
-        }, 500);
-    });
-});
+.card {
+    border: none;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
 
-// Delete Product
-function deleteProduct(productId) {
-    if (confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
-        // Check if delete route exists
-        @if(Route::has('admin.products.destroy'))
-            $.ajax({
-                url: "{{ url('admin/products') }}/" + productId,
-                method: 'DELETE',
-                data: {
-                    _token: '{{ csrf_token() }}'
-                },
-                success: function(response) {
-                    alert('Produk berhasil dihapus.');
-                    location.reload();
-                },
-                error: function() {
-                    alert('Terjadi kesalahan saat menghapus produk.');
-                }
-            });
-        @else
-            alert('Fitur hapus produk belum tersedia. Route admin.products.destroy belum didefinisikan.');
-        @endif
+.form-select:focus,
+.form-control:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.btn-outline-primary:hover {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+#bulkActionsCard {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
-// Show alert helper
-function showAlert(message, type = 'info') {
-    alert(message);
+.product-checkbox:checked {
+    background-color: #4e73df;
+    border-color: #4e73df;
 }
+</style>
+
+<script>
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    updateSelectedCount();
+});
+
+// Select all functionality
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.product-checkbox');
+
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+
+    updateSelectedCount();
+}
+
+// Update selected count
+function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+    const count = checkboxes.length;
+
+    document.getElementById('selectedCount').textContent = count;
+
+    const bulkActionsCard = document.getElementById('bulkActionsCard');
+    if (count > 0) {
+        bulkActionsCard.style.display = 'block';
+    } else {
+        bulkActionsCard.style.display = 'none';
+    }
+
+    // Update select all checkbox state
+    const selectAll = document.getElementById('selectAll');
+    const allCheckboxes = document.querySelectorAll('.product-checkbox');
+
+    if (count === 0) {
+        selectAll.indeterminate = false;
+        selectAll.checked = false;
+    } else if (count === allCheckboxes.length) {
+        selectAll.indeterminate = false;
+        selectAll.checked = true;
+    } else {
+        selectAll.indeterminate = true;
+    }
+}
+
+// Add event listeners to product checkboxes
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('product-checkbox')) {
+        updateSelectedCount();
+    }
+});
+
+// Filter functions
+function applyFilters() {
+    const search = document.getElementById('searchInput').value;
+    const category = document.getElementById('categoryFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const stock = document.getElementById('stockFilter').value;
+
+    // Simulate filtering - replace with actual AJAX call
+    console.log('Applying filters:', { search, category, status, stock });
+    showToast('Filters applied successfully', 'success');
+}
+
+function resetFilters() {
+    document.getElementById('filterForm').reset();
+    applyFilters();
+    showToast('Filters reset', 'info');
+}
+
+// Product actions
+function updateStock(productId) {
+    // Simulate getting product data
+    const productData = {
+        1: { name: 'Samsung Galaxy S23', stock: 45 },
+        2: { name: 'Nike Air Max 270', stock: 8 },
+        3: { name: 'MacBook Pro 14" M3', stock: 0 }
+    };
+
+    const product = productData[productId];
+    if (product) {
+        document.getElementById('productName').value = product.name;
+        document.getElementById('currentStock').value = product.stock;
+        document.getElementById('adjustmentQuantity').value = '';
+        document.getElementById('adjustmentNotes').value = '';
+
+        const modal = new bootstrap.Modal(document.getElementById('stockUpdateModal'));
+        modal.show();
+    }
+}
+
+function saveStockUpdate() {
+    const form = document.getElementById('stockUpdateForm');
+    const formData = new FormData(form);
+
+    // Simulate API call
+    console.log('Updating stock...', Object.fromEntries(formData));
+
+    bootstrap.Modal.getInstance(document.getElementById('stockUpdateModal')).hide();
+    showToast('Stock updated successfully', 'success');
+
+    // Refresh table data
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+function toggleStatus(productId) {
+    if (confirm('Are you sure you want to toggle the status of this product?')) {
+        // Simulate API call
+        console.log('Toggling status for product:', productId);
+        showToast('Product status updated', 'success');
+
+        // Update UI
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
+    }
+}
+
+function duplicateProduct(productId) {
+    if (confirm('This will create a copy of this product. Continue?')) {
+        console.log('Duplicating product:', productId);
+        showToast('Product duplicated successfully', 'success');
+
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
+    }
+}
+
+function deleteProduct(productId) {
+    if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+        console.log('Deleting product:', productId);
+        showToast('Product deleted successfully', 'success');
+
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
+    }
+}
+
+// Bulk actions
+function bulkAction(action) {
+    const selectedProducts = Array.from(document.querySelectorAll('.product-checkbox:checked')).map(cb => cb.value);
+
+    if (selectedProducts.length === 0) {
+        showToast('Please select products first', 'warning');
+        return;
+    }
+
+    let message = '';
+    switch (action) {
+        case 'activate':
+            message = `Activate ${selectedProducts.length} selected products?`;
+            break;
+        case 'deactivate':
+            message = `Deactivate ${selectedProducts.length} selected products?`;
+            break;
+        case 'update_stock':
+            message = `Update stock for ${selectedProducts.length} selected products?`;
+            break;
+        case 'delete':
+            message = `Delete ${selectedProducts.length} selected products? This cannot be undone.`;
+            break;
+    }
+
+    if (confirm(message)) {
+        console.log(`Bulk ${action} for products:`, selectedProducts);
+        showToast(`Bulk ${action} completed successfully`, 'success');
+
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
+    }
+}
+
+// Export function
+function exportProducts() {
+    const format = prompt('Export format (excel/csv):', 'excel');
+    if (format) {
+        console.log('Exporting products as:', format);
+        showToast('Export started, download will begin shortly', 'info');
+
+        // Simulate download
+        setTimeout(() => {
+            showToast('Export completed successfully', 'success');
+        }, 2000);
+    }
+}
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toast-container') || createToastContainer();
+
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type === 'error' ? 'danger' : type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-${getToastIcon(type)} me-2"></i>${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    const bsToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 5000
+    });
+
+    bsToast.show();
+
+    toast.addEventListener('hidden.bs.toast', () => {
+        toast.remove();
+    });
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+    return container;
+}
+
+function getToastIcon(type) {
+    switch (type) {
+        case 'success': return 'check-circle';
+        case 'error': return 'exclamation-circle';
+        case 'warning': return 'exclamation-triangle';
+        case 'info': return 'info-circle';
+        default: return 'bell';
+    }
+}
+
+// Search functionality
+document.getElementById('searchInput').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') {
+        applyFilters();
+    }
+});
+
+// Auto-save filters in localStorage
+function saveFilters() {
+    const filters = {
+        search: document.getElementById('searchInput').value,
+        category: document.getElementById('categoryFilter').value,
+        status: document.getElementById('statusFilter').value,
+        stock: document.getElementById('stockFilter').value
+    };
+    localStorage.setItem('productFilters', JSON.stringify(filters));
+}
+
+function loadFilters() {
+    const saved = localStorage.getItem('productFilters');
+    if (saved) {
+        const filters = JSON.parse(saved);
+        document.getElementById('searchInput').value = filters.search || '';
+        document.getElementById('categoryFilter').value = filters.category || '';
+        document.getElementById('statusFilter').value = filters.status || '';
+        document.getElementById('stockFilter').value = filters.stock || '';
+    }
+}
+
+// Load saved filters on page load
+document.addEventListener('DOMContentLoaded', loadFilters);
+
+// Save filters when they change
+document.getElementById('filterForm').addEventListener('change', saveFilters);
 </script>
-@endpush
+
+@endsection

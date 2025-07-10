@@ -315,7 +315,7 @@ class HomeController extends Controller
             ]
         ]);
 
-        return view('pages.faq', compact('faqs'));
+        return view('faq', compact('faqs'));
     }
 
     /**

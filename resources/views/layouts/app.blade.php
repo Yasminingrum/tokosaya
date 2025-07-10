@@ -3,328 +3,497 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'TokoSaya - E-commerce Terpercaya')</title>
-    <meta name="description" content="@yield('description', 'TokoSaya adalah platform e-commerce terpercaya dengan produk berkualitas dan harga terbaik')">
+    <title>@yield('title', 'TokoSaya - Belanja Online Terpercaya')</title>
+    <meta name="description" content="@yield('description', 'TokoSaya adalah platform e-commerce terpercaya dengan ribuan produk berkualitas dan harga terjangkau')">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --primary-color: #954C2E;
-            --secondary-color: #64748b;
-            --success-color: #059669;
-            --warning-color: #d97706;
-            --danger-color: #dc2626;
-            --light-bg: #f8fafc;
-            --dark-text: #954C2E;
+            --primary-color: #6B4E3D;
+            --secondary-color: #A4B494;
+            --accent-color: #D2855C;
+            --dark-color: #4A3429;
+            --light-gray: #F5F2E8;
+            --border-color: #E8DDD0;
+            --cream-color: #F0EDC4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--dark-text);
+            font-family: 'Inter', sans-serif;
             line-height: 1.6;
+            color: #4A3429;
+            background-color: var(--cream-color);
         }
 
         /* Header Styles */
-        .navbar {
+        .header {
+            background: white;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .top-bar {
+            background: var(--dark-color);
+            color: white;
+            font-size: 0.875rem;
+            padding: 8px 0;
         }
 
         .navbar-brand {
             font-weight: 700;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
+            color: var(--dark-color) !important;
+            text-decoration: none;
+        }
+
+        .navbar-nav .nav-link {
+            font-weight: 500;
+            color: var(--dark-color) !important;
+            margin: 0 10px;
+            transition: color 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
             color: var(--primary-color) !important;
         }
 
-        .search-bar {
-            max-width: 500px;
+        .search-form {
+            max-width: 400px;
+            position: relative;
         }
 
-        .search-bar .form-control {
-            border-radius: 25px 0 0 25px;
-            border-right: none;
-            padding: 0.75rem 1rem;
+        .search-input {
+            border-radius: 25px;
+            border: 2px solid var(--border-color);
+            padding: 12px 50px 12px 20px;
+            font-size: 0.95rem;
         }
 
-        .search-bar .btn {
-            border-radius: 0 25px 25px 0;
-            border-left: none;
-            padding: 0.75rem 1.5rem;
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-        .cart-badge {
+        .search-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+
+        .cart-icon, .wishlist-icon {
+            position: relative;
+            color: var(--dark-color);
+            font-size: 1.25rem;
+            margin: 0 15px;
+            text-decoration: none;
+        }
+
+        .badge-cart {
             position: absolute;
             top: -8px;
             right: -8px;
-            background: var(--danger-color);
+            background: var(--accent-color);
             color: white;
             border-radius: 50%;
             width: 20px;
             height: 20px;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        /* Card Styles */
-        .product-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: none;
+        /* Category & Product Cards */
+        .category-card, .product-card {
+            background: white;
             border-radius: 12px;
             overflow: hidden;
-        }
-
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        }
-
-        .product-image {
-            height: 200px;
-            object-fit: cover;
-            width: 100%;
-        }
-
-        .price {
-            font-weight: 700;
-            color: var(--primary-color);
-            font-size: 1.1rem;
-        }
-
-        .compare-price {
-            text-decoration: line-through;
-            color: var(--secondary-color);
-            font-size: 0.9rem;
-        }
-
-        /* Button Styles */
-        .btn-primary {
-            background: var(--primary-color);
-            border: none;
-            border-radius: 8px;
-            padding: 0.6rem 1.5rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: #819A91;
-            transform: translateY(-1px);
-        }
-
-        .btn-outline-primary {
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
-            border-radius: 8px;
-        }
-
-        /* Hero Section */
-        .hero-section {
-            background: linear-gradient(135deg, var(--primary-color), #3b82f6);
-            color: white;
-            padding: 4rem 0;
-            border-radius: 0 0 50px 50px;
-        }
-
-        /* Category Card */
-        .category-card {
-            text-align: center;
-            padding: 2rem 1rem;
-            border-radius: 15px;
-            background: white;
-            border: none;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid var(--border-color);
             height: 100%;
         }
 
-        .category-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        .category-card:hover, .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .category-card {
+            padding: 25px 15px;
+            text-align: center;
         }
 
         .category-icon {
-            width: 60px;
-            height: 60px;
-            background: var(--light-bg);
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 1.5rem;
+            margin: 0 auto 15px;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .category-count {
+            color: var(--secondary-color);
+            font-size: 0.8rem;
+        }
+
+        .product-image {
+            position: relative;
+            overflow: hidden;
+            aspect-ratio: 1;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.05);
+        }
+
+        .product-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: var(--accent-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            z-index: 2;
+        }
+
+        .product-info {
+            padding: 15px;
+        }
+
+        .product-title {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 8px;
+            line-height: 1.3;
+            font-size: 0.9rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-title a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .product-title a:hover {
             color: var(--primary-color);
+        }
+
+        .product-meta {
+            margin-bottom: 8px;
+            font-size: 0.75rem;
+            color: var(--secondary-color);
+        }
+
+        .product-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .price-compare {
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+            text-decoration: line-through;
+            margin-left: 8px;
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 12px;
+        }
+
+        .stars {
+            color: var(--accent-color);
+            font-size: 0.8rem;
+        }
+
+        .rating-text {
+            color: var(--secondary-color);
+            font-size: 0.75rem;
+        }
+
+        /* Compact Product Actions */
+        .product-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .btn-add-cart {
+            flex: 1;
+            background: var(--primary-color);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.8rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-add-cart:hover {
+            background: var(--dark-color);
+        }
+
+        .btn-add-cart:disabled {
+            background: var(--secondary-color);
+            cursor: not-allowed;
+        }
+
+        .btn-wishlist {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--secondary-color);
+            padding: 8px 10px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            flex: 0 0 auto;
+        }
+
+        .btn-wishlist:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .btn-wishlist.active {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            background: var(--cream-color);
+        }
+
+        .btn-detail {
+            background: var(--secondary-color);
+            border: none;
+            color: white;
+            padding: 8px 10px;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+            flex: 0 0 auto;
+        }
+
+        .btn-detail:hover {
+            background: var(--dark-color);
+        }
+
+        /* Compact Grid */
+        .product-grid-compact {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .products-grid-compact {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
         }
 
         /* Footer */
         .footer {
-            background: #954C2E;
+            background: var(--dark-color);
             color: white;
-            padding: 3rem 0 1rem;
+            padding: 60px 0 20px;
+            margin-top: 80px;
         }
 
-        .footer h5 {
-            color: #f1f5f9;
-            margin-bottom: 1rem;
+        .footer-title {
             font-weight: 600;
+            margin-bottom: 20px;
+            color: white;
         }
 
-        .footer a {
-            color: #cbd5e1;
+        .footer-link {
+            color: #94a3b8;
             text-decoration: none;
+            display: block;
+            margin-bottom: 8px;
             transition: color 0.3s ease;
         }
 
-        .footer a:hover {
+        .footer-link:hover {
             color: white;
         }
 
-        /* Responsive */
+        .social-icons a {
+            color: var(--secondary-color);
+            font-size: 1.25rem;
+            margin-right: 15px;
+            transition: color 0.3s ease;
+            text-decoration: none;
+        }
+
+        .social-icons a:hover {
+            color: var(--accent-color);
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 50px;
+            color: var(--dark-color);
+        }
+
+        /* Utility Classes */
+        .text-primary { color: var(--primary-color) !important; }
+        .bg-light-gray { background-color: var(--light-gray) !important; }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .hero-section {
-                padding: 2rem 0;
+            .section-title {
+                font-size: 2rem;
             }
 
-            .search-bar {
-                margin: 1rem 0;
-            }
-
-            .navbar-nav {
-                text-align: center;
+            .search-form {
+                margin: 15px 0;
             }
         }
     </style>
 
     @stack('styles')
 </head>
+
 <body>
-    <!-- Header -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
+    <!-- Top Bar -->
+    <div class="top-bar">
         <div class="container">
-            <!-- Brand -->
-            <a class="navbar-brand" href="{{ route('home') }}">
-                <i class="fas fa-store me-2"></i>TokoSaya
-            </a>
-
-            <!-- Mobile Toggle -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <!-- Search Bar (Desktop) -->
-            <div class="search-bar d-none d-lg-flex flex-grow-1 mx-4">
-                <form action="{{ route('search') }}" method="GET" class="d-flex w-100">
-                    <input class="form-control" type="search" name="q" placeholder="Cari produk..." value="{{ request('q') }}">
-                    <button class="btn btn-primary" type="submit">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </form>
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <span><i class="fas fa-phone me-2"></i> +62 804-1-500-400</span>
+                    <span class="ms-4"><i class="fas fa-envelope me-2"></i> info@tokosaya.id</span>
+                </div>
+                <div class="col-md-6 text-end">
+                    @auth
+                        <span>Hello, <strong>{{ auth()->user()->first_name }}</strong></span>
+                        <a href="{{ route('logout') }}" class="text-white ms-3 text-decoration-none"
+                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                            Logout
+                        </a>
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                            @csrf
+                        </form>
+                    @else
+                        <a href="{{ route('login') }}" class="text-white text-decoration-none">Login</a>
+                        <span class="mx-2">|</span>
+                        <a href="{{ route('register') }}" class="text-white text-decoration-none">Register</a>
+                    @endauth
+                </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Navigation Menu -->
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Search Bar (Mobile) -->
-                <div class="d-lg-none my-3">
-                    <form action="{{ route('search') }}" method="GET" class="d-flex">
-                        <input class="form-control me-2" type="search" name="q" placeholder="Cari produk..." value="{{ request('q') }}">
-                        <button class="btn btn-primary" type="submit">
+    <!-- Main Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light py-3">
+                <a class="navbar-brand" href="{{ route('home') }}">TokoSaya</a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('home') }}">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('products.index') }}">Shop</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Pages
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ route('about') }}">About</a></li>
+                                <li><a class="dropdown-item" href="{{ route('contact') }}">Contact</a></li>
+                                <li><a class="dropdown-item" href="{{ route('faq') }}">FAQ</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('contact') }}">Contact</a>
+                        </li>
+                    </ul>
+
+                    <!-- Search Form -->
+                    <form class="search-form me-4" action="{{ route('search') }}" method="GET">
+                        <input type="text" name="q" class="form-control search-input"
+                               placeholder="I am Searching for..." value="{{ request('q') }}">
+                        <button type="submit" class="search-btn">
                             <i class="fas fa-search"></i>
                         </button>
                     </form>
-                </div>
 
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('home') }}">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('products.index') }}">Produk</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('categories.index') }}">Kategori</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('about') }}">Tentang</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('contact') }}">Kontak</a>
-                    </li>
-
-                    <!-- Cart -->
-                    <li class="nav-item me-3">
-                        <a class="nav-link position-relative" href="{{ route('cart.index') }}">
-                            <i class="fas fa-shopping-cart fa-lg"></i>
-                            <span class="cart-badge" id="cart-count">0</span>
-                        </a>
-                    </li>
-
-                    <!-- User Menu -->
-                    @auth
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-circle me-1"></i>
-                                {{ Auth::user()->first_name }}
+                    <!-- User Actions -->
+                    <div class="d-flex align-items-center">
+                        @auth
+                            <a href="{{ route('wishlist.index') }}" class="wishlist-icon">
+                                <i class="fas fa-heart"></i>
+                                <span class="badge-cart" id="wishlist-count">0</span>
                             </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ route('dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
-                                <li><a class="dropdown-item" href="{{ route('profile.index') }}"><i class="fas fa-user me-2"></i>Profil</a></li>
-                                <li><a class="dropdown-item" href="{{ route('orders.index') }}"><i class="fas fa-box me-2"></i>Pesanan</a></li>
-                                <li><a class="dropdown-item" href="{{ route('wishlist.index') }}"><i class="fas fa-heart me-2"></i>Wishlist</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form action="{{ route('logout') }}" method="POST" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="dropdown-item text-danger">
-                                            <i class="fas fa-sign-out-alt me-2"></i>Logout
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
-                    @else
-                        <li class="nav-item">
-                            <a class="btn btn-outline-primary me-2" href="{{ route('login') }}">Masuk</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="btn btn-primary" href="{{ route('register') }}">Daftar</a>
-                        </li>
-                    @endauth
-                </ul>
-            </div>
-        </div>
-    </nav>
+                        @endauth
 
-    <!-- Alert Messages -->
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show m-0" role="alert">
-            <div class="container">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
+                        <a href="{{ route('cart.index') }}" class="cart-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="badge-cart" id="cart-count">0</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
         </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show m-0" role="alert">
-            <div class="container">
-                <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        </div>
-    @endif
-
-    @if(session('warning'))
-        <div class="alert alert-warning alert-dismissible fade show m-0" role="alert">
-            <div class="container">
-                <i class="fas fa-exclamation-triangle me-2"></i>{{ session('warning') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        </div>
-    @endif
+    </header>
 
     <!-- Main Content -->
     <main>
@@ -332,129 +501,200 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer mt-5">
+    <footer class="footer">
         <div class="container">
             <div class="row">
-                <!-- Company Info -->
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <h5><i class="fas fa-store me-2"></i>TokoSaya</h5>
-                    <p class="text-muted">Platform e-commerce terpercaya dengan produk berkualitas dan pelayanan terbaik untuk kebutuhan sehari-hari Anda.</p>
-                    <div class="social-links">
-                        <a href="#" class="me-3"><i class="fab fa-facebook fa-lg"></i></a>
-                        <a href="#" class="me-3"><i class="fab fa-instagram fa-lg"></i></a>
-                        <a href="#" class="me-3"><i class="fab fa-twitter fa-lg"></i></a>
-                        <a href="#" class="me-3"><i class="fab fa-whatsapp fa-lg"></i></a>
+                    <h5 class="footer-title">TokoSaya</h5>
+                    <p class="text-muted">Platform e-commerce terpercaya dengan ribuan produk berkualitas dan harga terjangkau. Belanja mudah, aman, dan nyaman.</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>
 
-                <!-- Quick Links -->
                 <div class="col-lg-2 col-md-6 mb-4">
-                    <h5>Menu</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="{{ route('home') }}">Home</a></li>
-                        <li class="mb-2"><a href="{{ route('products.index') }}">Produk</a></li>
-                        <li class="mb-2"><a href="{{ route('categories.index') }}">Kategori</a></li>
-                        <li class="mb-2"><a href="{{ route('about') }}">Tentang Kami</a></li>
-                        <li class="mb-2"><a href="{{ route('contact') }}">Kontak</a></li>
-                    </ul>
+                    <h5 class="footer-title">Quick Links</h5>
+                    <a href="{{ route('about') }}" class="footer-link">About Us</a>
+                    <a href="{{ route('contact') }}" class="footer-link">Contact</a>
+                    <a href="{{ route('faq') }}" class="footer-link">FAQ</a>
+                    <a href="{{ route('privacy') }}" class="footer-link">Privacy Policy</a>
+                    <a href="{{ route('terms') }}" class="footer-link">Terms of Service</a>
                 </div>
 
-                <!-- Customer Service -->
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <h5>Layanan</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="{{ route('faq') }}">FAQ</a></li>
-                        <li class="mb-2"><a href="{{ route('privacy') }}">Kebijakan Privasi</a></li>
-                        <li class="mb-2"><a href="{{ route('terms') }}">Syarat & Ketentuan</a></li>
-                        @auth
-                            <li class="mb-2"><a href="{{ route('orders.index') }}">Lacak Pesanan</a></li>
-                        @endauth
-                    </ul>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h5 class="footer-title">Categories</h5>
+                    <a href="#" class="footer-link">Fashion</a>
+                    <a href="#" class="footer-link">Electronics</a>
+                    <a href="#" class="footer-link">Home & Garden</a>
+                    <a href="#" class="footer-link">Sports</a>
+                    <a href="#" class="footer-link">Books</a>
                 </div>
 
-                <!-- Contact Info -->
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <h5>Kontak Kami</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="fas fa-map-marker-alt me-2"></i>
-                            Jakarta, Indonesia
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-phone me-2"></i>
-                            +62 804-1-500-400
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-envelope me-2"></i>
-                            info@tokosaya.id
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-clock me-2"></i>
-                            24/7 Customer Support
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <hr class="my-4">
-
-            <!-- Newsletter -->
-            <div class="row">
-                <div class="col-md-8">
-                    <h6>Berlangganan Newsletter</h6>
-                    <p class="text-muted">Dapatkan info produk terbaru dan penawaran menarik</p>
-                </div>
-                <div class="col-md-4">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <h5 class="footer-title">Newsletter</h5>
+                    <p class="text-muted">Subscribe to get updates on new products and offers</p>
                     <form action="{{ route('newsletter.subscribe') }}" method="POST" class="d-flex">
                         @csrf
-                        <input type="email" name="email" class="form-control me-2" placeholder="Email Anda" required>
-                        <button type="submit" class="btn btn-primary">Daftar</button>
+                        <input type="email" name="email" class="form-control me-2" placeholder="Enter your email" required>
+                        <button type="submit" class="btn btn-primary">Subscribe</button>
                     </form>
                 </div>
             </div>
 
-            <hr class="my-4">
+            <hr class="my-4" style="border-color: #475569;">
 
-            <!-- Copyright -->
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <p class="text-muted mb-0">© {{ date('Y') }} TokoSaya. Semua hak dilindungi.</p>
+                    <p class="text-muted mb-0">&copy; 2025 TokoSaya. All rights reserved.</p>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="text-muted mb-0">Dibuat dengan <i class="fas fa-heart text-danger"></i> di Indonesia</p>
+                <div class="col-md-6 text-end">
+                    <img src="https://via.placeholder.com/40x25/333/fff?text=VISA" alt="Visa" class="me-2">
+                    <img src="https://via.placeholder.com/40x25/333/fff?text=MC" alt="Mastercard" class="me-2">
+                    <img src="https://via.placeholder.com/40x25/333/fff?text=PAYPAL" alt="PayPal">
                 </div>
             </div>
         </div>
     </footer>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <!-- Custom JS -->
+    <!-- Custom JavaScript -->
     <script>
-        // Update cart count
+        // Update cart and wishlist counts
         function updateCartCount() {
-            fetch('{{ route("cart.count") }}')
+            fetch('/api/cart/count')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('cart-count').textContent = data.count || 0;
                 })
-                .catch(console.error);
+                .catch(error => console.log('Error fetching cart count:', error));
         }
 
-        // Load cart count on page load
-        document.addEventListener('DOMContentLoaded', updateCartCount);
+        function updateWishlistCount() {
+            @auth
+            fetch('/wishlist/count')
+                .then(response => response.json())
+                .then(data => {
+                    const wishlistElement = document.getElementById('wishlist-count');
+                    if (wishlistElement) {
+                        wishlistElement.textContent = data.count || 0;
+                    }
+                })
+                .catch(error => console.log('Error fetching wishlist count:', error));
+            @endauth
+        }
 
-        // Auto-hide alerts after 5 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }, 5000);
+        // Add to cart function
+        function addToCart(productId, quantity = 1) {
+            fetch('/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    quantity: quantity
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateCartCount();
+                    showNotification('Product added to cart successfully!', 'success');
+                } else {
+                    showNotification(data.message || 'Failed to add product to cart', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Failed to add product to cart', 'error');
             });
+        }
+
+        // Toggle wishlist function
+        function toggleWishlist(productId) {
+            @auth
+            fetch('/wishlist/toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    product_id: productId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateWishlistCount();
+                    const heartIcon = document.querySelector(`[data-product-id="${productId}"] .btn-wishlist i`);
+                    const heartBtn = document.querySelector(`[data-product-id="${productId}"] .btn-wishlist`);
+                    if (heartIcon && heartBtn) {
+                        if (data.added) {
+                            heartIcon.classList.remove('far');
+                            heartIcon.classList.add('fas');
+                            heartBtn.classList.add('active');
+                            showNotification('Added to wishlist!', 'success');
+                        } else {
+                            heartIcon.classList.remove('fas');
+                            heartIcon.classList.add('far');
+                            heartBtn.classList.remove('active');
+                            showNotification('Removed from wishlist!', 'info');
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Error:', error));
+            @else
+            window.location.href = '{{ route("login") }}';
+            @endauth
+        }
+
+        // Simple notification function
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartCount();
+            updateWishlistCount();
         });
+
+        // Show Laravel session messages
+        @if(session('success'))
+            showNotification('{{ session("success") }}', 'success');
+        @endif
+        @if(session('error'))
+            showNotification('{{ session("error") }}', 'error');
+        @endif
+        @if(session('warning'))
+            showNotification('{{ session("warning") }}', 'warning');
+        @endif
+        @if(session('info'))
+            showNotification('{{ session("info") }}', 'info');
+        @endif
     </script>
 
     @stack('scripts')
