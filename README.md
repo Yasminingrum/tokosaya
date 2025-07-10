@@ -1,1593 +1,513 @@
-# 🛒 TokoSaya E-commerce Platform
+# TokoSaya - Daftar Fitur dan Panduan Penggunaan
 
-[![Laravel](https://img.shields.io/badge/Laravel-12.0-red.svg)](https://laravel.com)
-[![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-purple.svg)](https://getbootstrap.com)
-[![Alpine.js](https://img.shields.io/badge/Alpine.js-3.x-blue.svg)](https://alpinejs.dev)
-[![MySQL](https://img.shields.io/badge/MySQL-8.0-orange.svg)](https://mysql.com)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)](README.md)
+![TokoSaya Banner](https://via.placeholder.com/800x200/4F46E5/FFFFFF?text=TokoSaya+E-Commerce+Platform)
 
-> **Enterprise-grade e-commerce platform built with modern PHP stack for Indonesian market**
+## 📋 Daftar Isi
 
-TokoSaya adalah platform e-commerce yang komprehensif dan modern, dibangun dengan teknologi terdepan untuk memberikan pengalaman berbelanja online terbaik. Platform ini dirancang khusus untuk pasar Indonesia dengan fitur-fitur advanced dan performa enterprise-level.
-
----
-
-## 📋 Table of Contents
-
-- [🎯 Project Overview](#-project-overview)
-- [✨ Key Features](#-key-features)
-- [🏗️ Architecture](#️-architecture)
-- [📂 Complete File Structure](#-complete-file-structure)
-- [🚀 Installation Guide](#-installation-guide)
-- [⚙️ Configuration](#️-configuration)
-- [📖 Usage Documentation](#-usage-documentation)
-- [🔧 Development Guide](#-development-guide)
-- [🧪 Testing](#-testing)
-- [📈 Performance](#-performance)
-- [🛡️ Security](#️-security)
-- [🌐 Deployment](#-deployment)
-- [📊 Monitoring](#-monitoring)
-- [🤝 Contributing](#-contributing)
-- [📝 License](#-license)
+- [Tentang TokoSaya](#tentang-tokosaya)
+- [Fitur untuk Pelanggan](#fitur-untuk-pelanggan)
+- [Fitur untuk Admin](#fitur-untuk-admin)
+- [Panduan Penggunaan Pelanggan](#panduan-penggunaan-pelanggan)
+- [Panduan Penggunaan Admin](#panduan-penggunaan-admin)
+- [FAQ](#faq)
+- [Dukungan Teknis](#dukungan-teknis)
 
 ---
 
-## 🎯 Project Overview
+## 🏪 Tentang TokoSaya
 
-### Project Statistics
-- **Total Files:** 92 files
-- **Lines of Code:** 42,000+ lines
-- **Development Time:** 16 weeks
-- **Team Size:** 1 senior developer
-- **Technology Stack:** Laravel 12 + Bootstrap 5.3 + Alpine.js + MySQL 8.0
-- **Architecture:** MVC with Service Layer Pattern
-- **Status:** ✅ Production Ready
+TokoSaya adalah platform e-commerce modern yang dirancang khusus untuk pasar Indonesia. Platform ini menyediakan pengalaman berbelanja online yang aman, mudah, dan menyenangkan dengan fitur-fitur canggih yang mendukung pertumbuhan bisnis online.
 
-### Business Metrics
-- **Target Users:** 1M+ concurrent users
-- **Product Capacity:** 10M+ products
-- **Order Processing:** 100K+ orders/month
-- **Performance:** Sub-second response time
-- **Availability:** 99.9% uptime target
-- **Security:** Enterprise-grade protection
+### Spesifikasi Teknis
+- **Teknologi**: Laravel 12 + Bootstrap 5.3 + Alpine.js
+- **Database**: MySQL 8.0
+- **Kapasitas**: 1M+ pengguna bersamaan
+- **Produk**: 10M+ produk
+- **Pesanan**: 100K+ pesanan/bulan
+- **Performa**: Respon di bawah 1 detik
 
 ---
 
-## ✨ Key Features
+## 🛍️ Fitur untuk Pelanggan
 
-### 🛍️ Customer Features
-- **Advanced Product Catalog** with smart filtering and search
-- **Intelligent Shopping Cart** with guest and user support
-- **Multi-step Checkout** with payment gateway integration
-- **Order Tracking** with real-time updates
-- **User Profile Management** with address book
-- **Wishlist & Favorites** with sharing capabilities
-- **Product Reviews & Ratings** with image uploads
-- **Mobile-Optimized** responsive design
+### 🔐 Autentikasi & Profil
+- **Registrasi Multi-Step**: Pendaftaran dengan verifikasi email
+- **Login Aman**: Sistem keamanan berlapis dengan rate limiting
+- **Manajemen Profil**: Update informasi pribadi dan foto profil
+- **Buku Alamat**: Kelola hingga 5 alamat pengiriman
+- **Verifikasi Nomor HP**: Verifikasi opsional untuk keamanan tambahan
 
-### 👨‍💼 Merchant Features
-- **Comprehensive Admin Dashboard** with business intelligence
-- **Product Management** with bulk operations
-- **Order Processing** with status management
-- **User Management** with role-based access
-- **Analytics & Reporting** with interactive charts
-- **Content Management** for categories and pages
-- **Marketing Tools** for promotions and banners
+### 📱 Katalog Produk
+- **Pencarian Cerdas**: Pencarian dengan autocomplete dan saran
+- **Filter Lanjutan**: Filter berdasarkan harga, merek, rating, kategori
+- **Kategori Hierarkis**: Navigasi kategori dengan sub-kategori
+- **Galeri 360°**: Tampilan produk dengan multiple gambar
+- **Perbandingan Produk**: Bandingkan hingga 4 produk sekaligus
 
-### 🔧 Technical Features
-- **Enterprise Architecture** scalable to millions
-- **Advanced Security** with CSRF, XSS protection
-- **Performance Optimization** with caching and indexing
-- **API-Ready** for mobile app integration
-- **SEO Optimized** for search engine visibility
-- **Multi-Payment Gateway** support
-- **Real-time Notifications** system
+### 🛒 Keranjang Belanja
+- **Keranjang Tamu**: Belanja tanpa perlu registrasi
+- **Keranjang Pengguna**: Simpan item untuk pembelian nanti
+- **Update Real-time**: Hitung total dan ongkir secara otomatis
+- **Maksimal Item**: Hingga 50 item per keranjang
+- **Simpan untuk Nanti**: Pindahkan item ke wishlist
 
----
+### ❤️ Wishlist & Favorit
+- **Daftar Keinginan**: Simpan hingga 100 produk favorit
+- **Berbagi Wishlist**: Bagikan daftar keinginan dengan teman
+- **Notifikasi Harga**: Alert ketika harga produk turun
+- **Kategori Wishlist**: Organisir produk berdasarkan kategori
 
-## 🏗️ Architecture
+### 💳 Checkout & Pembayaran
+- **Checkout Multi-Step**: Proses yang mudah dan jelas
+- **Multiple Payment Gateway**: Midtrans, Xendit, DOKU
+- **Metode Pembayaran**: Transfer bank, e-wallet, kartu kredit
+- **Kalkulator Ongkir**: Integrasi dengan JNE, J&T, SiCepat, POS
+- **Gratis Ongkir**: Untuk pembelian di atas Rp 250.000
 
-### Technology Stack
-```
-Frontend:
-├── Bootstrap 5.3.2     # CSS Framework
-├── Alpine.js 3.x       # JavaScript Framework  
-├── Font Awesome 6.x    # Icon Library
-├── AOS                 # Animation Library
-└── Chart.js 4.x        # Data Visualization
+### 📦 Manajemen Pesanan
+- **Tracking Real-time**: Lacak status pesanan secara langsung
+- **Riwayat Pesanan**: Lihat semua pesanan dengan filter tanggal
+- **Download Invoice**: Unduh faktur dan receipt
+- **Return/Refund**: Ajukan pengembalian barang atau dana
+- **Rating & Review**: Beri ulasan dengan foto
 
-Backend:
-├── Laravel 12          # PHP Framework
-├── MySQL 8.0+          # Database
-├── Redis (optional)    # Caching
-└── Vite               # Asset Bundling
+### 🎯 Promosi & Diskon
+- **Kupon Diskon**: Kode promo dengan berbagai jenis diskon
+- **Flash Sale**: Diskon terbatas waktu
+- **Program Loyalty**: Poin reward untuk pelanggan setia
+- **Cashback**: Pengembalian dana untuk pembelian tertentu
 
-Architecture Patterns:
-├── MVC Pattern         # Model-View-Controller
-├── Service Layer       # Business Logic Layer
-├── Repository Pattern  # Data Access Layer
-└── Observer Pattern    # Event Handling
-```
-
-### System Architecture
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Web Browser   │    │  Mobile App     │    │  Admin Panel    │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          └──────────────────────┼──────────────────────┘
-                                 │
-                    ┌─────────────┴───────────┐
-                    │     Load Balancer       │
-                    └─────────────┬───────────┘
-                                 │
-                    ┌─────────────┴───────────┐
-                    │   Laravel Application   │
-                    │  ┌─────────────────────┐│
-                    │  │   Controllers       ││
-                    │  └─────────┬───────────┘│
-                    │  ┌─────────┴───────────┐│
-                    │  │    Services         ││
-                    │  └─────────┬───────────┘│
-                    │  ┌─────────┴───────────┐│
-                    │  │     Models          ││
-                    │  └─────────┬───────────┘│
-                    └────────────┼────────────┘
-                                 │
-                    ┌─────────────┴───────────┐
-                    │    MySQL Database       │
-                    └─────────────────────────┘
-```
+### 🔔 Notifikasi
+- **Push Notification**: Notifikasi real-time di browser
+- **Email Notification**: Update status pesanan via email
+- **SMS Alert**: Pemberitahuan penting via SMS
+- **In-App Notification**: Pusat notifikasi dalam aplikasi
 
 ---
 
-## 📂 Complete File Structure
+## 👑 Fitur untuk Admin
 
-### Backend Architecture
+### 📊 Dashboard Analytics
+- **Business Intelligence**: Metrik bisnis real-time
+- **Grafik Interaktif**: Visualisasi data dengan Chart.js
+- **Laporan Penjualan**: Analisis performa penjualan
+- **Monitor Sistem**: Status kesehatan aplikasi
+- **Quick Actions**: Akses cepat ke fungsi penting
 
-#### 🗄️ Database Layer
-```
-database/
-├── TokoSaya.sql                          # Optimized database schema (15,000+ lines)
-│   ├── 42+ tables with advanced indexing
-│   ├── Stored procedures for complex operations
-│   ├── Triggers for data consistency
-│   └── Views for reporting and analytics
-│
-└── models/ (29 files)
-    ├── Role.php                          # User role management
-    ├── User.php                          # User authentication & profile
-    ├── CustomerAddress.php               # Multi-address management
-    ├── ActivityLog.php                   # Comprehensive audit trail
-    ├── Category.php                      # Hierarchical product categories
-    ├── Brand.php                         # Brand management with analytics
-    ├── Product.php                       # Core product entity with variants
-    ├── ProductImage.php                  # Multi-image support with CDN
-    ├── ProductVariant.php                # SKU-level inventory tracking
-    ├── ProductAttribute.php              # Configurable product properties
-    ├── ProductAttributeValue.php         # Type-safe attribute values
-    ├── ProductReview.php                 # Rating system with moderation
-    ├── ShoppingCart.php                  # Session/user-based cart
-    ├── CartItem.php                      # Cart item with pricing
-    ├── Wishlist.php                      # Product favorites system
-    ├── Order.php                         # Order management with workflow
-    ├── OrderItem.php                     # Order line items with snapshots
-    ├── PaymentMethod.php                 # Payment gateway configuration
-    ├── Payment.php                       # Transaction tracking
-    ├── ShippingMethod.php                # Delivery options
-    ├── ShippingZone.php                  # Geographic shipping zones
-    ├── ShippingRate.php                  # Zone-based rate calculation
-    ├── Coupon.php                        # Discount and promotion system
-    ├── CouponUsage.php                   # Usage tracking and limits
-    ├── Notification.php                  # User notification system
-    ├── Setting.php                       # System configuration
-    ├── Page.php                          # CMS functionality
-    ├── Banner.php                        # Marketing banner system
-    └── MediaFile.php                     # File management system
-```
+### 📦 Manajemen Produk
+- **CRUD Produk**: Tambah, edit, hapus produk dengan mudah
+- **Varian Produk**: Kelola SKU dengan atribut berbeda
+- **Upload Gambar**: Multiple gambar dengan kompresi otomatis
+- **Inventory Tracking**: Monitor stok real-time
+- **Bulk Operations**: Operasi massal untuk efisiensi
+- **SEO Optimization**: Meta tags dan URL friendly
 
-#### ⚙️ Business Logic Layer
-```
-app/Http/Controllers/
-├──Admin
-│   └──AdminDashboardController.php
-├── AuthController.php                    # Authentication & authorization (280+ lines)
-├── ProductController.php                 # Product catalog management (450+ lines)
-├── CartController.php                    # Shopping cart operations (380+ lines)
-├── OrderController.php                   # Order processing workflow (520+ lines)
-├── HomeController.php                    # Homepage and dashboard (220+ lines)
-├── AdminDashboardController.php          # Admin panel management (320+ lines)
-├── CheckoutController.php                # Multi-step checkout process (480+ lines)
-├── PaymentController.php                 # Payment gateway integration (420+ lines)
-├── CategoryController.php                # Category management (350+ lines)
-├── WishlistController.php                # Wishlist operations (380+ lines)
-├── ReviewController.php                  # Review and rating system (450+ lines)
-└── ProfileController.php                 # User profile management (420+ lines)
+### 🏷️ Manajemen Kategori & Merek
+- **Tree View Categories**: Struktur kategori hierarkis
+- **Drag & Drop**: Reorganisasi kategori dengan mudah
+- **Brand Management**: Kelola merek dengan analytics
+- **Category Analytics**: Performa setiap kategori
 
-app/Services/ (6 files)
-├── CartService.php                       # Cart business logic with session handling
-├── OrderService.php                      # Complex order processing workflows
-├── PaymentService.php                    # Multi-gateway payment processing
-├── AuthService.php                       # Authentication and security services
-├── ProductService.php                    # Product management with bulk operations
-└── ShippingService.php                   # Zone-based shipping calculations
-```
+### 📋 Manajemen Pesanan
+- **Order Processing**: Kelola semua pesanan dalam satu tempat
+- **Status Tracking**: Update status pesanan
+- **Payment Management**: Proses pembayaran dan refund
+- **Shipping Labels**: Generate label pengiriman
+- **Customer Communication**: Komunikasi dengan pelanggan
 
-#### 🛡️ Security & Validation Layer
-```
-app/Http/Requests/
-├── Auth/
-│   ├── LoginRequest.php                  # Login validation with security
-│   ├── UpdateProfileRequest.php
-│   └── RegisterRequest.php               # Registration with strong validation
-├── Profile/
-│   ├── UpdateProfileRequest.php          # Profile update validation
-│   └── ChangePasswordRequest.php         # Password strength validation
-├── Product/
-│   ├── StoreProductRequest.php           # Product creation validation
-│   └── UpdateProductRequest.php          # Product update validation
-├── Cart/
-│   └── AddToCartRequest.php              # Cart validation with stock check
-├── Order/
-│   └── CreateOrderRequest.php            # Complete order validation
-├── Category/
-│   ├── StoreCategoryRequest.php          # Category creation validation
-│   └── UpdateCategoryRequest.php         # Category update validation
-├── Review/
-│    ├── StoreReviewRequest.php            # Review creation with image upload
-│    └── UpdateReviewRequest.php           # Review update validation
-└── ContactFormRequest.php
+### 👥 Manajemen Pengguna
+- **User Management**: Kelola profil dan data pengguna
+- **Role-Based Access**: Sistem peran dan permission
+- **Customer Support**: Handle tiket dukungan pelanggan
+- **Activity Log**: Audit trail aktivitas pengguna
+- **Bulk User Operations**: Operasi massal pengguna
 
-app/Http/Middleware/
-├── AdminMiddleware.php                   # Admin access control
-├── CartMiddleware.php                    # Cart session management
-├── CartNotEmptyMiddleware.php            # Checkout validation
-├── CheckUserStatus.php                   # Account status monitoring
-├── EnsureEmailIsVerified.php
-├── RedirectIfAuthenticated.php          # Login optimization
-├── RoleMiddleware.php                    # Role-based access control
-└── PermissionMiddleware.php              # Granular permission system
-```
+### 💰 Manajemen Keuangan
+- **Sales Reports**: Laporan penjualan detail
+- **Payment Tracking**: Monitor semua transaksi
+- **Tax Management**: Perhitungan PPN 11%
+- **Profit Analysis**: Analisis margin keuntungan
+- **Revenue Forecasting**: Prediksi pendapatan
 
-#### 🔧 System Configuration
-```
-routes/
-├── web.php                               # Public routes (80+ endpoints)
-└── admin.php                             # Admin routes (120+ endpoints)
+### 🎨 Content Management
+- **Banner Management**: Kelola banner promosi
+- **Page Builder**: Buat halaman custom
+- **SEO Tools**: Optimasi mesin pencari
+- **Newsletter**: Kelola subscriber dan campaign
 
-config/
-└── tokosaya.php                          # Application configuration (20+ sections)
-
-app/Helpers/
-├── PriceHelper.php                       # Currency formatting utilities
-└── ImageHelper.php                       # Image processing utilities
-
-app/Collections/
-└── ProductCollection.php                 # Advanced product collection methods (35+ methods)
-```
+### ⚙️ Pengaturan Sistem
+- **General Settings**: Konfigurasi umum aplikasi
+- **Payment Gateway**: Setup metode pembayaran
+- **Shipping Zones**: Konfigurasi zona pengiriman
+- **Email Templates**: Customize template email
+- **Backup & Restore**: Backup otomatis database
 
 ---
 
-### Frontend Architecture (38 files)
+## 📖 Panduan Penggunaan Pelanggan
 
-#### 🏗️ Core Layout System (3 files)
-```
-resources/views/layouts/
-├── app.blade.php                         # Main customer layout (Bootstrap 5.3 + Alpine.js)
-├── auth.blade.php                        # Authentication layout (Split-screen design)
-└── checkout.blade.php                    # Checkout-specific layout (Progress indicators)
-```
+### 1. Registrasi dan Login
 
-#### 🔐 Authentication System (2 files)
-```
-resources/views/auth/
-├── login.blade.php                       # Login form with MFA support (200+ lines)
-└── register.blade.php                    # Multi-step registration wizard (250+ lines)
-```
+#### Cara Registrasi:
+1. Klik tombol **"Daftar"** di pojok kanan atas
+2. Isi form registrasi:
+   - Nama lengkap
+   - Email aktif
+   - Password (minimal 8 karakter)
+   - Konfirmasi password
+3. Centang persetujuan syarat dan ketentuan
+4. Klik **"Daftar Sekarang"**
+5. Cek email untuk verifikasi akun
+6. Klik link verifikasi di email
+7. Akun siap digunakan
 
-#### 🛍️ Product Experience (7 files)
-```
-resources/views/products/
-├── index.blade.php                       # Product catalog with advanced filters (400+ lines)
-└── show.blade.php                        # Product detail with 360° gallery (500+ lines)
+#### Cara Login:
+1. Klik tombol **"Masuk"** di pojok kanan atas
+2. Masukkan email dan password
+3. Klik **"Masuk"**
+4. Akan diarahkan ke dashboard atau halaman sebelumnya
 
-resources/views/categories/
-├── index.blade.php                       # Category listing with subcategories (300+ lines)
-└── show.blade.php                        # Category products with filters (350+ lines)
+### 2. Mencari dan Melihat Produk
 
-resources/views/brands/
-├── index.blade.php                       # Brand showcase with statistics (250+ lines)
-└── show.blade.php                        # Brand products display (300+ lines)
+#### Cara Mencari Produk:
+1. Gunakan kotak pencarian di header
+2. Ketik nama produk atau kata kunci
+3. Pilih dari saran yang muncul atau tekan Enter
+4. Gunakan filter di sidebar kiri:
+   - **Kategori**: Pilih kategori yang diinginkan
+   - **Harga**: Set range harga min-max
+   - **Merek**: Filter berdasarkan brand
+   - **Rating**: Pilih rating minimum
+   - **Lokasi**: Filter berdasarkan kota
 
-resources/views/search/
-└── index.blade.php                       # Advanced search with suggestions (400+ lines)
-```
+#### Cara Melihat Detail Produk:
+1. Klik pada gambar atau nama produk
+2. Di halaman detail, Anda dapat:
+   - Lihat galeri foto produk
+   - Baca deskripsi lengkap
+   - Pilih varian (warna, ukuran, dll)
+   - Lihat spesifikasi teknis
+   - Baca review dari pembeli lain
+   - Cek ketersediaan stok
 
-#### 🛒 Shopping Experience (3 files)
-```
-resources/views/cart/
-└── index.blade.php                       # Shopping cart with real-time updates (350+ lines)
+### 3. Menambah ke Keranjang dan Wishlist
 
-resources/views/checkout/
-├── index.blade.php                       # Multi-step checkout process (600+ lines)
-└── success.blade.php                     # Order confirmation page (200+ lines)
+#### Cara Menambah ke Keranjang:
+1. Di halaman detail produk:
+   - Pilih varian yang diinginkan
+   - Tentukan jumlah qty
+   - Klik **"Tambah ke Keranjang"**
+2. Atau dari halaman katalog:
+   - Hover ke produk
+   - Klik ikon keranjang
 
-resources/views/wishlist/
-└── index.blade.php                       # Wishlist with sharing features (300+ lines)
-```
+#### Cara Menambah ke Wishlist:
+1. Klik ikon hati (♥) di produk
+2. Produk akan tersimpan di wishlist
+3. Akses wishlist melalui menu profil
 
-#### 📦 Order Management (4 files)
-```
-resources/views/orders/
-├── index.blade.php                       # Order history with filtering (400+ lines)
-├── show.blade.php                        # Order details with timeline (450+ lines)
-└── track.blade.php                       # Order tracking with map (300+ lines)
+### 4. Proses Checkout
 
-resources/views/compare/
-└── index.blade.php                       # Product comparison table (350+ lines)
-```
+#### Langkah-langkah Checkout:
+1. **Buka Keranjang**:
+   - Klik ikon keranjang di header
+   - Review item dan qty
+   - Update atau hapus item jika perlu
+   - Klik **"Checkout"**
 
-#### 👤 User Profile System (5 files)
-```
-resources/views/profile/
-├── index.blade.php                       # User dashboard with statistics (400+ lines)
-├── edit.blade.php                        # Profile management with avatar (350+ lines)
-├── addresses.blade.php                   # Address management with maps (400+ lines)
-├── reviews.blade.php                     # Review management with analytics (300+ lines)
-└── notifications.blade.php               # Notification center with filters (250+ lines)
-```
+2. **Step 1 - Informasi Pengiriman**:
+   - Pilih alamat pengiriman
+   - Atau tambah alamat baru
+   - Pilih expedisi pengiriman
+   - Pilih jenis layanan (reguler/express)
 
-#### 📊 Admin Panel (5 files)
-```
-resources/views/admin/
-├── dashboard.blade.php                   # Business intelligence dashboard (600+ lines)
-├── analytics.blade.php                   # Interactive analytics with charts (500+ lines)
-└── users/
-    ├── index.blade.php                   # User management with bulk operations (450+ lines)
-    └── show.blade.php                    # User profile details (400+ lines)
+3. **Step 2 - Metode Pembayaran**:
+   - Pilih metode pembayaran:
+     - Transfer Bank (BCA, Mandiri, BRI, BNI)
+     - E-Wallet (GoPay, OVO, DANA)
+     - Kartu Kredit/Debit
+     - Virtual Account
 
-resources/views/admin/reviews/
-└── index.blade.php                       # Review moderation system (400+ lines)
+4. **Step 3 - Review Pesanan**:
+   - Cek kembali detail pesanan
+   - Masukkan kode kupon (jika ada)
+   - Lihat ringkasan biaya
+   - Klik **"Bayar Sekarang"**
 
-resources/views/admin/categories/
-└── index.blade.php                       # Category management with tree view (350+ lines)
-```
+5. **Pembayaran**:
+   - Ikuti instruksi pembayaran
+   - Upload bukti transfer (jika diperlukan)
+   - Pesanan akan diproses
 
-#### 🏠 Public Pages (6 files)
-```
-resources/views/
-├── home.blade.php                        # Homepage with hero carousel (500+ lines)
-├── about.blade.php                       # Company profile with team (400+ lines)
-├── contact.blade.php                     # Contact form with office info (650+ lines)
-└── faq.blade.php                         # Interactive FAQ system (750+ lines)
+### 5. Tracking Pesanan
 
-resources/views/components/
-├── header.blade.php                      # Navigation header with search (300+ lines)
-└── footer.blade.php                      # Site footer with links (200+ lines)
-```
+#### Cara Melacak Pesanan:
+1. Login ke akun Anda
+2. Masuk ke menu **"Pesanan Saya"**
+3. Pilih pesanan yang ingin dilacak
+4. Lihat status real-time:
+   - Menunggu Pembayaran
+   - Pembayaran Dikonfirmasi
+   - Diproses
+   - Dikirim
+   - Dalam Perjalanan
+   - Tiba di Tujuan
+   - Selesai
 
-#### ❌ Error Pages (2 files)
-```
-resources/views/errors/
-├── 404.blade.php                         # Custom 404 with search suggestions (350+ lines)
-└── 500.blade.php                         # Server error with status monitoring (500+ lines)
-```
+#### Fitur Tracking:
+- **Timeline Status**: Lihat progress pesanan
+- **Nomor Resi**: Track di website ekspedisi
+- **Estimasi Tiba**: Perkiraan waktu sampai
+- **Update Real-time**: Notifikasi setiap perubahan status
 
----
+### 6. Review dan Rating
 
-## 🚀 Installation Guide
-
-### Prerequisites
-- **PHP 8.2+** with required extensions
-- **MySQL 8.0+** or MariaDB 10.6+
-- **Composer 2.5+** for dependency management
-- **Node.js 18+** & **npm 9+** for asset compilation
-- **Git** for version control
-
-### Step 1: Clone Repository
-```bash
-git clone https://github.com/your-company/tokosaya.git
-cd tokosaya
-```
-
-### Step 2: Install Dependencies
-```bash
-# Install PHP dependencies
-composer install
-
-# Install Node.js dependencies
-npm install
-```
-
-### Step 3: Environment Configuration
-```bash
-# Copy environment file
-cp .env.example .env
-
-# Generate application key
-php artisan key:generate
-```
-
-### Step 4: Database Setup
-```bash
-# Create database
-mysql -u root -p -e "CREATE DATABASE tokosaya CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-# Import optimized schema
-mysql -u root -p tokosaya < database/TokoSaya.sql
-
-# Or run migrations (alternative)
-php artisan migrate --seed
-```
-
-### Step 5: Asset Compilation
-```bash
-# Development build
-npm run dev
-
-# Production build
-npm run build
-```
-
-### Step 6: Application Setup
-```bash
-# Create storage links
-php artisan storage:link
-
-# Cache configuration (production)
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-
-# Start development server
-php artisan serve
-```
+#### Cara Memberikan Review:
+1. Masuk ke halaman detail pesanan yang sudah selesai
+2. Klik **"Beri Ulasan"** pada produk
+3. Berikan rating (1-5 bintang)
+4. Tulis review Anda
+5. Upload foto produk (opsional)
+6. Klik **"Kirim Ulasan"**
 
 ---
 
-## ⚙️ Configuration
+## 🔧 Panduan Penggunaan Admin
 
-### Environment Variables
-```env
-# Application
-APP_NAME="TokoSaya"
-APP_ENV=production
-APP_KEY=base64:your-generated-key
-APP_DEBUG=false
-APP_URL=https://tokosaya.id
+### 1. Login Admin
 
-# Database
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=tokosaya
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
+#### Cara Masuk Dashboard Admin:
+1. Akses URL: `yoursite.com/admin`
+2. Masukkan kredensial admin
+3. Klik **"Login"**
+4. Akan diarahkan ke dashboard admin
 
-# Cache
-CACHE_DRIVER=redis
-SESSION_DRIVER=redis
-QUEUE_CONNECTION=redis
+### 2. Dashboard Overview
 
-# Mail
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.mailtrap.io
-MAIL_PORT=2525
-MAIL_USERNAME=your_username
-MAIL_PASSWORD=your_password
+#### Fitur Dashboard:
+- **Statistik Real-time**: Penjualan hari ini, pengguna online, pesanan baru
+- **Grafik Penjualan**: Tren penjualan 30 hari terakhir
+- **Top Products**: Produk terlaris
+- **Recent Orders**: Pesanan terbaru
+- **System Status**: Status server dan database
+- **Quick Actions**: Shortcut ke fungsi penting
 
-# Payment Gateways
-MIDTRANS_SERVER_KEY=your_midtrans_server_key
-MIDTRANS_CLIENT_KEY=your_midtrans_client_key
-MIDTRANS_IS_PRODUCTION=false
+### 3. Manajemen Produk
 
-# File Storage
-FILESYSTEM_DISK=public
-AWS_ACCESS_KEY_ID=your_aws_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret
+#### Cara Menambah Produk Baru:
+1. Masuk ke menu **"Produk"** → **"Tambah Produk"**
+2. Isi informasi dasar:
+   - Nama produk
+   - Deskripsi singkat
+   - Deskripsi lengkap
+   - SKU (kode produk)
+   - Kategori
+   - Merek
 
-# Services
-GOOGLE_MAPS_API_KEY=your_google_maps_key
-FIREBASE_SERVER_KEY=your_firebase_key
-```
+3. Isi informasi harga:
+   - Harga jual
+   - Harga coret (jika ada diskon)
+   - Margin keuntungan
 
-### TokoSaya Configuration (`config/tokosaya.php`)
-```php
-return [
-    'app' => [
-        'name' => 'TokoSaya',
-        'version' => '1.0.0',
-        'timezone' => 'Asia/Jakarta',
-        'currency' => 'IDR',
-        'locale' => 'id',
-    ],
-    
-    'features' => [
-        'guest_checkout' => true,
-        'product_reviews' => true,
-        'wishlist' => true,
-        'compare_products' => true,
-        'loyalty_program' => true,
-    ],
-    
-    'limits' => [
-        'products_per_page' => 24,
-        'max_cart_items' => 50,
-        'max_wishlist_items' => 100,
-        'max_addresses' => 5,
-    ],
-    
-    'payment' => [
-        'gateways' => ['midtrans', 'xendit', 'doku'],
-        'currencies' => ['IDR'],
-        'tax_rate' => 0.11, // 11% PPN
-    ],
-    
-    'shipping' => [
-        'providers' => ['jne', 'jnt', 'sicepat', 'pos'],
-        'free_shipping_threshold' => 250000, // Rp 250,000
-        'same_day_cities' => ['Jakarta', 'Bandung', 'Surabaya'],
-    ]
-];
-```
+4. Upload gambar:
+   - Gambar utama (wajib)
+   - Gambar tambahan (maksimal 10)
+   - Alt text untuk SEO
 
----
+5. Kelola inventory:
+   - Stok tersedia
+   - Minimum stok
+   - Track inventory (ya/tidak)
 
-## 📖 Usage Documentation
+6. SEO Settings:
+   - Meta title
+   - Meta description
+   - URL slug
 
-### Customer Workflow
-```
-1. Registration/Login
-   ├── User registers with email verification
-   ├── Profile completion with address
-   └── Phone number verification (optional)
+7. Klik **"Simpan Produk"**
 
-2. Product Discovery
-   ├── Browse categories or search products
-   ├── Use filters (price, brand, rating, etc.)
-   ├── View product details with images/reviews
-   └── Add to cart or wishlist
+#### Cara Edit Produk:
+1. Masuk ke **"Produk"** → **"Semua Produk"**
+2. Cari produk yang ingin diedit
+3. Klik **"Edit"**
+4. Update informasi yang diperlukan
+5. Klik **"Update Produk"**
 
-3. Shopping Cart
-   ├── Manage quantities and variants
-   ├── Apply coupons and discounts
-   ├── Calculate shipping costs
-   └── Proceed to checkout
+#### Bulk Operations:
+1. Pilih multiple produk dengan checkbox
+2. Pilih aksi dari dropdown:
+   - Update status (aktif/nonaktif)
+   - Update kategori
+   - Update harga (persentase)
+   - Hapus produk
+3. Klik **"Terapkan"**
 
-4. Checkout Process
-   ├── Step 1: Delivery information
-   ├── Step 2: Payment method selection
-   ├── Step 3: Order review and confirmation
-   └── Payment processing
+### 4. Manajemen Pesanan
 
-5. Order Management
-   ├── Track order status in real-time
-   ├── Download invoice and receipts
-   ├── Request returns/refunds if needed
-   └── Leave product reviews
-```
+#### Cara Memproses Pesanan:
+1. Masuk ke menu **"Pesanan"**
+2. Lihat daftar pesanan dengan status:
+   - **Pending**: Menunggu konfirmasi
+   - **Processing**: Sedang diproses
+   - **Shipped**: Sudah dikirim
+   - **Delivered**: Sudah sampai
+   - **Cancelled**: Dibatalkan
 
-### Admin Workflow
-```
-1. Dashboard Overview
-   ├── View key business metrics
-   ├── Monitor recent orders and activities
-   ├── Check system health status
-   └── Access quick actions
+3. Klik pesanan untuk melihat detail
+4. Update status pesanan sesuai progress
+5. Tambahkan nomor resi jika sudah dikirim
+6. Kirim notifikasi ke customer
 
-2. Product Management
-   ├── Add/edit products with variants
-   ├── Manage categories and brands
-   ├── Upload product images
-   ├── Set pricing and inventory
-   └── Monitor product performance
+#### Cara Generate Invoice:
+1. Buka detail pesanan
+2. Klik **"Generate Invoice"**
+3. Download atau print invoice
+4. Kirim ke customer via email
 
-3. Order Processing
-   ├── View and manage all orders
-   ├── Update order status and tracking
-   ├── Process payments and refunds
-   ├── Generate shipping labels
-   └── Handle customer communications
+### 5. Manajemen Pengguna
 
-4. User Management
-   ├── View customer profiles and history
-   ├── Manage user roles and permissions
-   ├── Handle customer support tickets
-   └── Moderate product reviews
+#### Cara Melihat Data Customer:
+1. Masuk ke menu **"Pengguna"** → **"Customers"**
+2. Lihat daftar semua customer
+3. Filter berdasarkan:
+   - Status akun
+   - Tanggal registrasi
+   - Total pembelian
+   - Lokasi
 
-5. Analytics & Reports
-   ├── Sales performance analysis
-   ├── Customer behavior insights
-   ├── Inventory management reports
-   ├── Financial statements
-   └── Marketing campaign effectiveness
-```
+#### Cara Kelola Admin:
+1. Masuk ke **"Pengguna"** → **"Admin"**
+2. Untuk tambah admin baru:
+   - Klik **"Tambah Admin"**
+   - Isi data admin
+   - Set role dan permission
+   - Kirim kredensial via email
+
+### 6. Reports dan Analytics
+
+#### Cara Melihat Laporan Penjualan:
+1. Masuk ke menu **"Laporan"** → **"Penjualan"**
+2. Pilih periode laporan
+3. Filter berdasarkan:
+   - Kategori produk
+   - Metode pembayaran
+   - Status pesanan
+4. Export ke Excel/PDF
+
+#### Analytics yang Tersedia:
+- **Sales Performance**: Tren penjualan dan revenue
+- **Product Analytics**: Produk terlaris dan slow moving
+- **Customer Behavior**: Pattern pembelian customer
+- **Inventory Report**: Status stok dan reorder point
+- **Payment Report**: Analisis metode pembayaran
 
 ---
 
-## 🔧 Development Guide
+## ❓ FAQ (Frequently Asked Questions)
 
-### Code Standards
-- **PSR-12** coding standard compliance
-- **SOLID** principles implementation
-- **DRY** (Don't Repeat Yourself) approach
-- **KISS** (Keep It Simple, Stupid) methodology
-- **Comprehensive documentation** for all methods
-- **Type hints** for all parameters and return values
+### Untuk Pelanggan
 
-### Development Workflow
-```bash
-# Create feature branch
-git checkout -b feature/new-feature
+**Q: Bagaimana cara reset password?**
+A: Klik "Lupa Password" di halaman login, masukkan email, dan ikuti instruksi di email yang dikirim.
 
-# Make changes following conventions
-# - Use descriptive commit messages
-# - Follow PSR-12 coding standards
-# - Add/update tests for new features
-# - Update documentation
+**Q: Kenapa pesanan saya belum sampai?**
+A: Cek status tracking di "Pesanan Saya". Jika ada masalah, hubungi customer service melalui live chat.
 
-# Run tests before committing
-php artisan test
-npm run test
+**Q: Bisakah mengubah alamat setelah checkout?**
+A: Alamat hanya bisa diubah jika pesanan belum diproses. Hubungi customer service segera.
 
-# Submit pull request with description
-git push origin feature/new-feature
-```
+**Q: Bagaimana cara menggunakan kupon diskon?**
+A: Masukkan kode kupon di halaman checkout pada kolom "Kode Promo" sebelum pembayaran.
 
-### Adding New Features
+**Q: Apakah bisa COD (Cash on Delivery)?**
+A: Saat ini belum tersedia COD. Gunakan metode pembayaran yang tersedia: transfer bank, e-wallet, atau kartu kredit.
 
-#### 1. Create Model with Migration
-```bash
-php artisan make:model NewModel -m
-```
+### Untuk Admin
 
-#### 2. Define Model Relationships
-```php
-class NewModel extends Model
-{
-    protected $fillable = ['field1', 'field2'];
-    
-    public function relatedModel()
-    {
-        return $this->belongsTo(RelatedModel::class);
-    }
-}
-```
+**Q: Bagaimana backup data?**
+A: Backup otomatis dilakukan setiap hari. Untuk backup manual, masuk ke "Pengaturan" → "Backup & Restore".
 
-#### 3. Create Controller with Form Requests
-```bash
-php artisan make:controller NewModelController
-php artisan make:request StoreNewModelRequest
-```
+**Q: Bagaimana menambah metode pembayaran baru?**
+A: Masuk ke "Pengaturan" → "Payment Gateway", lalu configure API credentials untuk gateway baru.
 
-#### 4. Add Routes
-```php
-// In routes/web.php or routes/admin.php
-Route::resource('new-models', NewModelController::class);
-```
+**Q: Bisakah import produk dari Excel?**
+A: Ya, gunakan fitur "Import Produk" di menu Produk dengan template Excel yang disediakan.
 
-#### 5. Create Views
-```bash
-# Create view directory
-mkdir resources/views/new-models
-
-# Create view files
-touch resources/views/new-models/index.blade.php
-touch resources/views/new-models/show.blade.php
-```
-
-### Database Conventions
-- **Table names:** plural, snake_case (e.g., `product_categories`)
-- **Column names:** snake_case (e.g., `created_at`)
-- **Primary keys:** `id` (auto-incrementing integer)
-- **Foreign keys:** `model_id` (e.g., `user_id`)
-- **Timestamps:** `created_at`, `updated_at`
-- **Soft deletes:** `deleted_at`
-
-### API Development
-```php
-// API Controller example
-class ApiProductController extends Controller
-{
-    public function index(Request $request)
-    {
-        $products = Product::with(['category', 'images'])
-            ->when($request->search, function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%");
-            })
-            ->paginate(24);
-            
-        return ProductResource::collection($products);
-    }
-}
-```
+**Q: Bagaimana setting ongkir otomatis?**
+A: Konfigurasi di "Pengaturan" → "Shipping", masukkan API key dari expedisi yang digunakan.
 
 ---
 
-## 🧪 Testing
+## 🛠️ Dukungan Teknis
 
-### Test Structure
-```
-tests/
-├── Feature/                              # Integration tests
-│   ├── Auth/
-│   │   ├── LoginTest.php
-│   │   └── RegistrationTest.php
-│   ├── Product/
-│   │   ├── ProductCatalogTest.php
-│   │   └── ProductSearchTest.php
-│   ├── Cart/
-│   │   ├── AddToCartTest.php
-│   │   └── CheckoutTest.php
-│   └── Order/
-│       ├── OrderCreationTest.php
-│       └── OrderTrackingTest.php
-│
-└── Unit/                                 # Unit tests
-    ├── Models/
-    │   ├── UserTest.php
-    │   ├── ProductTest.php
-    │   └── OrderTest.php
-    ├── Services/
-    │   ├── CartServiceTest.php
-    │   ├── PaymentServiceTest.php
-    │   └── ShippingServiceTest.php
-    └── Helpers/
-        ├── PriceHelperTest.php
-        └── ImageHelperTest.php
-```
+### Kontak Support
+- **Email**: support@tokosaya.com
+- **WhatsApp**: +62 821-xxxx-xxxx
+- **Live Chat**: Tersedia 24/7 di website
+- **Telepon**: 021-xxxx-xxxx (jam kerja: 09:00 - 17:00 WIB)
 
-### Running Tests
-```bash
-# Run all tests
-php artisan test
+### Jam Operasional
+- **Live Chat**: 24/7
+- **Email Support**: Respon maksimal 24 jam
+- **Telepon**: Senin - Jumat, 09:00 - 17:00 WIB
 
-# Run specific test suite
-php artisan test --testsuite=Feature
+### System Requirements
+**Untuk Pengguna:**
+- Browser: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+- JavaScript harus aktif
+- Cookies harus aktif
+- Koneksi internet stabil
 
-# Run with coverage report
-php artisan test --coverage
+**Untuk Admin:**
+- Browser modern dengan resolusi minimal 1366x768
+- RAM minimal 4GB untuk performa optimal
+- Koneksi internet stabil
 
-# Run specific test file
-php artisan test tests/Feature/Auth/LoginTest.php
+### Troubleshooting Umum
 
-# Run tests with parallel processing
-php artisan test --parallel
-```
+**Masalah Login:**
+1. Pastikan email dan password benar
+2. Clear browser cache dan cookies
+3. Coba browser lain
+4. Reset password jika perlu
 
-### Test Examples
-```php
-// Feature Test Example
-class ProductCatalogTest extends TestCase
-{
-    use RefreshDatabase;
-    
-    public function test_user_can_view_product_catalog()
-    {
-        $products = Product::factory(10)->create();
-        
-        $response = $this->get('/products');
-        
-        $response->assertStatus(200)
-                ->assertViewIs('products.index')
-                ->assertViewHas('products');
-    }
-    
-    public function test_user_can_filter_products_by_category()
-    {
-        $category = Category::factory()->create();
-        $products = Product::factory(5)->create(['category_id' => $category->id]);
-        
-        $response = $this->get("/products?category={$category->id}");
-        
-        $response->assertStatus(200);
-        $this->assertCount(5, $response->viewData('products'));
-    }
-}
+**Masalah Loading Lambat:**
+1. Check koneksi internet
+2. Clear browser cache
+3. Disable extensions browser
+4. Coba incognito mode
 
-// Unit Test Example
-class CartServiceTest extends TestCase
-{
-    public function test_add_product_to_cart()
-    {
-        $user = User::factory()->create();
-        $product = Product::factory()->create();
-        
-        $cartService = new CartService();
-        $result = $cartService->addToCart($user, $product, 2);
-        
-        $this->assertTrue($result);
-        $this->assertDatabaseHas('cart_items', [
-            'user_id' => $user->id,
-            'product_id' => $product->id,
-            'quantity' => 2
-        ]);
-    }
-}
-```
+**Error saat Upload Gambar:**
+1. Pastikan format gambar: JPG, PNG, GIF
+2. Ukuran maksimal: 2MB per gambar
+3. Gunakan koneksi internet stabil
 
 ---
 
-## 📈 Performance
+## 📝 Changelog
 
-### Performance Targets
-- **Page Load Time:** < 2 seconds
-- **Time to First Byte (TTFB):** < 500ms
-- **Largest Contentful Paint (LCP):** < 2.5 seconds
-- **First Input Delay (FID):** < 100ms
-- **Cumulative Layout Shift (CLS):** < 0.1
-- **Lighthouse Score:** 95+ for all pages
+### Version 1.0.0 (Juli 2025)
+- ✅ Launch platform TokoSaya
+- ✅ Fitur lengkap customer dan admin
+- ✅ Integrasi payment gateway
+- ✅ Sistem tracking real-time
+- ✅ Mobile responsive design
 
-### Optimization Strategies
-
-#### Database Optimization
-```sql
--- Optimized indexes for common queries
-CREATE INDEX idx_products_category_status ON products(category_id, status);
-CREATE INDEX idx_orders_user_created ON orders(user_id, created_at DESC);
-CREATE INDEX idx_products_search ON products(name, status) USING FULLTEXT;
-
--- Partitioning for large tables
-ALTER TABLE orders PARTITION BY RANGE (YEAR(created_at)) (
-    PARTITION p2023 VALUES LESS THAN (2024),
-    PARTITION p2024 VALUES LESS THAN (2025),
-    PARTITION p2025 VALUES LESS THAN (2026)
-);
-```
-
-#### Caching Strategy
-```php
-// Model caching example
-class Product extends Model
-{
-    public function getCachedProducts($categoryId)
-    {
-        return Cache::tags(['products', 'category:'.$categoryId])
-            ->remember("products.category.{$categoryId}", 3600, function () use ($categoryId) {
-                return $this->where('category_id', $categoryId)
-                          ->where('status', 'active')
-                          ->with(['images', 'brand'])
-                          ->get();
-            });
-    }
-}
-
-// View caching
-Route::get('/products', function () {
-    return Cache::remember('products.index', 1800, function () {
-        return view('products.index', [
-            'products' => Product::paginate(24),
-            'categories' => Category::active()->get()
-        ]);
-    });
-});
-```
-
-#### Asset Optimization
-```javascript
-// Vite configuration for optimal bundling
-export default defineConfig({
-    build: {
-        rollupOptions: {
-            output: {
-                manualChunks: {
-                    vendor: ['bootstrap', 'alpinejs'],
-                    admin: ['chart.js', 'datatables']
-                }
-            }
-        }
-    },
-    plugins: [
-        laravel(['resources/css/app.css', 'resources/js/app.js']),
-        // Image optimization
-        {
-            name: 'imagemin',
-            generateBundle() {
-                // Compress images during build
-            }
-        }
-    ]
-});
-```
-
-### Performance Monitoring
-```php
-// Custom performance middleware
-class PerformanceMiddleware
-{
-    public function handle($request, Closure $next)
-    {
-        $start = microtime(true);
-        
-        $response = $next($request);
-        
-        $duration = microtime(true) - $start;
-        
-        // Log slow requests
-        if ($duration > 1.0) {
-            Log::warning('Slow request detected', [
-                'url' => $request->fullUrl(),
-                'duration' => $duration,
-                'memory' => memory_get_peak_usage(true)
-            ]);
-        }
-        
-        return $response;
-    }
-}
-```
+### Rencana Update Mendatang
+- 🔄 Mobile app Android & iOS
+- 🔄 Sistem affiliasi
+- 🔄 Multi-vendor marketplace
+- 🔄 AI-powered product recommendation
+- 🔄 Voice search
 
 ---
 
-## 🛡️ Security
+## 📄 Lisensi
 
-### Security Features
-- **CSRF Protection** on all forms
-- **XSS Prevention** with output escaping
-- **SQL Injection Protection** via Eloquent ORM
-- **Authentication Security** with rate limiting
-- **Authorization** with role-based access control
-- **File Upload Security** with type validation
-- **HTTPS Enforcement** in production
-- **Security Headers** implementation
-
-### Security Implementation
-```php
-// CSRF Protection (automatic in Laravel)
-@csrf // In Blade templates
-
-// XSS Prevention
-{!! clean($userInput) !!}
-{{ $safeOutput }} // Automatic escaping
-
-// SQL Injection Prevention
-Product::where('name', 'like', '%' . $search . '%')->get(); // Safe with Eloquent
-
-// Rate Limiting
-Route::middleware('throttle:60,1')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
-});
-
-// File Upload Security
-class ImageUploadRequest extends FormRequest
-{
-    public function rules()
-    {
-        return [
-            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-        ];
-    }
-}
-
-// Role-Based Authorization
-class AdminMiddleware
-{
-    public function handle($request, Closure $next)
-    {
-        if (!auth()->user()->hasRole('admin')) {
-            abort(403, 'Unauthorized');
-        }
-        return $next($request);
-    }
-}
-```
-
-### Security Headers
-```php
-// In middleware or web server configuration
-class SecurityHeadersMiddleware
-{
-    public function handle($request, Closure $next)
-    {
-        $response = $next($request);
-        
-        return $response->withHeaders([
-            'X-Content-Type-Options' => 'nosniff',
-            'X-Frame-Options' => 'DENY',
-            'X-XSS-Protection' => '1; mode=block',
-            'Strict-Transport-Security' => 'max-age=31536000; includeSubDomains',
-            'Content-Security-Policy' => "default-src 'self'; script-src 'self' 'unsafe-inline'",
-            'Referrer-Policy' => 'strict-origin-when-cross-origin'
-        ]);
-    }
-}
-```
-
-### Security Checklist
-- [ ] SSL/TLS certificate installed and configured
-- [ ] All forms include CSRF tokens
-- [ ] User input is validated and sanitized
-- [ ] File uploads are restricted and validated
-- [ ] Database queries use parameter binding
-- [ ] Sensitive data is encrypted in database
-- [ ] Session configuration is secure
-- [ ] Error messages don't reveal sensitive information
-- [ ] Security headers are implemented
-- [ ] Dependencies are regularly updated
+TokoSaya menggunakan lisensi MIT. Untuk informasi detail, lihat file LICENSE di repository.
 
 ---
 
-## 🌐 Deployment
+**© 2025 TokoSaya E-commerce Platform. All rights reserved.**
 
-### Production Server Requirements
-```yaml
-Minimum Requirements:
-  CPU: 4 cores (2.4 GHz)
-  RAM: 8 GB
-  Storage: 100 GB SSD
-  Bandwidth: 1 Gbps
-
-Recommended Requirements:
-  CPU: 8 cores (3.0 GHz)
-  RAM: 16 GB
-  Storage: 500 GB NVMe SSD
-  Bandwidth: 10 Gbps
-  
-Database Server:
-  CPU: 4 cores dedicated
-  RAM: 16 GB
-  Storage: 1 TB SSD with RAID 1
-  
-Load Balancer:
-  CPU: 2 cores
-  RAM: 4 GB
-  Storage: 50 GB SSD
-```
-
-### Docker Deployment
-```dockerfile
-# Dockerfile
-FROM php:8.2-fpm
-
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip
-
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
-
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Set working directory
-WORKDIR /var/www
-
-# Copy application files
-COPY . .
-
-# Install dependencies
-RUN composer install --optimize-autoloader --no-dev
-
-# Set permissions
-RUN chown -R www-data:www-data /var/www \
-    && chmod -R 755 /var/www/storage
-
-EXPOSE 9000
-CMD ["php-fpm"]
-```
-
-```yaml
-# docker-compose.yml
-version: '3.8'
-
-services:
-  app:
-    build: .
-    container_name: tokosaya-app
-    restart: unless-stopped
-    working_dir: /var/www
-    volumes:
-      - ./:/var/www
-      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
-    networks:
-      - tokosaya-network
-
-  webserver:
-    image: nginx:alpine
-    container_name: tokosaya-webserver
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./:/var/www
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d
-      - ./docker/nginx/ssl:/etc/nginx/ssl
-    networks:
-      - tokosaya-network
-
-  database:
-    image: mysql:8.0
-    container_name: tokosaya-database
-    restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: tokosaya
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_USER: ${DB_USERNAME}
-    volumes:
-      - database-data:/var/lib/mysql
-      - ./database/TokoSaya.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - tokosaya-network
-
-  redis:
-    image: redis:7-alpine
-    container_name: tokosaya-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    networks:
-      - tokosaya-network
-
-networks:
-  tokosaya-network:
-    driver: bridge
-
-volumes:
-  database-data:
-```
-
-### Deployment Script
-```bash
-#!/bin/bash
-# deploy.sh
-
-set -e
-
-echo "🚀 Starting TokoSaya deployment..."
-
-# Pull latest code
-git pull origin main
-
-# Install/update dependencies
-composer install --optimize-autoloader --no-dev
-npm ci
-npm run build
-
-# Database migrations
-php artisan migrate --force
-
-# Clear and cache configurations
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-php artisan event:cache
-
-# Optimize application
-php artisan optimize
-
-# Set permissions
-chmod -R 755 storage bootstrap/cache
-chown -R www-data:www-data storage bootstrap/cache
-
-# Restart services
-systemctl restart php8.2-fpm
-systemctl restart nginx
-
-# Verify deployment
-php artisan about
-
-echo "✅ Deployment completed successfully!"
-```
-
-### Server Configuration
-
-#### Nginx Configuration
-```nginx
-server {
-    listen 80;
-    listen [::]:80;
-    server_name tokosaya.id www.tokosaya.id;
-    return 301 https://$server_name$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name tokosaya.id www.tokosaya.id;
-    root /var/www/tokosaya/public;
-
-    # SSL Configuration
-    ssl_certificate /path/to/ssl/cert.pem;
-    ssl_certificate_key /path/to/ssl/private.key;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512;
-    ssl_prefer_server_ciphers off;
-
-    # Security Headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-
-    # Performance
-    gzip on;
-    gzip_vary on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-
-    # Static file caching
-    location ~* \.(jpg|jpeg|png|gif|ico|css|js|pdf|txt)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # Laravel application
-    index index.php;
-    charset utf-8;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location = /favicon.ico { access_log off; log_not_found off; }
-    location = /robots.txt  { access_log off; log_not_found off; }
-
-    error_page 404 /index.php;
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-        include fastcgi_params;
-        fastcgi_hide_header X-Powered-By;
-    }
-
-    location ~ /\.(?!well-known).* {
-        deny all;
-    }
-}
-```
-
-#### PHP-FPM Configuration
-```ini
-; /etc/php/8.2/fpm/pool.d/tokosaya.conf
-[tokosaya]
-user = www-data
-group = www-data
-listen = /run/php/php8.2-fpm-tokosaya.sock
-listen.owner = www-data
-listen.group = www-data
-listen.mode = 0660
-
-pm = dynamic
-pm.max_children = 50
-pm.start_servers = 5
-pm.min_spare_servers = 5
-pm.max_spare_servers = 35
-pm.max_requests = 1000
-
-; Performance tuning
-php_admin_value[memory_limit] = 256M
-php_admin_value[max_execution_time] = 300
-php_admin_value[upload_max_filesize] = 10M
-php_admin_value[post_max_size] = 10M
-```
-
-### Load Balancer Setup
-```nginx
-# /etc/nginx/conf.d/load-balancer.conf
-upstream tokosaya_backend {
-    least_conn;
-    server 10.0.1.10:80 weight=3 max_fails=3 fail_timeout=30s;
-    server 10.0.1.11:80 weight=3 max_fails=3 fail_timeout=30s;
-    server 10.0.1.12:80 weight=2 max_fails=3 fail_timeout=30s backup;
-}
-
-server {
-    listen 80;
-    server_name tokosaya.id;
-
-    location / {
-        proxy_pass http://tokosaya_backend;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # Health check
-        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503;
-        proxy_connect_timeout 5s;
-        proxy_send_timeout 10s;
-        proxy_read_timeout 10s;
-    }
-}
-```
-
----
-
-## 📊 Monitoring
-
-### Application Monitoring
-```php
-// Custom monitoring middleware
-class ApplicationMonitoringMiddleware
-{
-    public function handle($request, Closure $next)
-    {
-        $start = microtime(true);
-        $startMemory = memory_get_usage(true);
-        
-        $response = $next($request);
-        
-        $duration = microtime(true) - $start;
-        $memoryUsage = memory_get_usage(true) - $startMemory;
-        
-        // Log performance metrics
-        Log::channel('performance')->info('Request completed', [
-            'url' => $request->fullUrl(),
-            'method' => $request->method(),
-            'duration' => round($duration * 1000, 2) . 'ms',
-            'memory' => $this->formatBytes($memoryUsage),
-            'status' => $response->getStatusCode(),
-            'user_id' => auth()->id(),
-            'ip' => $request->ip()
-        ]);
-        
-        // Alert on slow requests
-        if ($duration > 2.0) {
-            $this->alertSlowRequest($request, $duration);
-        }
-        
-        return $response;
-    }
-}
-```
-
-### Health Check Endpoint
-```php
-// routes/web.php
-Route::get('/health', function () {
-    $checks = [
-        'database' => $this->checkDatabase(),
-        'cache' => $this->checkCache(),
-        'storage' => $this->checkStorage(),
-        'queue' => $this->checkQueue(),
-        'external_apis' => $this->checkExternalAPIs()
-    ];
-    
-    $status = collect($checks)->every(fn($check) => $check['status'] === 'ok') ? 'healthy' : 'unhealthy';
-    
-    return response()->json([
-        'status' => $status,
-        'timestamp' => now()->toISOString(),
-        'checks' => $checks,
-        'version' => config('app.version')
-    ], $status === 'healthy' ? 200 : 503);
-});
-```
-
-### Logging Configuration
-```php
-// config/logging.php
-'channels' => [
-    'stack' => [
-        'driver' => 'stack',
-        'channels' => ['single', 'slack'],
-        'ignore_exceptions' => false,
-    ],
-    
-    'performance' => [
-        'driver' => 'daily',
-        'path' => storage_path('logs/performance.log'),
-        'level' => 'info',
-        'days' => 14,
-    ],
-    
-    'security' => [
-        'driver' => 'daily',
-        'path' => storage_path('logs/security.log'),
-        'level' => 'warning',
-        'days' => 90,
-    ],
-    
-    'business' => [
-        'driver' => 'daily',
-        'path' => storage_path('logs/business.log'),
-        'level' => 'info',
-        'days' => 365,
-    ],
-    
-    'slack' => [
-        'driver' => 'slack',
-        'url' => env('LOG_SLACK_WEBHOOK_URL'),
-        'username' => 'TokoSaya Monitor',
-        'emoji' => ':boom:',
-        'level' => 'critical',
-    ],
-];
-```
-
-### Metrics Collection
-```php
-// Custom metrics service
-class MetricsService
-{
-    public function recordOrder($order)
-    {
-        Log::channel('business')->info('Order created', [
-            'order_id' => $order->id,
-            'user_id' => $order->user_id,
-            'total_cents' => $order->total_cents,
-            'items_count' => $order->items->count(),
-            'payment_method' => $order->payment_method_id
-        ]);
-    }
-    
-    public function recordPageView($request)
-    {
-        Cache::increment('page_views:' . date('Y-m-d'));
-        Cache::increment('page_views:' . $request->path() . ':' . date('Y-m-d'));
-    }
-    
-    public function recordUserActivity($user, $action)
-    {
-        ActivityLog::create([
-            'user_id' => $user->id,
-            'action' => $action,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent()
-        ]);
-    }
-}
-```
-
-### Alerting System
-```php
-// Alert service for critical events
-class AlertService
-{
-    public function criticalError($exception, $context = [])
-    {
-        // Log to multiple channels
-        Log::channel('slack')->critical('Critical error occurred', [
-            'message' => $exception->getMessage(),
-            'file' => $exception->getFile(),
-            'line' => $exception->getLine(),
-            'context' => $context,
-            'trace' => $exception->getTraceAsString()
-        ]);
-        
-        // Send email to developers
-        Mail::to(config('app.dev_email'))
-            ->send(new CriticalErrorMail($exception, $context));
-    }
-    
-    public function highOrderVolume($orderCount)
-    {
-        if ($orderCount > 1000) { // Per hour threshold
-            Log::channel('slack')->warning('High order volume detected', [
-                'orders_per_hour' => $orderCount,
-                'timestamp' => now()
-            ]);
-        }
-    }
-    
-    public function lowInventory($product)
-    {
-        if ($product->stock_quantity <= $product->min_stock_level) {
-            Log::channel('business')->warning('Low inventory alert', [
-                'product_id' => $product->id,
-                'product_name' => $product->name,
-                'current_stock' => $product->stock_quantity,
-                'min_level' => $product->min_stock_level
-            ]);
-        }
-    }
-}
-```
-
----
-
-## 🤝 Contributing
-
-### Development Setup
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes following our coding standards
-4. Add tests for new functionality
-5. Ensure all tests pass (`php artisan test`)
-6. Commit your changes (`git commit -m 'Add amazing feature'`)
-7. Push to the branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
-
-### Code Review Process
-1. **Automated Checks**: All PRs must pass automated tests and code quality checks
-2. **Peer Review**: At least one team member must review and approve
-3. **Security Review**: Security-sensitive changes require additional review
-4. **Performance Impact**: Large changes require performance impact assessment
-5. **Documentation**: Updates to documentation must accompany code changes
-
-### Coding Standards
-```php
-// Follow PSR-12 coding standard
-class ProductController extends Controller
-{
-    /**
-     * Display paginated list of products with filtering options.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\View\View
-     */
-    public function index(Request $request): View
-    {
-        $products = Product::query()
-            ->when($request->search, function (Builder $query, string $search): Builder {
-                return $query->where('name', 'like', "%{$search}%");
-            })
-            ->when($request->category, function (Builder $query, int $categoryId): Builder {
-                return $query->where('category_id', $categoryId);
-            })
-            ->with(['category', 'images', 'brand'])
-            ->paginate(24);
-
-        return view('products.index', compact('products'));
-    }
-}
-```
-
-### Git Conventions
-```bash
-# Commit message format
-<type>(<scope>): <subject>
-
-# Types
-feat: new feature
-fix: bug fix
-docs: documentation changes
-style: code style changes (formatting, etc.)
-refactor: code refactoring
-test: adding or updating tests
-chore: maintenance tasks
-
-# Examples
-feat(cart): add guest checkout functionality
-fix(payment): resolve Midtrans webhook validation
-docs(api): add product endpoint documentation
-refactor(user): extract address management to service
-```
-
----
-
-## 📝 License
-
-### MIT License
-
-```
-MIT License
-
-Copyright (c) 2025 TokoSaya E-commerce Platform
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
----
-
-**Last Updated**: July 2025  
-**Version**: 1.0.0  
-**Status**: 🚀 Production Ready  
-**License**: MIT  
-**Maintained by**: TokoSaya Development
+*Dokumen ini terakhir diperbarui: Juli 2025*

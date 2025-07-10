@@ -591,11 +591,19 @@
 
         // Add to cart function
         function addToCart(productId, quantity = 1) {
+            const button = event.target;
+            const originalText = button.textContent;
+
+            // Disable button dan ubah text
+            button.disabled = true;
+            button.textContent = 'Adding...';
+
             fetch('/cart/add', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({
                     product_id: productId,
@@ -606,52 +614,64 @@
             .then(data => {
                 if (data.success) {
                     updateCartCount();
-                    showNotification('Product added to cart successfully!', 'success');
+                    showNotification(data.message || 'Product added to cart successfully!', 'success');
+
+                    // ✅ Berikan feedback visual yang lebih baik
+                    button.textContent = 'Added!';
+                    button.style.background = '#22c55e';
+
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.style.background = '';
+                        button.disabled = false;
+                    }, 2000);
                 } else {
                     showNotification(data.message || 'Failed to add product to cart', 'error');
+                    button.disabled = false;
+                    button.textContent = originalText;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showNotification('Failed to add product to cart', 'error');
+                showNotification('Network error. Please try again.', 'error');
+                button.disabled = false;
+                button.textContent = originalText;
             });
         }
 
         // Toggle wishlist function
         function toggleWishlist(productId) {
             @auth
-            fetch('/wishlist/toggle', {
+            fetch(`/wishlist/toggle/${productId}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    product_id: productId
-                })
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                }
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    updateWishlistCount();
-                    const heartIcon = document.querySelector(`[data-product-id="${productId}"] .btn-wishlist i`);
-                    const heartBtn = document.querySelector(`[data-product-id="${productId}"] .btn-wishlist`);
-                    if (heartIcon && heartBtn) {
-                        if (data.added) {
-                            heartIcon.classList.remove('far');
-                            heartIcon.classList.add('fas');
-                            heartBtn.classList.add('active');
-                            showNotification('Added to wishlist!', 'success');
+                    // Update heart icons
+                    const hearts = document.querySelectorAll(`[onclick="toggleWishlist(${productId})"] i`);
+                    hearts.forEach(heart => {
+                        if (data.in_wishlist) {
+                            heart.classList.remove('far');
+                            heart.classList.add('fas');
                         } else {
-                            heartIcon.classList.remove('fas');
-                            heartIcon.classList.add('far');
-                            heartBtn.classList.remove('active');
-                            showNotification('Removed from wishlist!', 'info');
+                            heart.classList.remove('fas');
+                            heart.classList.add('far');
                         }
-                    }
+                    });
+
+                    // Update wishlist count
+                    updateWishlistCount();
+                    showNotification(data.message, 'success');
+                } else {
+                    showNotification('Error: ' + data.message, 'error');
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => showNotification('Network error', 'error'));
             @else
             window.location.href = '{{ route("login") }}';
             @endauth

@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\PermissionMiddleware::class,
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'user.status' => \App\Http\Middleware\UserStatusMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

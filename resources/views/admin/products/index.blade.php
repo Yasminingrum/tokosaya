@@ -123,191 +123,298 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
+@extends('layouts.admin')
+
+@section('title', 'Manage Products - TokoSaya Admin')
+
+@section('content')
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Products Management</h1>
+            <p class="text-muted mb-0">Manage your product inventory and stock levels</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="exportProducts()">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+            <a href="{{ route('admin.products.create') }}" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i>Add Product
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form id="filterForm" class="row g-3" method="GET">
+                <div class="col-md-3">
+                    <label class="form-label">Search Products</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="search" id="searchInput"
+                               value="{{ request('search') }}" placeholder="Product name, SKU...">
+                        <button class="btn btn-outline-secondary" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" name="category_id" id="categoryFilter">
+                        <option value="">All Categories</option>
+                        @php
+                            // Get categories from database
+                            $categories = \App\Models\Category::where('status', 'active')->get();
+                        @endphp
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" name="status" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Stock Status</label>
+                    <select class="form-select" name="stock_status" id="stockFilter">
+                        <option value="">All Stock</option>
+                        <option value="in_stock" {{ request('stock_status') == 'in_stock' ? 'selected' : '' }}>In Stock</option>
+                        <option value="low_stock" {{ request('stock_status') == 'low_stock' ? 'selected' : '' }}>Low Stock</option>
+                        <option value="out_of_stock" {{ request('stock_status') == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Actions</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-1"></i>Filter
+                        </button>
+                        <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="card shadow mb-4" id="bulkActionsCard" style="display: none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong><span id="selectedCount">0</span> products selected</strong>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-sm" onclick="bulkAction('activate')">
+                        <i class="fas fa-check me-1"></i>Activate
+                    </button>
+                    <button class="btn btn-warning btn-sm" onclick="bulkAction('deactivate')">
+                        <i class="fas fa-pause me-1"></i>Deactivate
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="bulkAction('update_stock')">
+                        <i class="fas fa-boxes me-1"></i>Update Stock
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="bulkAction('delete')">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Products List</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="productsTable">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                            </th>
+                            <th>Image</th>
+                            <th>Product Details</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
                     <tbody id="productsTableBody">
-                        <!-- Sample Data - Replace with dynamic data -->
-                        <tr>
-                            <td><input type="checkbox" class="product-checkbox" value="1"></td>
-                            <td>
-                                <img src="/images/placeholder-product.jpg" class="product-thumbnail"
-                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
-                            </td>
-                            <td>
-                                <div>
-                                    <strong>Samsung Galaxy S23</strong>
-                                    <br><small class="text-muted">SKU: SGS23-256-BLK</small>
-                                    <br><small class="text-muted">Created: Jan 15, 2024</small>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-info">Electronics</span>
-                            </td>
-                            <td>
-                                <strong>Rp 12,999,000</strong>
-                                <br><small class="text-muted">Cost: Rp 10,500,000</small>
-                            </td>
-                            <td>
-                                <span class="badge bg-success">
-                                    <i class="fas fa-boxes me-1"></i>45
-                                </span>
-                                <br><small class="text-muted">Min: 10</small>
-                            </td>
-                            <td>
-                                <span class="badge bg-success">Active</span>
-                                <br><small class="text-muted">Sales: 127</small>
-                            </td>
-                            <td>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                                        Actions
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="/admin/products/1/edit">
-                                            <i class="fas fa-edit me-2"></i>Edit
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="/products/1" target="_blank">
-                                            <i class="fas fa-eye me-2"></i>View
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="duplicateProduct(1)">
-                                            <i class="fas fa-copy me-2"></i>Duplicate
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="#" onclick="updateStock(1)">
-                                            <i class="fas fa-boxes me-2"></i>Update Stock
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="toggleStatus(1)">
-                                            <i class="fas fa-toggle-on me-2"></i>Toggle Status
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteProduct(1)">
-                                            <i class="fas fa-trash me-2"></i>Delete
-                                        </a></li>
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
+                        @php
+                            // Get products from database using the ProductController logic
+                            $query = \App\Models\Product::with(['category', 'brand', 'primaryImage'])
+                                ->select([
+                                    'id', 'name', 'slug', 'sku', 'price_cents', 'compare_price_cents',
+                                    'stock_quantity', 'min_stock_level', 'category_id', 'brand_id',
+                                    'status', 'created_at', 'sale_count'
+                                ]);
 
-                        <tr>
-                            <td><input type="checkbox" class="product-checkbox" value="2"></td>
-                            <td>
-                                <img src="/images/placeholder-product.jpg" class="product-thumbnail"
-                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
-                            </td>
-                            <td>
-                                <div>
-                                    <strong>Nike Air Max 270</strong>
-                                    <br><small class="text-muted">SKU: NAM270-42-WHT</small>
-                                    <br><small class="text-muted">Created: Jan 10, 2024</small>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-warning">Fashion</span>
-                            </td>
-                            <td>
-                                <strong>Rp 1,899,000</strong>
-                                <br><small class="text-muted">Cost: Rp 1,200,000</small>
-                            </td>
-                            <td>
-                                <span class="badge bg-warning">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>8
-                                </span>
-                                <br><small class="text-muted">Min: 10</small>
-                            </td>
-                            <td>
-                                <span class="badge bg-success">Active</span>
-                                <br><small class="text-muted">Sales: 89</small>
-                            </td>
-                            <td>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                                        Actions
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="/admin/products/2/edit">
-                                            <i class="fas fa-edit me-2"></i>Edit
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="/products/2" target="_blank">
-                                            <i class="fas fa-eye me-2"></i>View
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="duplicateProduct(2)">
-                                            <i class="fas fa-copy me-2"></i>Duplicate
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="#" onclick="updateStock(2)">
-                                            <i class="fas fa-boxes me-2"></i>Update Stock
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="toggleStatus(2)">
-                                            <i class="fas fa-toggle-on me-2"></i>Toggle Status
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteProduct(2)">
-                                            <i class="fas fa-trash me-2"></i>Delete
-                                        </a></li>
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
+                            // Apply filters from request
+                            if (request('search')) {
+                                $search = request('search');
+                                $query->where(function($q) use ($search) {
+                                    $q->where('name', 'like', "%{$search}%")
+                                      ->orWhere('sku', 'like', "%{$search}%");
+                                });
+                            }
 
-                        <tr>
-                            <td><input type="checkbox" class="product-checkbox" value="3"></td>
-                            <td>
-                                <img src="/images/placeholder-product.jpg" class="product-thumbnail"
-                                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
-                            </td>
-                            <td>
-                                <div>
-                                    <strong>MacBook Pro 14" M3</strong>
-                                    <br><small class="text-muted">SKU: MBP14-M3-512-SLV</small>
-                                    <br><small class="text-muted">Created: Dec 28, 2023</small>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-info">Electronics</span>
-                            </td>
-                            <td>
-                                <strong>Rp 32,999,000</strong>
-                                <br><small class="text-muted">Cost: Rp 28,500,000</small>
-                            </td>
-                            <td>
-                                <span class="badge bg-danger">
-                                    <i class="fas fa-times me-1"></i>0
-                                </span>
-                                <br><small class="text-muted">Min: 5</small>
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">Out of Stock</span>
-                                <br><small class="text-muted">Sales: 23</small>
-                            </td>
-                            <td>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                                        Actions
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="/admin/products/3/edit">
-                                            <i class="fas fa-edit me-2"></i>Edit
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="/products/3" target="_blank">
-                                            <i class="fas fa-eye me-2"></i>View
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="duplicateProduct(3)">
-                                            <i class="fas fa-copy me-2"></i>Duplicate
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item" href="#" onclick="updateStock(3)">
-                                            <i class="fas fa-boxes me-2"></i>Update Stock
-                                        </a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="toggleStatus(3)">
-                                            <i class="fas fa-toggle-on me-2"></i>Toggle Status
-                                        </a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteProduct(3)">
-                                            <i class="fas fa-trash me-2"></i>Delete
-                                        </a></li>
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
+                            if (request('category_id')) {
+                                $query->where('category_id', request('category_id'));
+                            }
+
+                            if (request('status')) {
+                                $query->where('status', request('status'));
+                            }
+
+                            if (request('stock_status')) {
+                                switch (request('stock_status')) {
+                                    case 'in_stock':
+                                        $query->where('stock_quantity', '>', 'min_stock_level');
+                                        break;
+                                    case 'low_stock':
+                                        $query->whereColumn('stock_quantity', '<=', 'min_stock_level')
+                                              ->where('stock_quantity', '>', 0);
+                                        break;
+                                    case 'out_of_stock':
+                                        $query->where('stock_quantity', 0);
+                                        break;
+                                }
+                            }
+
+                            $products = $query->orderBy('created_at', 'desc')->paginate(20);
+                        @endphp
+
+                        @forelse($products as $product)
+                            <tr>
+                                <td><input type="checkbox" class="product-checkbox" value="{{ $product->id }}"></td>
+                                <td>
+                                    @if($product->primaryImage)
+                                        <img src="{{ $product->primaryImage->url ?? '/images/placeholder-product.jpg' }}"
+                                             class="product-thumbnail"
+                                             style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;"
+                                             alt="{{ $product->name }}">
+                                    @else
+                                        <img src="/images/placeholder-product.jpg"
+                                             class="product-thumbnail"
+                                             style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;"
+                                             alt="No Image">
+                                    @endif
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ $product->name }}</strong>
+                                        <br><small class="text-muted">SKU: {{ $product->sku ?? 'N/A' }}</small>
+                                        <br><small class="text-muted">Created: {{ $product->created_at->format('M d, Y') }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if($product->category)
+                                        <span class="badge bg-info">{{ $product->category->name }}</span>
+                                    @else
+                                        <span class="badge bg-secondary">No Category</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <strong>{{ $product->formatted_price ?? 'Rp ' . number_format(($product->price_cents ?? 0) / 100, 0, ',', '.') }}</strong>
+                                    @if($product->compare_price_cents && $product->compare_price_cents > $product->price_cents)
+                                        <br><small class="text-muted text-decoration-line-through">
+                                            {{ 'Rp ' . number_format($product->compare_price_cents / 100, 0, ',', '.') }}
+                                        </small>
+                                    @endif
+                                </td>
+                                <td>
+                                    @php
+                                        $stockClass = 'bg-success';
+                                        $stockIcon = 'fas fa-boxes';
+
+                                        if ($product->stock_quantity == 0) {
+                                            $stockClass = 'bg-danger';
+                                            $stockIcon = 'fas fa-times';
+                                        } elseif ($product->stock_quantity <= $product->min_stock_level) {
+                                            $stockClass = 'bg-warning';
+                                            $stockIcon = 'fas fa-exclamation-triangle';
+                                        }
+                                    @endphp
+
+                                    <span class="badge {{ $stockClass }}">
+                                        <i class="{{ $stockIcon }} me-1"></i>{{ $product->stock_quantity }}
+                                    </span>
+                                    <br><small class="text-muted">Min: {{ $product->min_stock_level ?? 0 }}</small>
+                                </td>
+                                <td>
+                                    @php
+                                        $statusClass = $product->status == 'active' ? 'bg-success' :
+                                                      ($product->status == 'inactive' ? 'bg-warning' : 'bg-secondary');
+                                    @endphp
+                                    <span class="badge {{ $statusClass }}">{{ ucfirst($product->status) }}</span>
+                                    <br><small class="text-muted">Sales: {{ $product->sale_count ?? 0 }}</small>
+                                </td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                            Actions
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="{{ route('admin.products.edit', $product->id) }}">
+                                                <i class="fas fa-edit me-2"></i>Edit
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="{{ route('products.show', $product->slug) }}" target="_blank">
+                                                <i class="fas fa-eye me-2"></i>View
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="duplicateProduct({{ $product->id }})">
+                                                <i class="fas fa-copy me-2"></i>Duplicate
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="#" onclick="updateStock({{ $product->id }}, '{{ $product->name }}', {{ $product->stock_quantity }})">
+                                                <i class="fas fa-boxes me-2"></i>Update Stock
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="toggleStatus({{ $product->id }})">
+                                                <i class="fas fa-toggle-on me-2"></i>Toggle Status
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteProduct({{ $product->id }})">
+                                                <i class="fas fa-trash me-2"></i>Delete
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="fas fa-box text-muted fa-2x mb-2"></i>
+                                    <br>No products found
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if($products->hasPages())
+                <nav aria-label="Products pagination" class="mt-3">
+                    {{ $products->appends(request()->query())->links() }}
+                </nav>
+            @endif
+        </div>
+    </div>
+</div>
                 </table>
             </div>
 

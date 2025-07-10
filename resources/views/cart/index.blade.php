@@ -301,7 +301,7 @@
 
                     <div class="summary-row">
                         <span>Ongkos Kirim</span>
-                        <span id="shipping">{{ $summary['formatted']['shipping'] }}</span>
+                        <span id="shipping">{{ $summary['formatted']['shipping'] ?? 'Rp 0' }}</span>
                     </div>
 
                     <div class="summary-row summary-total">

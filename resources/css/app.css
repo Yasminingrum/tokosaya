@@ -348,6 +348,34 @@ a:hover {
     color: white;
 }
 
+/* Wishlist Button States */
+.btn-wishlist.active {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    background: var(--cream-color);
+}
+
+.btn-wishlist.active i {
+    color: var(--accent-color);
+}
+
+/* Loading states untuk buttons */
+.btn-add-cart:disabled {
+    background: var(--secondary-color);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.btn-wishlist:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Notification improvements */
+.alert {
+    animation: slideInRight 0.3s ease-out;
+}
+
 .product-info {
     padding: var(--space-lg);
     flex: 1;
@@ -1452,4 +1480,15 @@ a:focus {
     background-color: var(--cream-dark);
     color: var(--text-muted);
     cursor: not-allowed;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }

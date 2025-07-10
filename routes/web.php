@@ -56,11 +56,21 @@ Route::get('/brands/{brand}', [ProductController::class, 'brand'])->name('brands
 Route::get('/products/featured', [ProductController::class, 'featured'])->name('products.featured');
 
 // Cart Routes (Public - Guest can access)
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-Route::put('/cart/item/{item}', [CartController::class, 'update'])->name('cart.update');
-Route::delete('/cart/item/{item}', [CartController::class, 'remove'])->name('cart.remove');
-Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
+Route::prefix('cart')->name('cart.')->group(function () {
+    Route::get('/', [CartController::class, 'index'])->name('index');
+    Route::post('/add', [CartController::class, 'add'])->name('add');
+    Route::put('/item/{item}', [CartController::class, 'update'])->name('update');
+    Route::delete('/item/{item}', [CartController::class, 'remove'])->name('remove');
+    Route::post('/clear', [CartController::class, 'clear'])->name('clear');
+    Route::get('/count', [CartController::class, 'count'])->name('count');
+});
+
+// Checkout Routes
+Route::prefix('checkout')->middleware('auth')->name('checkout.')->group(function () {
+    Route::get('/', [CheckoutController::class, 'index'])->name('index');
+    Route::post('/process', [CheckoutController::class, 'process'])->name('process');
+    Route::get('/success/{order}', [CheckoutController::class, 'success'])->name('success');
+});
 
 // Newsletter Routes
 Route::post('/newsletter/subscribe', [HomeController::class, 'newsletterSubscribe'])->name('newsletter.subscribe');
@@ -129,18 +139,26 @@ Route::middleware('auth')->group(function () {
         Route::post('/{review}/unhelpful', [ReviewController::class, 'unhelpful'])->name('reviews.unhelpful');
     });
 
-    // Wishlist (Authenticated users only)
-    Route::prefix('wishlist')->group(function () {
+    // wishlist routes
+    Route::prefix('wishlist')->middleware('auth')->group(function () {
         Route::get('/', [WishlistController::class, 'index'])->name('wishlist.index');
         Route::post('/add', [WishlistController::class, 'add'])->name('wishlist.add');
         Route::post('/remove/{product}', [WishlistController::class, 'remove'])->name('wishlist.remove');
         Route::post('/clear', [WishlistController::class, 'clear'])->name('wishlist.clear');
-        Route::post('/toggle', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+
+        Route::post('/toggle/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+
         Route::post('/move-to-cart/{product}', [WishlistController::class, 'moveToCart'])->name('wishlist.move_to_cart');
-        Route::get('/check', [WishlistController::class, 'check'])->name('wishlist.check');
+
+        Route::get('/check/{product}', [WishlistController::class, 'check'])->name('wishlist.check');
+
         Route::get('/count', [WishlistController::class, 'count'])->name('wishlist.count');
         Route::post('/share', [WishlistController::class, 'share'])->name('wishlist.share');
     });
+
+    Route::post('wishlist/toggle/{product}', [WishlistController::class, 'toggle'])
+    ->middleware('auth')
+    ->name('wishlist.toggle');
 
     // Orders (Authenticated users only)
     Route::prefix('orders')->group(function () {
